@@ -1,6 +1,15 @@
 # unswallow
 
+[![npm version](https://img.shields.io/npm/v/unswallow)](https://www.npmjs.com/package/unswallow)
+[![PyPI version](https://img.shields.io/pypi/v/unswallow)](https://pypi.org/project/unswallow/)
+[![CI](https://github.com/0DukePan/unswallow/actions/workflows/ci.yml/badge.svg)](https://github.com/0DukePan/unswallow/actions/workflows/ci.yml)
+[![Demo](https://img.shields.io/badge/demo-gif-purple)](docs/demo.gif)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Zero runtime dependencies](https://img.shields.io/badge/runtime_deps-0-brightgreen)](package.json)
+
 **Detect and recover tool calls trapped inside a model's reasoning channel.**
+
+![unswallow demo](docs/demo.gif)
 
 Your agent's model *decided* to call a tool. The server returned `HTTP 200`, `finish_reason: stop`, and `tool_calls: []`. Your agent loop read "no tool call", and silently stopped mid-task. No crash, no error, no log line pointing at the cause.
 
