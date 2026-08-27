@@ -1,0 +1,27 @@
+{
+  "id": "minimax-m3-pattern-c-leak",
+  "description": "MiniMax M3 <mm:think> streaming leak: reasoning tags/content leak into the wrong field mid-stream. Non-streaming signature: an unclosed thinking tag in content.",
+  "engine": "unknown",
+  "version": null,
+  "pattern": "C",
+  "source": "https://github.com/vllm-project/vllm/issues/39056 (pattern C documented in unswallow plan; MiniMax M3 <mm:think> streaming leak)",
+  "sourced": false,
+  "note": "Detection-only fixture: no recovery is possible without a structural envelope, and none should be attempted.",
+  "expect": { "detected": true, "pattern": "C", "recovered": false, "minConfidence": 0 },
+  "response": {
+    "id": "chatcmpl-minimax-m3",
+    "object": "chat.completion",
+    "model": "MiniMax-M3",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "Here is the summary you asked for. <mm:think>I should verify the weather data before finalizing this answer, but the tool result is still pending",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

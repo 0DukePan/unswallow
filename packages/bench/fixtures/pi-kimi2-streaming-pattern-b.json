@@ -1,0 +1,18 @@
+{
+  "id": "pi-kimi2-streaming-pattern-b",
+  "description": "pi #952 streaming: tool-call JSON lands in content, then reasoning text trails after it across later deltas — the exact shape that broke pi's extractFirstJsonObject.",
+  "engine": "unknown",
+  "version": null,
+  "pattern": "B",
+  "source": "https://github.com/earendil-works/pi/issues/952",
+  "sourced": true,
+  "note": "Streaming variant: JSON envelope split across two deltas, reasoning text trailing in a third.",
+  "stream": true,
+  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5 },
+  "chunks": [
+    { "id": "chatcmpl-pi-952-s", "model": "moonshotai/Kimi-K2-Thinking", "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Sha" } }] },
+    { "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "nghai\"}}" } }] },
+    { "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "\n\nLet me also double check whether there are any further steps I should take before reporting back." } }] },
+    { "choices": [{ "index": 0, "finish_reason": "stop", "delta": {} }] }
+  ]
+}

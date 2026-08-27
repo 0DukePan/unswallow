@@ -1,0 +1,29 @@
+{
+  "id": "vllm-qwen3.5-0.19-pattern-a",
+  "description": "vLLM 0.19 + Qwen3.5-35B-A3B-FP8: tool call emitted inside the think block, routed into reasoning by the qwen3 reasoning parser; tool_calls comes back empty. Function-XML envelope shape.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "https://github.com/vllm-project/vllm/issues/39056",
+  "sourced": true,
+  "note": "Reconstructed from the issue body's reproduction output.",
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "response": {
+    "id": "chatcmpl-vllm-39056",
+    "object": "chat.completion",
+    "created": 1785000000,
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nI need to answer the user's question.\n<tool_call>\n<function=Finish>\n<parameter=answer>\n204\n</parameter>\n</function>\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

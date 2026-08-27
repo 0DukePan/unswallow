@@ -1,0 +1,49 @@
+name: Matrix update
+description: Propose a row for the engine/version behavior matrix
+title: 'matrix: '
+labels: [matrix]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One row, one source URL, one PR. The matrix is a living data file — updates don't require a release.
+  - type: input
+    id: engine
+    attributes:
+      label: Engine
+      description: vllm / sglang / llama.cpp
+    validations:
+      required: true
+  - type: input
+    id: range
+    attributes:
+      label: Version range
+      description: semver range, e.g. `>=0.20.0 <0.24.0` or `*`
+    validations:
+      required: true
+  - type: input
+    id: pattern
+    attributes:
+      label: Pattern
+      description: A / B / C
+    validations:
+      required: true
+  - type: input
+    id: behavior
+    attributes:
+      label: Behavior
+      description: swallow / partial / resolved
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: Issue or PR URL — every row must be sourced
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: What changes in this range?
+      description: Short description of the behavior and how it differs from neighboring ranges

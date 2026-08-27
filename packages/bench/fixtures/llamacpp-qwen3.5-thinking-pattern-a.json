@@ -1,0 +1,27 @@
+{
+  "id": "llamacpp-qwen3.5-thinking-pattern-a",
+  "description": "llama.cpp #20837: Qwen3.5-9B prints tool calls in XML inside the thinking block and stops when thinking is enabled; the think block stays in content and tool_calls is empty.",
+  "engine": "llama.cpp",
+  "version": "b8461",
+  "pattern": "A",
+  "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
+  "sourced": true,
+  "note": "In this shape the entire thinking block (with the tool call) lands in the content field — recovered via think-block region extraction.",
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "response": {
+    "id": "chatcmpl-llamacpp-20837",
+    "object": "chat.completion",
+    "model": "Qwen3.5-9B-UD-Q4_K_XL",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "<thinking>\nThe user asked what tools I have available. I should check the weather tool to demonstrate.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Berlin\"}}\n</tool_call>\n</thinking>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

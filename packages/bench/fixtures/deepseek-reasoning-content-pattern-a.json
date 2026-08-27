@@ -1,0 +1,28 @@
+{
+  "id": "deepseek-reasoning-content-pattern-a",
+  "description": "DeepSeek-channel shape: tool-call JSON envelope trapped in reasoning_content. In production this envelope sits between DeepSeek's separator tokens; the JSON-envelope extractor handles it without depending on those tokens' byte encoding.",
+  "engine": "sglang",
+  "version": "0.4.6",
+  "pattern": "A",
+  "source": "https://api-docs.deepseek.com/guides/function_calling",
+  "sourced": false,
+  "note": "Tests the reasoning_content channel + JSON envelope path end to end.",
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "response": {
+    "id": "chatcmpl-deepseek",
+    "object": "chat.completion",
+    "model": "deepseek-chat",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "< thinking>\nI should get the weather for Hangzhou.\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Hangzhou\"}}\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

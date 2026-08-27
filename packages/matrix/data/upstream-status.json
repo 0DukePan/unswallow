@@ -1,0 +1,58 @@
+{
+  "vllm-39056": {
+    "label": "vLLM pattern A/B",
+    "issueUrl": "https://github.com/vllm-project/vllm/issues/39056",
+    "key": 39056,
+    "title": "vLLM 0.19 may lose tool calls for Qwen/Qwen3.5-35B-A3B-FP8 when XML tool_call is emitted inside <think>",
+    "state": "open",
+    "comments": 24,
+    "updatedAt": "2026-06-12T19:40:17Z",
+    "labels": []
+  },
+  "sglang-30744": {
+    "label": "SGLang pattern A",
+    "issueUrl": "https://github.com/sgl-project/sglang/issues/30744",
+    "key": 30744,
+    "title": "[Bug] Qwen3.5-9B runtime LoRA: tool calls swallowed into reasoning_content / malformed (4.8% defective turns); absent for base+identity on same server and for merged weights on vLLM/hosted",
+    "state": "open",
+    "comments": 0,
+    "updatedAt": "2026-07-10T23:58:22Z",
+    "labels": []
+  },
+  "llamacpp-20837": {
+    "label": "llama.cpp pattern A",
+    "issueUrl": "https://github.com/ggml-org/llama.cpp/issues/20837",
+    "key": 20837,
+    "title": "Eval bug: Qwen3.5 9B often prints tool calls in XML and stops when thinking is enabled - tool calls inside thinking block",
+    "state": "open",
+    "comments": 59,
+    "updatedAt": "2026-08-10T13:57:13Z",
+    "labels": [
+      "bug",
+      "chat parser"
+    ]
+  },
+  "pi-952": {
+    "label": "pi pattern B",
+    "issueUrl": "https://github.com/earendil-works/pi/issues/952",
+    "key": 952,
+    "title": "JSON parsing fails when thinking models stream reasoning after tool-call arguments",
+    "state": "closed",
+    "comments": 4,
+    "updatedAt": "2026-04-16T12:14:13Z",
+    "labels": [
+      "bug",
+      "possibly-openclaw-clanker"
+    ]
+  },
+  "openwebui-23339": {
+    "label": "history drift (pattern D)",
+    "issueUrl": "https://github.com/open-webui/open-webui/issues/23339",
+    "key": 23339,
+    "title": "feat: Add model-level toggle to disable reinjecting reasoning/thinking into prompts (prevents <think> tag imitation and rendering/parsing failures)",
+    "state": "open",
+    "comments": 43,
+    "updatedAt": "2026-07-10T10:51:27Z",
+    "labels": []
+  }
+}

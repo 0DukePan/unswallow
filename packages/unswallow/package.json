@@ -1,0 +1,48 @@
+{
+  "name": "unswallow",
+  "version": "0.1.0",
+  "description": "Detect and recover tool calls trapped inside a model's reasoning channel — the reasoning-channel swallow bug class across vLLM, SGLang, and llama.cpp.",
+  "keywords": [
+    "llm",
+    "agents",
+    "tool-calls",
+    "tool-use",
+    "function-calling",
+    "reasoning",
+    "thinking",
+    "vllm",
+    "sglang",
+    "llama.cpp",
+    "qwen3",
+    "deepseek",
+    "openai-compatible"
+  ],
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "unswallow": "dist/cli/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0DukePan/unswallow.git"
+  },
+  "homepage": "https://github.com/0DukePan/unswallow#readme",
+  "bugs": {
+    "url": "https://github.com/0DukePan/unswallow/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@unswallow/matrix": "^0.1.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  }
+}

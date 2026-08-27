@@ -1,0 +1,36 @@
+{
+  "name": "@unswallow/matrix",
+  "version": "0.1.0",
+  "description": "Living engine/version behavior matrix for the reasoning-channel tool-call swallow bug class — the sourced data file that unswallow's confidence scoring is built on. Versioned independently of the unswallow package, closer to an antivirus definitions file than a code release.",
+  "keywords": [
+    "vllm",
+    "sglang",
+    "llama.cpp",
+    "tool-calls",
+    "reasoning",
+    "matrix"
+  ],
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0DukePan/unswallow.git"
+  },
+  "homepage": "https://github.com/0DukePan/unswallow/tree/main/packages/matrix",
+  "bugs": {
+    "url": "https://github.com/0DukePan/unswallow/issues"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "data"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "update": "node scripts/update-matrix.mjs"
+  }
+}

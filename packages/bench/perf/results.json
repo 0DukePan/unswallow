@@ -1,0 +1,159 @@
+{
+  "machine": {
+    "platform": "win32 x64",
+    "cpu": "AMD Ryzen 5 2600X Six-Core Processor           ",
+    "cores": 12,
+    "totalMemBytes": 17101832192,
+    "node": "v22.16.0",
+    "date": "2026-08-26T14:04:48.888Z",
+    "gcAvailable": true
+  },
+  "checkAndRescue": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A — small reasoning (~2–3KB)",
+      "payloadBytes": 2874,
+      "n": 3000,
+      "p50ms": 0.10130000000935979,
+      "p95ms": 0.12159999998402782,
+      "p99ms": 0.17320000001927838,
+      "meanMs": 0.10426983333360598,
+      "opsPerSec": 9590.50156722272,
+      "retainedPerOpBytes": 14.704
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A — function-XML envelope (~1.5KB)",
+      "payloadBytes": 1857,
+      "n": 3000,
+      "p50ms": 0.09040000001550652,
+      "p95ms": 0.11269999999785796,
+      "p99ms": 0.17699999999604188,
+      "meanMs": 0.09348020000028191,
+      "opsPerSec": 10697.452508627326,
+      "retainedPerOpBytes": 15.364
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A — large reasoning (64KB)",
+      "payloadBytes": 65023,
+      "n": 500,
+      "p50ms": 0.13980000000447035,
+      "p95ms": 0.17730000001029111,
+      "p99ms": 0.19829999998910353,
+      "meanMs": 0.14672059999988415,
+      "opsPerSec": 6815.675508420696,
+      "retainedPerOpBytes": 0.36
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A — 1MB reasoning",
+      "payloadBytes": 1011116,
+      "n": 100,
+      "p50ms": 1.291800000006333,
+      "p95ms": 2.8449000000255182,
+      "p99ms": 3.042699999990873,
+      "meanMs": 1.4275840000004973,
+      "opsPerSec": 700.484174661282,
+      "retainedPerOpBytes": 0
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B — trailing text in content",
+      "payloadBytes": 1064,
+      "n": 2000,
+      "p50ms": 0.08449999999720603,
+      "p95ms": 0.09670000002370216,
+      "p99ms": 0.13659999999799766,
+      "meanMs": 0.08811989999930665,
+      "opsPerSec": 11348.174476002223,
+      "retainedPerOpBytes": 29.072
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C — field leak (detection-only)",
+      "payloadBytes": 510,
+      "n": 2000,
+      "p50ms": 0.05840000000898726,
+      "p95ms": 0.0712000000057742,
+      "p99ms": 0.10240000000339933,
+      "meanMs": 0.06048470000058296,
+      "opsPerSec": 16533.106719391217,
+      "retainedPerOpBytes": 42.552
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy — tool_calls already populated",
+      "payloadBytes": 1150,
+      "n": 2000,
+      "p50ms": 0.044599999993806705,
+      "p95ms": 0.052499999990686774,
+      "p99ms": 0.07620000001043081,
+      "meanMs": 0.04597355000016978,
+      "opsPerSec": 21751.63762633747,
+      "retainedPerOpBytes": 0.92
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard — discussion-only",
+      "payloadBytes": 1529,
+      "n": 2000,
+      "p50ms": 0.05869999999413267,
+      "p95ms": 0.0652000000118278,
+      "p99ms": 0.09320000000298023,
+      "meanMs": 0.060216249999939464,
+      "opsPerSec": 16606.812945027385,
+      "retainedPerOpBytes": 27.8
+    }
+  ],
+  "streaming": {
+    "typical": {
+      "n": 300,
+      "p50": 0.8637999999918975,
+      "p95": 1.3364000000001397,
+      "p99": 1.6304999999993015,
+      "mean": 0.9414823333330181,
+      "opsPerSec": 1062.1548218114924
+    },
+    "big": {
+      "n": 20,
+      "p50": 10.015500000008615,
+      "p95": 10.730400000000373,
+      "p99": 10.899499999999534,
+      "mean": 10.024834999999438,
+      "opsPerSec": 99.75226524925907
+    },
+    "nonStreamReference": {
+      "n": 2000,
+      "p50": 0.11530000000493601,
+      "p95": 0.17489999998360872,
+      "p99": 0.3339999999734573,
+      "mean": 0.1290186500000418,
+      "opsPerSec": 7750.817420579706
+    }
+  },
+  "history": {
+    "n": 3000,
+    "p50": 0.054699999978765845,
+    "p95": 0.07699999999022111,
+    "p99": 0.10780000002705492,
+    "mean": 0.05896493333338488,
+    "opsPerSec": 16959.232266846608
+  },
+  "matrix": {
+    "n": 100000,
+    "p50": 0.0004999999946448952,
+    "p95": 0.003599999996367842,
+    "p99": 0.005900000018300489,
+    "mean": 0.00112391199998674,
+    "opsPerSec": 889749.3754064359
+  },
+  "reference": {
+    "n": 500,
+    "p50": 0.23940000002039596,
+    "p95": 0.26380000001518056,
+    "p99": 0.5359999999927823,
+    "mean": 0.2437430000003078,
+    "opsPerSec": 4102.681923167997
+  }
+}

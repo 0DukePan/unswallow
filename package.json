@@ -1,0 +1,30 @@
+{
+  "name": "unswallow-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo for unswallow — detect and recover tool calls trapped inside a model's reasoning channel.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "npm run build --workspace unswallow",
+    "test": "npm run build --workspace unswallow && node --import tsx --test packages/unswallow/test/semver.test.ts packages/unswallow/test/core.test.ts packages/unswallow/test/fp-guard.test.ts packages/unswallow/test/stream.test.ts packages/unswallow/test/history.test.ts packages/unswallow/test/proxy.test.ts",
+    "bench": "npm run build --workspace unswallow && node packages/bench/run.mjs",
+    "bench:check": "npm run build --workspace unswallow && node packages/bench/run.mjs --check",
+    "bench:update": "npm run build --workspace unswallow && node packages/bench/run.mjs --update-pins",
+    "bench:perf": "npm run build --workspace unswallow && node --expose-gc packages/bench/perf.mjs",
+    "bench:python": "python packages/python/bench/parity.py && python packages/python/bench/perf_python.py",
+    "matrix:update": "node packages/matrix/scripts/update-matrix.mjs && python packages/python/scripts/sync_matrix.py",
+    "test:python": "python -m unittest discover -s packages/python/tests -t packages/python",
+    "pin": "node packages/bench/scripts/pin-fixtures.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

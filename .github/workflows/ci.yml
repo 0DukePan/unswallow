@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Bench (read-only: hash pins + fixture expectations + matrix consistency)
+        run: node packages/bench/run.mjs --check
+      - name: CLI smoke test
+        run: |
+          node packages/unswallow/dist/cli/index.js check > /tmp/unswallow-check.out && grep -q "SWALLOW DETECTED" /tmp/unswallow-check.out
+          node packages/unswallow/dist/cli/index.js matrix | grep -q "open-webui"
+          node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/vllm-qwen3-0.19-tool-choice-required-pattern-b.json | grep -q "SWALLOW DETECTED"
+          node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/fp-guard-discussion-only.json | grep -q "NO SWALLOW DETECTED"
+
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Matrix data must stay in sync with the npm matrix package
+        run: |
+          python -c "import hashlib, sys
+          a = hashlib.sha256(open('packages/matrix/data/engine-matrix.json','rb').read()).hexdigest()
+          b = hashlib.sha256(open('packages/python/unswallow/data/engine-matrix.json','rb').read()).hexdigest()
+          sys.exit(0 if a == b else 1)"
+      - name: Run Python test suite (stdlib-only, no install needed)
+        run: python -m unittest discover -s packages/python/tests -t packages/python
+      - name: Cross-language parity — 15-fixture corpus through the Python core
+        run: python packages/python/bench/parity.py
+      - name: Python CLI smoke
+        run: |
+          cd packages/python && python -m unswallow.cli check | grep -q "SWALLOW DETECTED"
+          cd packages/python && python -m unswallow.cli matrix | grep -q "open-webui"

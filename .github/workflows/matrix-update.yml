@@ -1,0 +1,39 @@
+name: Matrix Watch
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Poll tracked upstream issue threads
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node packages/matrix/scripts/update-matrix.mjs || true
+      - name: Open PR if the snapshot changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: 'chore(matrix): refresh upstream issue status'
+          branch: matrix-update
+          title: 'chore(matrix): refresh upstream issue status'
+          body: |
+            Weekly poll of the tracked upstream issue threads
+            (vLLM #39056, SGLang #30744, llama.cpp #20837, pi #952, open-webui #23339).
+
+            Review `packages/matrix/data/upstream-status.json` and update
+            `packages/matrix/data/engine-matrix.json` if any behavior row needs
+            adjusting. The fixture-impact report lists which benchmark fixtures
+            a behavior flip would force to change.
+          delete-branch: true

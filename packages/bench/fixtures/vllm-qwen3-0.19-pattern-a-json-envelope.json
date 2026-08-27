@@ -1,0 +1,28 @@
+{
+  "id": "vllm-qwen3-0.19-pattern-a-json-envelope",
+  "description": "vLLM 0.19 variant from the #39056 thread: JSON tool-call envelope inside the think block instead of the function-XML form.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "https://github.com/vllm-project/vllm/issues/39056",
+  "sourced": true,
+  "note": "Variant reproduction reported by multiple commenters in the thread.",
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "response": {
+    "id": "chatcmpl-vllm-39056-v2",
+    "object": "chat.completion",
+    "model": "cyankiwi/Qwen3.5-27B-AWQ-4bit",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nThe user wants the weather in Tokyo. I should use the get_weather tool.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Tokyo\"}}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

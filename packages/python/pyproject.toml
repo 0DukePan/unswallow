@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unswallow"
+version = "0.1.0"
+description = "Detect and recover tool calls trapped inside a model's reasoning channel — the reasoning-channel swallow bug class across vLLM, SGLang, and llama.cpp. 1:1 mirror of the TypeScript library."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = [
+  "llm",
+  "agents",
+  "tool-calls",
+  "tool-use",
+  "function-calling",
+  "reasoning",
+  "thinking",
+  "vllm",
+  "sglang",
+  "llama.cpp",
+  "qwen3",
+  "deepseek",
+  "openai-compatible",
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/0DukePan/unswallow"
+Repository = "https://github.com/0DukePan/unswallow"
+Issues = "https://github.com/0DukePan/unswallow/issues"
+
+[project.scripts]
+unswallow = "unswallow.cli:main"
+
+[tool.setuptools]
+packages = ["unswallow"]
+
+[tool.setuptools.package-data]
+unswallow = ["data/*.json"]

@@ -1,0 +1,28 @@
+{
+  "id": "sglang-qwen3.5-reasoning-content-pattern-a",
+  "description": "SGLang #30744: tool calls swallowed into reasoning_content on Qwen3.5-9B runtime LoRA; 4.8% defective turns.",
+  "engine": "sglang",
+  "version": "0.4.6",
+  "pattern": "A",
+  "source": "https://github.com/sgl-project/sglang/issues/30744",
+  "sourced": true,
+  "note": "Reasoning content channel uses reasoning_content, matching the DeepSeek-compatible field name SGLang exposes.",
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "response": {
+    "id": "chatcmpl-sglang-30744",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-9B",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "< thinking>\nThe user asked for the weather in Beijing.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Beijing\"}}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

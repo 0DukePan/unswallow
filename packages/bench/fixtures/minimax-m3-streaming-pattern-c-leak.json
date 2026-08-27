@@ -1,0 +1,17 @@
+{
+  "id": "minimax-m3-streaming-pattern-c-leak",
+  "description": "MiniMax M3 <mm:think> streaming leak: an unclosed thinking tag lands in the content channel mid-stream; detection-only, no recovery.",
+  "engine": "unknown",
+  "version": null,
+  "pattern": "C",
+  "source": "MiniMax M3 <mm:think> streaming leak (pattern C documented in the unswallow plan)",
+  "sourced": false,
+  "note": "Also asserts the live leak event path via the stream accumulator.",
+  "stream": true,
+  "expect": { "detected": true, "pattern": "C", "recovered": false, "minConfidence": 0 },
+  "chunks": [
+    { "id": "chatcmpl-minimax-s", "model": "MiniMax-M3", "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "Here is the summary you asked for. <mm:thi" } }] },
+    { "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "nk>I should verify the weather data before finalizing this answer" } }] },
+    { "choices": [{ "index": 0, "finish_reason": "stop", "delta": {} }] }
+  ]
+}

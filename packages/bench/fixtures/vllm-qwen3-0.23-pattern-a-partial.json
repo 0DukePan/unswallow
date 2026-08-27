@@ -1,0 +1,28 @@
+{
+  "id": "vllm-qwen3-0.23-pattern-a-partial",
+  "description": "vLLM 0.20–0.24 era: partially patched, still misses the paired tool_call-block case from the original #39056 report.",
+  "engine": "vllm",
+  "version": "0.23.4",
+  "pattern": "A",
+  "source": "https://github.com/vllm-project/vllm/issues/39056",
+  "sourced": true,
+  "note": "Matrix row >=0.20.0 <0.24.0 is behavior 'partial', so a recovered detection is expected at 0.8 confidence.",
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.7 },
+  "response": {
+    "id": "chatcmpl-vllm-023",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3-32B",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\n<tool_call>\n<function=get_weather>\n<parameter=city>\nTokyo\n</parameter>\n</function>\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

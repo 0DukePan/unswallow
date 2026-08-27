@@ -1,0 +1,129 @@
+{
+  "machine": {
+    "platform": "windows amd64",
+    "python": "3.14.6",
+    "date": "2026-08-26T14:00:17Z"
+  },
+  "checkAndRescue": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A \u2014 small reasoning (~2\u20133KB)",
+      "payloadBytes": 2840,
+      "n": 3000,
+      "p50": 0.19729999985429458,
+      "p95": 0.28560000009747455,
+      "p99": 0.3722000001289416,
+      "mean": 0.20964506666481006,
+      "opsPerSec": 4769.966762913839,
+      "retainedPerOpBytes": 4.3355
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A \u2014 function-XML envelope (~1.5KB)",
+      "payloadBytes": 1872,
+      "n": 3000,
+      "p50": 0.19580000025598565,
+      "p95": 0.24329999996552942,
+      "p99": 0.3034999999727006,
+      "mean": 0.20235506666510142,
+      "opsPerSec": 4941.808557010359,
+      "retainedPerOpBytes": 5.3775
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A \u2014 large reasoning (64KB)",
+      "payloadBytes": 65042,
+      "n": 500,
+      "p50": 0.2061999998659303,
+      "p95": 0.2171999999518448,
+      "p99": 0.24059999987002811,
+      "mean": 0.20896160001302633,
+      "opsPerSec": 4785.568257218846,
+      "retainedPerOpBytes": 51.04
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A \u2014 1MB reasoning",
+      "payloadBytes": 1011134,
+      "n": 100,
+      "p50": 0.45490000002246234,
+      "p95": 0.5750999998781481,
+      "p99": 0.7124999997358827,
+      "mean": 0.46888499998658517,
+      "opsPerSec": 2132.7191102906045,
+      "retainedPerOpBytes": 193.54
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B \u2014 trailing text in content",
+      "payloadBytes": 1086,
+      "n": 2000,
+      "p50": 0.2013000002989429,
+      "p95": 0.2656000001479697,
+      "p99": 0.38819999963379814,
+      "mean": 0.21275614999558456,
+      "opsPerSec": 4700.216656584326,
+      "retainedPerOpBytes": 10.503
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C \u2014 field leak (detection-only)",
+      "payloadBytes": 522,
+      "n": 2000,
+      "p50": 0.16210000012506498,
+      "p95": 0.225499999942258,
+      "p99": 0.35530000013750396,
+      "mean": 0.17395975000090402,
+      "opsPerSec": 5748.456180207222,
+      "retainedPerOpBytes": 9.641
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy \u2014 tool_calls already populated",
+      "payloadBytes": 1176,
+      "n": 2000,
+      "p50": 0.13779999972030055,
+      "p95": 0.17080000043279142,
+      "p99": 0.25279999999838765,
+      "mean": 0.14417204999608657,
+      "opsPerSec": 6936.1571818334005,
+      "retainedPerOpBytes": 2.998
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard \u2014 discussion-only",
+      "payloadBytes": 1540,
+      "n": 2000,
+      "p50": 0.1550000001770968,
+      "p95": 0.2260999999634805,
+      "p99": 0.37920000022495515,
+      "mean": 0.16598644999794487,
+      "opsPerSec": 6024.5881516978125,
+      "retainedPerOpBytes": 9.514
+    }
+  ],
+  "streaming": {
+    "n": 300,
+    "p50": 13.272899999719812,
+    "p95": 17.249600000013743,
+    "p99": 21.03019999958633,
+    "mean": 13.826104333331083,
+    "opsPerSec": 72.3269531236839
+  },
+  "history": {
+    "n": 3000,
+    "p50": 0.3594999998313142,
+    "p95": 0.43950000008408097,
+    "p99": 0.5071000000498316,
+    "mean": 0.37176626666693363,
+    "opsPerSec": 2689.862124838515
+  },
+  "matrix": {
+    "n": 100000,
+    "p50": 0.0012999998943996616,
+    "p95": 0.040100000205711694,
+    "p99": 0.05160000000614673,
+    "mean": 0.009269872999921063,
+    "opsPerSec": 107876.34307487443
+  }
+}

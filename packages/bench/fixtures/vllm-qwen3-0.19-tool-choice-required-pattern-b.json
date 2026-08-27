@@ -1,0 +1,27 @@
+{
+  "id": "vllm-qwen3-0.19-tool-choice-required-pattern-b",
+  "description": "vLLM 0.19 Bug 2 from the #39056 thread (PR #35936): with tool_choice \"required\", the server validates content as plain JSON only — the model's valid <tool_call> XML envelope in content always fails validation and tool_calls silently comes back empty.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "B",
+  "source": "https://github.com/vllm-project/vllm/issues/39056 (comment: Bug 2, PR #35936)",
+  "sourced": true,
+  "note": "A distinct silent-empty mechanism: the envelope is in content (not reasoning), and the failure is the server's JSON-only validation branch, not the reasoning parser. Same recovery: envelope in content, tool_calls empty.",
+  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5 },
+  "response": {
+    "id": "chatcmpl-vllm-39056-bug2",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "<tool_call>\n<function=get_capital>\n<parameter=country>\nFrance\n</parameter>\n</function>\n</tool_call>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

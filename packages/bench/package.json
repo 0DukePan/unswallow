@@ -1,0 +1,11 @@
+{
+  "name": "@unswallow/bench",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Hash-pinned fixture corpus + benchmark runner for unswallow.",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@unswallow/matrix": "^0.1.0"
+  }
+}

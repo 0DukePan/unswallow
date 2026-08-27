@@ -1,0 +1,46 @@
+name: Bug report
+description: Something swallowed a tool call, or unswallow misbehaved
+title: '[bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If your server returned `tool_calls: []` while a tool call was sitting in the reasoning channel, paste the raw response below — that becomes a pinned benchmark fixture with your attribution.
+  - type: textarea
+    id: raw
+    attributes:
+      label: Raw provider response (JSON)
+      description: The unredacted chat.completion response. Redact API keys/tokens only.
+      render: json
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Engine
+      description: vllm / sglang / llama.cpp / other (name the serving stack and how it's hosted)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Engine version
+      description: e.g. vllm 0.19.0, or a commit/build number
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: e.g. Qwen/Qwen3.5-35B-A3B-FP8
+  - type: textarea
+    id: flags
+    attributes:
+      label: Serving flags / request shape
+      description: e.g. `--reasoning-parser qwen3 --tool-call-parser qwen3_coder`, or the `tools` array you sent
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect unswallow (or the server) to do?
+    validations:
+      required: true

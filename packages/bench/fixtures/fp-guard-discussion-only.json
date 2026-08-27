@@ -1,0 +1,28 @@
+{
+  "id": "fp-guard-discussion-only",
+  "description": "Adversarial: the model merely discusses calling a tool inside its reasoning channel without ever emitting a structural envelope. Must NOT be recovered.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "This is the single most important correctness property: a wrong recovery is worse than the silent failure it replaces.",
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "response": {
+    "id": "chatcmpl-fp-discussion",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nI could call get_weather to check the weather in Tokyo, but the user only asked a general question and no tool result is required here. I will answer directly.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

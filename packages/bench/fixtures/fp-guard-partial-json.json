@@ -1,0 +1,28 @@
+{
+  "id": "fp-guard-partial-json",
+  "description": "Adversarial: reasoning contains a partial, unparseable JSON-looking fragment — structurally incomplete, must NOT be recovered.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Recovery requires a structurally well-formed envelope (name + arguments), never a keyword or fragment match.",
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "response": {
+    "id": "chatcmpl-fp-partial",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nIf I did call a tool it would look like {\"name\": \"get_weather\", \"arguments\": {\"city\": \"Tokyo\"} but I do not need it.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

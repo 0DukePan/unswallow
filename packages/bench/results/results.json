@@ -1,0 +1,472 @@
+{
+  "runner": "unswallow bench runner v1",
+  "fixtures": 15,
+  "passed": 15,
+  "failed": 0,
+  "manifest": "fixtures.sha256",
+  "manifestVerified": true,
+  "matrixConsistency": {
+    "checked": 9,
+    "failed": 0
+  },
+  "generatedAt": "2026-08-26T14:06:47.290Z",
+  "results": [
+    {
+      "id": "deepseek-reasoning-content-pattern-a",
+      "engine": "sglang",
+      "version": "0.4.6",
+      "pattern": "A",
+      "source": "https://api-docs.deepseek.com/guides/function_calling",
+      "sourced": false,
+      "stream": false,
+      "sha256": "a60d68371b2e7ecad0b48cc4765e73b2ea87f1bf23698507e0d4054c81aa0281",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Hangzhou"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "fp-guard-discussion-only",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "2f4e46bf57c943502ce4ba2a992e1f6e65008f68b049e82d42bfbea9dc48176d",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null
+      },
+      "failures": []
+    },
+    {
+      "id": "fp-guard-partial-json",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "993d697e833ebd2d7711e6d57c277578d256ab0a0caa03c3d02280e019aa5928",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null
+      },
+      "failures": []
+    },
+    {
+      "id": "llamacpp-qwen3.5-thinking-pattern-a",
+      "engine": "llama.cpp",
+      "version": "b8461",
+      "pattern": "A",
+      "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
+      "sourced": true,
+      "stream": false,
+      "sha256": "a9f2a25baa1d547d29c79b1555186cd5da677855a266c5a144eaaacb8a92d0da",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Berlin"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "minimax-m3-pattern-c-leak",
+      "engine": "unknown",
+      "version": null,
+      "pattern": "C",
+      "source": "https://github.com/vllm-project/vllm/issues/39056 (pattern C documented in unswallow plan; MiniMax M3 <mm:think> streaming leak)",
+      "sourced": false,
+      "stream": false,
+      "sha256": "2014ae58050f9f5e6b3d42b788495a64bcc4b2fa944da8b98dc245a958741ca0",
+      "expect": {
+        "detected": true,
+        "pattern": "C",
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "C",
+        "recovered": false,
+        "confidence": 0.5,
+        "toolCall": null
+      },
+      "failures": []
+    },
+    {
+      "id": "minimax-m3-streaming-pattern-c-leak",
+      "engine": "unknown",
+      "version": null,
+      "pattern": "C",
+      "source": "MiniMax M3 <mm:think> streaming leak (pattern C documented in the unswallow plan)",
+      "sourced": false,
+      "stream": true,
+      "sha256": "bbd0d5e45f4068082569271ad8e66edba723e092e4e1c600b60631f94725dd1e",
+      "expect": {
+        "detected": true,
+        "pattern": "C",
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "C",
+        "recovered": false,
+        "confidence": 0.5,
+        "toolCall": null
+      },
+      "failures": []
+    },
+    {
+      "id": "pi-kimi2-pattern-b",
+      "engine": "unknown",
+      "version": null,
+      "pattern": "B",
+      "source": "https://github.com/earendil-works/pi/issues/952",
+      "sourced": true,
+      "stream": false,
+      "sha256": "330771d32e60de8a6bf7319c1e9601cd3c42b0ff072285d7ede6906382766199",
+      "expect": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": true,
+        "minConfidence": 0.5
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": true,
+        "confidence": 0.55,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Shanghai"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "pi-kimi2-streaming-pattern-b",
+      "engine": "unknown",
+      "version": null,
+      "pattern": "B",
+      "source": "https://github.com/earendil-works/pi/issues/952",
+      "sourced": true,
+      "stream": true,
+      "sha256": "4ac9c3f78aac202499c5d80c992e6cc78d0282c0619c95decec0b5d50dbf8542",
+      "expect": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": true,
+        "minConfidence": 0.5
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": true,
+        "confidence": 0.55,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Shanghai"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "sglang-qwen3.5-reasoning-content-pattern-a",
+      "engine": "sglang",
+      "version": "0.4.6",
+      "pattern": "A",
+      "source": "https://github.com/sgl-project/sglang/issues/30744",
+      "sourced": true,
+      "stream": false,
+      "sha256": "a628f4c1cacd1f8c4bb604964aa028d5dd37288572b5d489873e3610e99f3848",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Beijing"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3-0.19-pattern-a-json-envelope",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": true,
+      "stream": false,
+      "sha256": "0bada98eff8ed611818c997cf1a085c28a35801158f86d518ca21d452165e276",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Tokyo"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3-0.19-tool-choice-required-pattern-b",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "B",
+      "source": "https://github.com/vllm-project/vllm/issues/39056 (comment: Bug 2, PR #35936)",
+      "sourced": true,
+      "stream": false,
+      "sha256": "25c286c452be371947318715e99cb0838f0f35f7e615eb74e3e67f5e53168181",
+      "expect": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": true,
+        "minConfidence": 0.5
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": true,
+        "confidence": 0.55,
+        "toolCall": {
+          "name": "get_capital",
+          "arguments": {
+            "country": "France"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3-0.23-pattern-a-partial",
+      "engine": "vllm",
+      "version": "0.23.4",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": true,
+      "stream": false,
+      "sha256": "e67c506ac9be1a973bc7bab9cc8675fc62fcd5a5cec821623ce1a24834bd3d6f",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.7
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.8,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Tokyo"
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3-0.24-clean",
+      "engine": "vllm",
+      "version": "0.24.0",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": true,
+      "stream": false,
+      "sha256": "000521f0917b7e167108b18c4505e573c6feab2d4a579194cb9c22845ea10789",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": true,
+      "stream": false,
+      "sha256": "248375fbde01d474f6eec4bf534aa7ecf6b7a9a394e6111aafce3961dc4375da",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "Finish",
+          "arguments": {
+            "answer": 204
+          }
+        }
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-streaming-pattern-a",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": true,
+      "stream": true,
+      "sha256": "5a1a408f27aa2a78344f7edc5e88c0fa67bf8e30daa401d8d122631e9b2b0a00",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "Finish",
+          "arguments": {
+            "answer": 204
+          }
+        }
+      },
+      "failures": []
+    }
+  ],
+  "consistency": [
+    {
+      "id": "deepseek-reasoning-content-pattern-a",
+      "ok": true,
+      "note": "matrix sglang * → swallow; fixture expects detection"
+    },
+    {
+      "id": "llamacpp-qwen3.5-thinking-pattern-a",
+      "ok": true,
+      "note": "matrix llama.cpp * → swallow; fixture expects detection"
+    },
+    {
+      "id": "sglang-qwen3.5-reasoning-content-pattern-a",
+      "ok": true,
+      "note": "matrix sglang * → swallow; fixture expects detection"
+    },
+    {
+      "id": "vllm-qwen3-0.19-pattern-a-json-envelope",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "vllm-qwen3-0.19-tool-choice-required-pattern-b",
+      "ok": true,
+      "note": "no matrix row for vllm 0.19.0 pattern B — novel combination, keep an eye on it"
+    },
+    {
+      "id": "vllm-qwen3-0.23-pattern-a-partial",
+      "ok": true,
+      "note": "matrix vllm >=0.20.0 <0.24.0 → partial; fixture expects detection"
+    },
+    {
+      "id": "vllm-qwen3-0.24-clean",
+      "ok": true,
+      "note": "matrix vllm >=0.24.0 → resolved; fixture expects no detection"
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-streaming-pattern-a",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "pi-kimi2-pattern-b",
+  "description": "pi/earendil-works #952: thinking models stream reasoning after the tool-call arguments, leaving trailing text after the JSON envelope in content and breaking strict JSON.parse.",
+  "engine": "unknown",
+  "version": null,
+  "pattern": "B",
+  "source": "https://github.com/earendil-works/pi/issues/952",
+  "sourced": true,
+  "note": "pi patched this inside its own extractFirstJsonObject; this fixture is the raw non-streaming equivalent: envelope + trailing reasoning text in content.",
+  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5 },
+  "response": {
+    "id": "chatcmpl-pi-952",
+    "object": "chat.completion",
+    "model": "moonshotai/Kimi-K2-Thinking",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Shanghai\"}}\n\nLet me also double check whether there are any further steps I should take before reporting back to the user.\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}
