@@ -23,10 +23,14 @@ jobs:
         run: node packages/bench/run.mjs --check
       - name: CLI smoke test
         run: |
-          node packages/unswallow/dist/cli/index.js check > /tmp/unswallow-check.out && grep -q "SWALLOW DETECTED" /tmp/unswallow-check.out
-          node packages/unswallow/dist/cli/index.js matrix | grep -q "open-webui"
-          node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/vllm-qwen3-0.19-tool-choice-required-pattern-b.json | grep -q "SWALLOW DETECTED"
-          node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/fp-guard-discussion-only.json | grep -q "NO SWALLOW DETECTED"
+          node packages/unswallow/dist/cli/index.js check > /tmp/unswallow-check.out
+          grep -q "SWALLOW DETECTED" /tmp/unswallow-check.out
+          node packages/unswallow/dist/cli/index.js matrix > /tmp/unswallow-matrix.out
+          grep -q "open-webui" /tmp/unswallow-matrix.out
+          node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/vllm-qwen3-0.19-tool-choice-required-pattern-b.json > /tmp/unswallow-b.out
+          grep -q "SWALLOW DETECTED" /tmp/unswallow-b.out
+          node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/fp-guard-discussion-only.json > /tmp/unswallow-fp.out
+          grep -q "NO SWALLOW DETECTED" /tmp/unswallow-fp.out
 
   python:
     runs-on: ubuntu-latest
@@ -50,5 +54,8 @@ jobs:
         run: python packages/python/bench/parity.py
       - name: Python CLI smoke
         run: |
-          cd packages/python && python -m unswallow.cli check | grep -q "SWALLOW DETECTED"
-          cd packages/python && python -m unswallow.cli matrix | grep -q "open-webui"
+          cd packages/python
+          python -m unswallow.cli check > /tmp/py-check.out
+          grep -q "SWALLOW DETECTED" /tmp/py-check.out
+          python -m unswallow.cli matrix > /tmp/py-matrix.out
+          grep -q "open-webui" /tmp/py-matrix.out
