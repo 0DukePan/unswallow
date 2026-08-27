@@ -1,0 +1,28 @@
+name: Demo GIF
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['docs/demo.tape']
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build --workspace unswallow
+      - uses: charmbracelet/vhs-action@v2
+        with:
+          path: 'docs/demo.tape'
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: render demo.gif'
+          file_pattern: docs/demo.gif
