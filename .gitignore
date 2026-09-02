@@ -1,5 +1,10 @@
 node_modules/
 dist/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
 *.log
 *.tsbuildinfo
 .DS_Store
+*.tgz

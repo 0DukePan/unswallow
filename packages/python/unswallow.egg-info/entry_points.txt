@@ -1,2 +1,0 @@
-[console_scripts]
-unswallow = unswallow.cli:main
