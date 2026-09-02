@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const core = require('../unswallow/dist/src/index.js');
 const { checkAndRescue, checkAndRescueStream, sanitizeHistory, matchMatrixEntry } = core;
-const matrixEntries = require('@unswallow/matrix').entries;
+const matrixEntries = require('unswallow-matrix').entries;
 
 const RESULTS_DIR = path.join(import.meta.dirname, 'perf');
 const RESULTS_MD = path.join(RESULTS_DIR, 'results.md');

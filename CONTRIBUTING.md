@@ -21,7 +21,7 @@ Rules that keep the corpus honest:
 
 ## How to update the engine matrix
 
-The matrix (`packages/matrix/data/engine-matrix.json`) is a living data file published as its own package, `@unswallow/matrix`, versioned independently of `unswallow`. One row, one source URL, one PR:
+The matrix (`packages/matrix/data/engine-matrix.json`) is a living data file published as its own package, `unswallow-matrix`, versioned independently of `unswallow`. One row, one source URL, one PR:
 
 ```json
 {
@@ -54,7 +54,7 @@ Repo layout (npm workspaces):
 ```
 packages/
   unswallow/   # the published `unswallow` package: src/ (core + streaming + history + proxy), cli/ (bin)
-  matrix/      # the published `@unswallow/matrix` package: data/engine-matrix.json, update tooling
+  matrix/      # the published `unswallow-matrix` package: data/engine-matrix.json, update tooling
   bench/       # private: fixtures/, run.mjs, perf.mjs, results/
   python/      # the published PyPI `unswallow` package: 1:1 Python mirror (stdlib-only)
 ```
@@ -63,7 +63,7 @@ The engine matrix is bundled in the Python package as data — `npm run matrix:u
 
 Requirements for merged code:
 
-- Zero runtime dependencies (`unswallow` depends only on `@unswallow/matrix`; the Python package is pure stdlib).
+- Zero runtime dependencies (`unswallow` depends only on `unswallow-matrix`; the Python package is pure stdlib).
 - No test regressions; a new fixture for any new detection/recovery behavior; streaming behavior needs streaming fixtures; proxy behavior needs proxy tests with a fake upstream.
 - TS and Python must stay behaviorally identical — the Python test suite mirrors the TS suite, and the 15-fixture bench corpus runs against the TS core. If you change detection semantics, port the change to both.
 - CLI output must stay dependency-free (plain ANSI, no chalk-style deps).

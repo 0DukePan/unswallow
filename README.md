@@ -237,7 +237,7 @@ The genuinely hard part of this bug class is knowing **which engine, which versi
 | llama.cpp | `*` | A | swallow | [#20837](https://github.com/ggml-org/llama.cpp/issues/20837) |
 | open-webui | `*` | D | swallow | [#23339](https://github.com/open-webui/open-webui/issues/23339) |
 
-Every row ships with a `source` URL — community PRs against [`packages/matrix/data/engine-matrix.json`](packages/matrix/data/engine-matrix.json) are welcome and don't require a release. The matrix is published as its own package, `@unswallow/matrix`, **versioned independently of `unswallow`** — closer to an antivirus definitions file than a code release (see [`packages/matrix/README.md`](packages/matrix/README.md)). `npm run matrix:update` refreshes upstream issue status via the GitHub API (used by the weekly CI watcher) and reports which benchmark fixtures a behavior flip would force to change.
+Every row ships with a `source` URL — community PRs against [`packages/matrix/data/engine-matrix.json`](packages/matrix/data/engine-matrix.json) are welcome and don't require a release. The matrix is published as its own package, `unswallow-matrix`, **versioned independently of `unswallow`** — closer to an antivirus definitions file than a code release (see [`packages/matrix/README.md`](packages/matrix/README.md)). `npm run matrix:update` refreshes upstream issue status via the GitHub API (used by the weekly CI watcher) and reports which benchmark fixtures a behavior flip would force to change.
 
 ## Benchmarks
 

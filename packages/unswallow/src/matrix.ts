@@ -15,7 +15,7 @@ const CWD_MATRIX_PATH = path.join(process.cwd(), 'data', 'engine-matrix.json');
 export function loadMatrix(custom?: SwallowMatrixEntry[]): SwallowMatrixEntry[] {
   if (custom && custom.length > 0) return custom;
   try {
-    const pkg = require('@unswallow/matrix') as { entries: SwallowMatrixEntry[] };
+    const pkg = require('unswallow-matrix') as { entries: SwallowMatrixEntry[] };
     if (Array.isArray(pkg.entries)) return pkg.entries;
   } catch {
     // fall through to local paths (monorepo dev without workspace link)
@@ -37,7 +37,7 @@ export function getMatrixFile(custom?: SwallowMatrixEntry[]): MatrixFile {
     return { matrixVersion: 'custom', updated: 'n/a', entries: custom };
   }
   try {
-    const pkg = require('@unswallow/matrix') as MatrixFile;
+    const pkg = require('unswallow-matrix') as MatrixFile;
     if (pkg && Array.isArray(pkg.entries)) {
       return {
         matrixVersion: pkg.matrixVersion,

@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const core = require('../unswallow/dist/src/index.js');
 const { checkAndRescue, checkAndRescueStream, matchMatrixEntry } = core;
-const matrixEntries = require('@unswallow/matrix').entries;
+const matrixEntries = require('unswallow-matrix').entries;
 
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures');
 const MANIFEST_PATH = path.join(import.meta.dirname, 'fixtures.sha256');

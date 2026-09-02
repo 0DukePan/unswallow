@@ -39,7 +39,7 @@
     "node": ">=18.17"
   },
   "dependencies": {
-    "@unswallow/matrix": "^0.1.0"
+    "unswallow-matrix": "^0.1.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

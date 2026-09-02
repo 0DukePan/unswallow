@@ -9,7 +9,7 @@ CI green (node 20/22 + python 3.9/3.11/3.13 + parity), demo GIF rendered, badges
 # --- npm (run from this repo root) ---
 npm adduser                      # interactive; you may need an OTP
 cd packages/unswallow && npm publish
-cd ../matrix && npm publish      # @unswallow/matrix, own release cycle
+cd ../matrix && npm publish      # unswallow-matrix, own release cycle
 cd ../..
 
 # --- PyPI ---
@@ -28,7 +28,7 @@ python -m venv /tmp/verify-pip && /tmp/verify-pip/bin/pip install unswallow && u
 Bump versions for any later release:
 `packages/unswallow/package.json`, `packages/matrix/package.json`,
 `packages/python/pyproject.toml`, `packages/python/unswallow/__init__.py`
-(and `unswallow`'s dependency range on `@unswallow/matrix` if the matrix releases first).
+(and `unswallow`'s dependency range on `unswallow-matrix` if the matrix releases first).
 
 ## 2. Repo settings (GitHub web UI, ~1 minute)
 

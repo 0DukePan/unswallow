@@ -1,4 +1,4 @@
-# @unswallow/matrix
+# unswallow-matrix
 
 The living engine/version behavior matrix for the reasoning-channel tool-call swallow bug class.
 
@@ -30,4 +30,4 @@ Edit `data/engine-matrix.json` and open a PR. That's it — no package release r
 
 ## Release
 
-Bump the version here, publish with `npm publish` from this directory, and bump the `@unswallow/matrix` range in `packages/unswallow/package.json` if needed. Matrix data itself never waits for this process.
+Bump the version here, publish with `npm publish` from this directory, and bump the `unswallow-matrix` range in `packages/unswallow/package.json` if needed. Matrix data itself never waits for this process.
