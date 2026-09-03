@@ -15,6 +15,13 @@ Your agent's model *decided* to call a tool. The server returned `HTTP 200`, `fi
 
 The tool call is sitting, fully formed, inside the `reasoning` / `reasoning_content` / `thinking` field. The parser never looked there. This package finds it and puts it back.
 
+## Why unswallow
+
+- **Zero runtime dependencies** — stdlib only, in both TypeScript and Python. Nothing to audit, nothing to break.
+- **Non-destructive** — recovery returns a healed deep copy; the original response object is never mutated, and clean responses pass through byte-identical.
+- **No false recoveries** — a model merely *discussing* a tool call is never "recovered". Recovery requires a structurally complete envelope, enforced by pinned adversarial fixtures.
+- **Fast enough to be invisible** — single checks land around a tenth of a millisecond on realistic payloads (see [Benchmarks](#benchmarks)); a healthy response returns before any scanning even starts.
+
 ```bash
 npx unswallow check
 ```
