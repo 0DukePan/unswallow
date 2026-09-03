@@ -58,13 +58,14 @@ function renderVerdict(r: SwallowCheckResult, engine: string, version: string): 
       ? `${fg.yellow('⚠')} ${fg.bold(fg.yellow(`REASONING-CHANNEL SWALLOW DETECTED — Pattern ${pattern}`))} ${fg.dim(`(${PATTERN_LABELS[pattern]})`)}`
       : `${fg.red('⚠')} ${fg.bold(fg.red(`SWALLOW-LIKE SIGNAL — Pattern ${pattern}`))} ${fg.dim(`(${PATTERN_LABELS[pattern]})`)}`;
   console.log(banner);
-  for (const reason of r.warnings.filter((w) => w.startsWith('tool-call envelope'))) {
+  for (const reason of r.warnings.filter((w) => w.includes('tool-call envelope'))) {
     console.log(`  ${fg.dim(reason)}`);
   }
   console.log();
   if (r.recovered && r.recoveredResponse) {
+    const calls = r.toolCalls ?? [];
     const before = 'tool_calls: []';
-    const after = `tool_calls: [${r.toolCall?.name ?? '?'}(…)]`;
+    const after = `tool_calls: [${calls.map((c) => `${c.name}(…)`).join(', ') || '?'}]`;
     const w = Math.max(before.length, after.length) + 2;
     console.log(fg.dim(pad('BEFORE', w)) + fg.green('AFTER'));
     console.log(fg.dim(pad(before, w)) + fg.green(after));
@@ -72,9 +73,11 @@ function renderVerdict(r: SwallowCheckResult, engine: string, version: string): 
     const fa = 'finish_reason: tool_calls';
     console.log(fg.dim(pad(fb, w)) + fg.green(fa));
     console.log();
-    console.log(
-      `  recovered: ${fg.cyan(r.toolCall?.name ?? '')}(${JSON.stringify(r.toolCall?.arguments ?? {})})`
-    );
+    for (const call of calls) {
+      console.log(
+        `  recovered: ${fg.cyan(call.name)}(${JSON.stringify(call.arguments)})`
+      );
+    }
   } else if (r.pattern === 'C') {
     console.log(`  ${fg.yellow('detection-only — no recovery performed (pattern C, see docs)')}`);
   }

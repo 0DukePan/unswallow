@@ -29,7 +29,8 @@ def check_message(message: Dict[str, Any], **opts) -> SwallowCheckResult:
     tool_call = None
     if cls.envelope:
         tool_call = ToolCall(name=cls.envelope.name, arguments=cls.envelope.arguments)
-    recovered = cls.pattern != "C" and cls.envelope is not None
+    tool_calls = [ToolCall(name=e.name, arguments=e.arguments) for e in cls.envelopes]
+    recovered = cls.pattern != "C" and len(tool_calls) > 0
 
     confidence, warnings = score_confidence(
         confidence_input(cls, matrix_match, engine, version, opts)
@@ -39,6 +40,7 @@ def check_message(message: Dict[str, Any], **opts) -> SwallowCheckResult:
         detected=True,
         pattern=cls.pattern,
         tool_call=tool_call,
+        tool_calls=tool_calls,
         recovered=recovered,
         source=cls.source,
         engine_hint=engine,
@@ -66,7 +68,7 @@ def confidence_input(cls, matrix_match, engine: str, version, opts: Dict[str, An
 
 
 def check_and_rescue(response: Dict[str, Any], **opts) -> SwallowCheckResult:
-    from .recover import apply_recovery_to_response
+    from .recover import apply_recovery_many
 
     choices = response.get("choices") if isinstance(response, dict) else None
     if (
@@ -81,6 +83,7 @@ def check_and_rescue(response: Dict[str, Any], **opts) -> SwallowCheckResult:
             detected=False,
             pattern=None,
             tool_call=None,
+            tool_calls=None,
             recovered=False,
             source="content",
             engine_hint=_ne(opts.get("engine_hint")),
@@ -91,8 +94,8 @@ def check_and_rescue(response: Dict[str, Any], **opts) -> SwallowCheckResult:
         )
 
     result = check_message(choices[0]["message"], **opts)
-    if result.recovered and result.tool_call is not None:
-        result.recovered_response = apply_recovery_to_response(
-            response, result.tool_call.name, result.tool_call.arguments
+    if result.recovered and result.tool_calls:
+        result.recovered_response = apply_recovery_many(
+            response, [{"name": t.name, "arguments": t.arguments} for t in result.tool_calls]
         )
     return result

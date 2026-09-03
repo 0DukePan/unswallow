@@ -168,3 +168,31 @@ test('streaming: accumulated response preserves id/model and assembled channels'
   assert.equal(response.choices[0].message.content, 'answer');
   assert.equal(response.choices[0].finish_reason, 'stop');
 });
+
+test('streaming: parallel tool calls split across deltas are all recovered', async () => {
+  const chunks = [
+    chunk({ reasoning: '< thinking>\nTwo parallel searches.\n<tool_call>{"name": "se' }),
+    chunk({ reasoning: 'arch", "arguments": {"query": "one"}}</tool_call>\n<tool_ca' }),
+    chunk({ reasoning: 'll>{"name": "search", "arguments": {"query": "two"}}</tool_call>\n< res' }),
+    chunk({ reasoning: 'ponse>\n' }),
+    chunk({}, 'stop'),
+  ];
+  const result = await checkAndRescueStream(iter(chunks), {
+    engineHint: 'vllm',
+    engineVersion: '0.19.0',
+  });
+  assert.equal(result.detected, true);
+  assert.equal(result.pattern, 'A');
+  assert.equal(result.recovered, true);
+  assert.deepEqual(
+    result.toolCalls,
+    [
+      { name: 'search', arguments: { query: 'one' } },
+      { name: 'search', arguments: { query: 'two' } },
+    ]
+  );
+  const calls = result.recoveredResponse!.choices[0].message.tool_calls!;
+  assert.equal(calls.length, 2);
+  assert.equal(JSON.parse(calls[0].function.arguments).query, 'one');
+  assert.equal(JSON.parse(calls[1].function.arguments).query, 'two');
+});

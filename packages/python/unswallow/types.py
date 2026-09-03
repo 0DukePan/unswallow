@@ -21,6 +21,8 @@ class ToolEnvelope:
     raw: str
     format: str
     arguments_from_string: bool = False
+    start: int = -1
+    end: int = -1
 
 
 @dataclass
@@ -55,6 +57,7 @@ class SwallowCheckResult:
     detected: bool
     pattern: Optional[str]
     tool_call: Optional[ToolCall]
+    tool_calls: Optional[List[ToolCall]]
     recovered: bool
     source: str
     engine_hint: str
@@ -69,6 +72,7 @@ def not_detected(engine_hint: str) -> SwallowCheckResult:
         detected=False,
         pattern=None,
         tool_call=None,
+        tool_calls=None,
         recovered=False,
         source="content",
         engine_hint=engine_hint,

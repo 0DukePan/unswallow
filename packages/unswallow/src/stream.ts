@@ -1,5 +1,5 @@
 import { checkMessage } from './index';
-import { applyRecoveryToResponse } from './recover';
+import { applyRecoveryMany } from './recover';
 import type {
   CheckOptions,
   RawProviderResponse,
@@ -199,11 +199,10 @@ export async function checkAndRescueStream(
   }
   const response = acc.end();
   const result = checkMessage(response.choices[0].message, opts);
-  if (result.recovered && result.toolCall) {
-    result.recoveredResponse = applyRecoveryToResponse(
+  if (result.recovered && result.toolCalls && result.toolCalls.length > 0) {
+    result.recoveredResponse = applyRecoveryMany(
       response,
-      result.toolCall.name,
-      result.toolCall.arguments
+      result.toolCalls
     );
   }
   return result;

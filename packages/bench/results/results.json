@@ -1,15 +1,15 @@
 {
   "runner": "unswallow bench runner v1",
-  "fixtures": 15,
-  "passed": 15,
+  "fixtures": 17,
+  "passed": 17,
   "failed": 0,
   "manifest": "fixtures.sha256",
   "manifestVerified": true,
   "matrixConsistency": {
-    "checked": 9,
+    "checked": 11,
     "failed": 0
   },
-  "generatedAt": "2026-08-26T14:06:47.290Z",
+  "generatedAt": "2026-09-03T12:36:04.453Z",
   "results": [
     {
       "id": "deepseek-reasoning-content-pattern-a",
@@ -36,7 +36,8 @@
           "arguments": {
             "city": "Hangzhou"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -60,7 +61,8 @@
         "pattern": null,
         "recovered": false,
         "confidence": 0,
-        "toolCall": null
+        "toolCall": null,
+        "toolCallCount": 0
       },
       "failures": []
     },
@@ -84,7 +86,8 @@
         "pattern": null,
         "recovered": false,
         "confidence": 0,
-        "toolCall": null
+        "toolCall": null,
+        "toolCallCount": 0
       },
       "failures": []
     },
@@ -113,7 +116,8 @@
           "arguments": {
             "city": "Berlin"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -137,7 +141,8 @@
         "pattern": "C",
         "recovered": false,
         "confidence": 0.5,
-        "toolCall": null
+        "toolCall": null,
+        "toolCallCount": 0
       },
       "failures": []
     },
@@ -161,7 +166,8 @@
         "pattern": "C",
         "recovered": false,
         "confidence": 0.5,
-        "toolCall": null
+        "toolCall": null,
+        "toolCallCount": 0
       },
       "failures": []
     },
@@ -190,7 +196,8 @@
           "arguments": {
             "city": "Shanghai"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -219,7 +226,8 @@
           "arguments": {
             "city": "Shanghai"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -248,7 +256,8 @@
           "arguments": {
             "city": "Beijing"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -277,7 +286,8 @@
           "arguments": {
             "city": "Tokyo"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -306,7 +316,8 @@
           "arguments": {
             "country": "France"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -335,7 +346,8 @@
           "arguments": {
             "city": "Tokyo"
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -359,7 +371,70 @@
         "pattern": null,
         "recovered": false,
         "confidence": 0,
-        "toolCall": null
+        "toolCall": null,
+        "toolCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a-duplicate",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": false,
+      "stream": false,
+      "sha256": "2a9b0db262149298129f2dbdf143f2f0b6895f4a515941669af83b3ff77851f9",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9,
+        "toolCallCount": 1
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Tokyo"
+          }
+        },
+        "toolCallCount": 1
+      },
+      "failures": []
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a-parallel",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "https://github.com/vllm-project/vllm/issues/39056",
+      "sourced": false,
+      "stream": false,
+      "sha256": "5cd5e11b57e9f04dc374b51006fd96f8597159bbfb9c2394574f413e0c3c0bc5",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9,
+        "toolCallCount": 2
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "toolCall": {
+          "name": "search",
+          "arguments": {
+            "query": "first"
+          }
+        },
+        "toolCallCount": 2
       },
       "failures": []
     },
@@ -388,7 +463,8 @@
           "arguments": {
             "answer": 204
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     },
@@ -417,7 +493,8 @@
           "arguments": {
             "answer": 204
           }
-        }
+        },
+        "toolCallCount": 1
       },
       "failures": []
     }
@@ -457,6 +534,16 @@
       "id": "vllm-qwen3-0.24-clean",
       "ok": true,
       "note": "matrix vllm >=0.24.0 → resolved; fixture expects no detection"
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a-duplicate",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a-parallel",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
     },
     {
       "id": "vllm-qwen3.5-0.19-pattern-a",

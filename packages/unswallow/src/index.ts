@@ -1,4 +1,4 @@
-import { applyRecoveryToResponse } from './recover';
+import { applyRecoveryMany } from './recover';
 import { checkMessage } from './pipeline';
 import { normalizeEngine } from './matrix';
 import type {
@@ -16,10 +16,14 @@ export {
 export { matchesRange, parseVersion, parseRange } from './semver';
 export {
   extractEnvelope,
+  extractAllEnvelopes,
   validateEnvelopeShape,
   buildToolCallsEntry,
   applyRecoveryToResponse,
+  applyRecoveryMany,
+  MAX_ENVELOPES,
 } from './recover';
+export type { LocatedEnvelope, ExtractionResult } from './recover';
 export { extractRegions, splitThinkBlocks, REASONING_FIELDS } from './scan';
 export { checkMessage } from './pipeline';
 export { createStreamAccumulator, checkAndRescueStream } from './stream';
@@ -56,6 +60,7 @@ export function checkAndRescue(
       detected: false,
       pattern: null,
       toolCall: null,
+      toolCalls: null,
       recovered: false,
       source: 'content',
       engineHint: normalizeEngine(opts.engineHint),
@@ -67,11 +72,10 @@ export function checkAndRescue(
   }
 
   const result = checkMessage(response.choices[0].message, opts);
-  if (result.recovered && result.toolCall) {
-    result.recoveredResponse = applyRecoveryToResponse(
+  if (result.recovered && result.toolCalls && result.toolCalls.length > 0) {
+    result.recoveredResponse = applyRecoveryMany(
       response,
-      result.toolCall.name,
-      result.toolCall.arguments
+      result.toolCalls
     );
   }
   return result;

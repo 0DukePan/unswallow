@@ -103,15 +103,16 @@ def _render(result: SwallowCheckResult, engine: str, version: str) -> None:
     pattern = result.pattern or "?"
     print("\u26a0 REASONING-CHANNEL SWALLOW DETECTED — Pattern {} ({})".format(pattern, {"A": "trapped inside", "B": "trailing after", "C": "field leak"}.get(pattern, "")))
     for w in result.warnings:
-        if w.startswith("tool-call envelope"):
+        if "tool-call envelope" in w:
             print("  " + w)
-    if result.recovered and result.tool_call is not None:
+    if result.recovered and result.tool_calls:
         print()
         print("  BEFORE                  AFTER")
-        print("  tool_calls: []          tool_calls: [{}(\u2026)]".format(result.tool_call.name))
+        print("  tool_calls: []          tool_calls: [{}]".format(", ".join("{}(\u2026)".format(c.name) for c in result.tool_calls)))
         print("  finish_reason: stop     finish_reason: tool_calls")
         print()
-        print("  recovered: {}({})".format(result.tool_call.name, json.dumps(result.tool_call.arguments)))
+        for c in result.tool_calls:
+            print("  recovered: {}({})".format(c.name, json.dumps(c.arguments)))
     elif pattern == "C":
         print("  detection-only — no recovery performed (pattern C, see docs)")
     print()
@@ -129,7 +130,7 @@ def _render(result: SwallowCheckResult, engine: str, version: str) -> None:
         if not version:
             missing.append("--version")
         print("matrix match  : none{}".format(" (pass {})".format(" ".join(missing)) if missing else ""))
-    informational = [w for w in result.warnings if not w.startswith("tool-call envelope")]
+    informational = [w for w in result.warnings if "tool-call envelope" not in w]
     print("warnings      : {}".format("(none)" if not informational else ""))
     for w in informational:
         print("                " + w)
@@ -196,6 +197,7 @@ def _to_dict(result: SwallowCheckResult) -> dict:
         "detected": result.detected,
         "pattern": result.pattern,
         "toolCall": {"name": result.tool_call.name, "arguments": result.tool_call.arguments} if result.tool_call else None,
+        "toolCalls": [{"name": c.name, "arguments": c.arguments} for c in result.tool_calls] if result.tool_calls else None,
         "recovered": result.recovered,
         "source": result.source,
         "engineHint": result.engine_hint,

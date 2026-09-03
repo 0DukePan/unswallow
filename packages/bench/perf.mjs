@@ -515,7 +515,7 @@ async function main() {
   fs.writeFileSync(RESULTS_MD, md);
   fs.writeFileSync(
     RESULTS_JSON,
-    JSON.stringify({ machine, checkAndRescue: checkRows, streaming: { typical: streamRes, big: bigStreamRes, nonStreamReference: nonStreamRes }, history: historyRes, matrix: matrixRes, reference: refRes }, null, 2) + '\n'
+    JSON.stringify({ machine, checkAndRescue: checkRows, streaming: { typical: streamRes, big: bigStreamRes, nonStreamReference: nonStreamRes }, history: historyRes, matrix: matrixRes, reference: refRes, proxy: proxyRows }, null, 2) + '\n'
   );
 
   console.log(md);

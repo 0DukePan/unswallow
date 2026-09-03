@@ -229,6 +229,93 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(normalize_engine("anything-else"), "unknown")
         self.assertEqual(normalize_engine(None), "unknown")
 
+    def test_parallel_tool_calls_all_recovered_in_order(self):
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    "< thinking>\nCalling two searches at once.\n"
+                    '<tool_call>\n{"name": "search", "arguments": {"query": "first"}}\n</tool_call>\n'
+                    '<tool_call>\n{"name": "search", "arguments": {"query": "second"}}\n</tool_call>\n'
+                    "< response>\n"
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertEqual(result.pattern, "A")
+        self.assertTrue(result.recovered)
+        self.assertEqual(result.confidence, 0.95)
+        self.assertEqual(result.tool_call.name, "search")
+        self.assertEqual(result.tool_call.arguments, {"query": "first"})
+        self.assertEqual(
+            [(t.name, t.arguments) for t in result.tool_calls],
+            [("search", {"query": "first"}), ("search", {"query": "second"})],
+        )
+        calls = result.recovered_response["choices"][0]["message"]["tool_calls"]
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0]["function"]["name"], "search")
+        import json
+
+        self.assertEqual(json.loads(calls[0]["function"]["arguments"])["query"], "first")
+        self.assertEqual(json.loads(calls[1]["function"]["arguments"])["query"], "second")
+        self.assertEqual(result.recovered_response["choices"][0]["finish_reason"], "tool_calls")
+
+    def test_mixed_formats_recover_in_document_order(self):
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    "< thinking>\n"
+                    "<tool_call>\n<function=Finish>\n<parameter=answer>\n204\n</parameter>\n</function>\n</tool_call>\n"
+                    '<tool_call>\n{"name": "get_weather", "arguments": {"city": "Tokyo"}}\n</tool_call>\n'
+                    "< response>\n"
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertEqual([t.name for t in result.tool_calls], ["Finish", "get_weather"])
+        self.assertEqual(len(result.recovered_response["choices"][0]["message"]["tool_calls"]), 2)
+
+    def test_duplicate_envelopes_collapse_with_warning(self):
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    "< thinking>\n"
+                    '<tool_call>\n{"name": "get_weather", "arguments": {"city": "Tokyo"}}\n</tool_call>\n'
+                    '<tool_call>\n{"name": "get_weather", "arguments": {"city": "Tokyo"}}\n</tool_call>\n'
+                    "< response>\n"
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertTrue(result.recovered)
+        self.assertEqual(len(result.tool_calls), 1)
+        self.assertEqual(len(result.recovered_response["choices"][0]["message"]["tool_calls"]), 1)
+        self.assertTrue(any("duplicate" in w for w in result.warnings))
+
+    def test_envelope_scan_caps_with_warning(self):
+        reasoning = "< thinking>\n"
+        for i in range(40):
+            reasoning += '<tool_call>\n{{"name": "f{}", "arguments": {{"i": {}}}}}\n</tool_call>\n'.format(i, i)
+        reasoning += "< response>\n"
+        r = response({"role": "assistant", "content": "", "reasoning": reasoning, "tool_calls": []})
+        result = check_and_rescue(r)
+        self.assertTrue(result.detected)
+        self.assertEqual(result.pattern, "A")
+        self.assertEqual(len(result.tool_calls), 32)
+        self.assertEqual(len(result.recovered_response["choices"][0]["message"]["tool_calls"]), 32)
+        self.assertTrue(any("capped at 32" in w for w in result.warnings))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,7 +4,7 @@ import re
 from typing import AsyncIterable, Dict, List, Optional
 
 from .pipeline import check_message
-from .recover import apply_recovery_to_response
+from .recover import apply_recovery_many
 from .types import SwallowCheckResult
 
 OPEN_TAG_AT = re.compile(r"^<\s*([a-zA-Z0-9_.:\-]*?\s*think)\s*>", re.I)
@@ -162,8 +162,8 @@ async def check_and_rescue_stream(
         acc.push(chunk)
     response = acc.end()
     result = check_message(response["choices"][0]["message"], **opts)
-    if result.recovered and result.tool_call is not None:
-        result.recovered_response = apply_recovery_to_response(
-            response, result.tool_call.name, result.tool_call.arguments
+    if result.recovered and result.tool_calls:
+        result.recovered_response = apply_recovery_many(
+            response, [{"name": t.name, "arguments": t.arguments} for t in result.tool_calls]
         )
     return result

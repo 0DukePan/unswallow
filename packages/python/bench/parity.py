@@ -1,4 +1,4 @@
-"""Cross-language parity bench: run the 15-fixture corpus through the Python core
+"""Cross-language parity bench: run the 17-fixture corpus through the Python core
 and compare against the fixture expectations AND the exact confidence values
 recorded by the TypeScript core in packages/bench/results/results.json.
 
@@ -69,6 +69,10 @@ def main():
             issues.append("recovered: py={} expected={}".format(result.recovered, expect.get("recovered")))
         if result.confidence < expect.get("minConfidence", 0):
             issues.append("confidence: py={:.2f} < min={}".format(result.confidence, expect.get("minConfidence")))
+        if "toolCallCount" in expect:
+            py_count = len(result.tool_calls) if result.tool_calls else 0
+            if py_count != expect["toolCallCount"]:
+                issues.append("toolCallCount: py={} expected={}".format(py_count, expect["toolCallCount"]))
         conf_match = "?"
         if ts is not None and ts.get("confidence") is not None:
             ts_conf = ts["confidence"]

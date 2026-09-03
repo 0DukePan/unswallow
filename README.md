@@ -150,7 +150,8 @@ npx unswallow proxy --upstream http://localhost:8000/v1 --port 8787 --engine vll
 ```
 
 - **Non-streaming:** the response is healed in place; `x-unswallow` header reports `{detected, pattern, recovered, confidence}`.
-- **Streaming:** chunks are forwarded live as they arrive; the terminal `finish_reason: stop` chunk is held, and if a swallow is detected a recovery tail (`tool_calls` delta + `finish_reason: tool_calls`) is emitted in its place, followed by a diagnostics event.
+- **Streaming:** chunks are forwarded live as they arrive; the terminal `finish_reason: stop` chunk is held, and if a swallow is detected a recovery tail (`tool_calls` delta + `finish_reason: tool_calls`) is emitted in its place, followed by a diagnostics event. Parallel calls emit one delta chunk per recovered call.
+- **Abort propagation:** if your client drops the connection mid-stream, the proxy cancels the upstream request immediately instead of draining it.
 - Everything else (other routes, other methods) passes through untouched.
 
 ```ts
@@ -243,13 +244,15 @@ Every row ships with a `source` URL — community PRs against [`packages/matrix/
 
 Three layers, all independently rerunnable on your own hardware.
 
-### Correctness — 15/15 hash-pinned fixtures
+### Correctness — 17/17 hash-pinned fixtures
 
 Hash-pinned fixture corpus seeded from the real upstream reports — **every fixture is byte-checked against `packages/bench/fixtures.sha256` before it runs**, so results can't silently drift. Engine/version hints are recorded per fixture; sample size and sourcing (`sourced: true/false`) are disclosed in every published result.
 
 | id | engine | version | expected | actual | recovered | confidence | status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | vllm-qwen3.5-0.19-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | PASS |
+| vllm-qwen3.5-0.19-pattern-a-parallel | vllm | 0.19.0 | A | A | yes (2) | 0.95 | PASS |
+| vllm-qwen3.5-0.19-pattern-a-duplicate | vllm | 0.19.0 | A | A | yes (1) | 0.95 | PASS |
 | vllm-qwen3-0.19-pattern-a-json-envelope | vllm | 0.19.0 | A | A | yes | 0.95 | PASS |
 | vllm-qwen3-0.19-tool-choice-required-pattern-b | vllm | 0.19.0 | B | B | yes | 0.55 | PASS |
 | vllm-qwen3-0.23-pattern-a-partial | vllm | 0.23.4 | A | A | yes | 0.80 | PASS |
@@ -269,54 +272,54 @@ Regenerate with `npm run bench`; verified read-only in CI (`npm run bench:check`
 
 ### Performance — measured
 
-`npm run bench:perf` — seeded, deterministic corpus; warm latencies, p50/p95/p99, throughput, and retained heap per call (measured with `--expose-gc`). Full report with machine info in [`packages/bench/perf/results.md`](packages/bench/perf/results.md). Latest run:
+`npm run bench:perf` — seeded, deterministic corpus; warm latencies, p50/p95/p99, throughput, and retained heap per call (measured with `--expose-gc`). Full report with machine info in [`packages/bench/perf/results.md`](packages/bench/perf/results.md). Latest run (measured 2026-09-03):
 
 *Node v22.16.0 · AMD Ryzen 5 2600X (12 cores) · 15.9 GB RAM · win32 x64*
 
 | scenario | payload | p50 / p95 / p99 | mean | throughput |
 | --- | --- | --- | --- | --- |
-| Pattern A — small reasoning | 2.8 KB | 0.11 / 0.20 / 0.40 ms | 0.130 ms | ~7,700 ops/s |
-| Pattern A — function-XML envelope | 1.8 KB | 0.09 / 0.15 / 0.22 ms | 0.104 ms | ~9,600 ops/s |
-| Pattern A — large reasoning | 63.5 KB | 0.14 / 0.17 / 0.24 ms | 0.150 ms | ~6,700 ops/s |
-| Pattern A — 1 MB reasoning | 987 KB | 1.56 / 3.00 / 3.35 ms | 1.712 ms | ~580 ops/s |
-| Pattern B — trailing text | 1.0 KB | 0.09 / 0.12 / 0.16 ms | 0.094 ms | ~10,600 ops/s |
-| Pattern C — field leak | 0.5 KB | 0.06 / 0.09 / 0.11 ms | 0.062 ms | ~16,200 ops/s |
-| Healthy (tool_calls populated) | 1.1 KB | 0.05 / 0.05 / 0.07 ms | 0.048 ms | ~21,000 ops/s |
-| False-positive guard (discussion-only) | 1.5 KB | 0.06 / 0.07 / 0.10 ms | 0.058 ms | ~17,300 ops/s |
-| Streaming — typical reasoning stream (843 chunks, 19.7 KB) | — | 0.87 / 1.29 / 2.00 ms | 0.948 ms | ~1,050 streams/s |
-| Streaming — 500 KB content stream (5,323 chunks) | — | 10.58 / 14.05 / 17.29 ms | 11.109 ms | ~90 streams/s |
-| sanitizeHistory — 40-message history | — | 0.06 / 0.08 / 0.13 ms | 0.061 ms | ~16,500 ops/s |
-| matchMatrixEntry — 100k lookups | — | <0.01 ms | 0.001 ms | ~787,000 ops/s |
+| Pattern A — small reasoning | 2.8 KB | 0.15 / 0.24 / 0.46 ms | 0.162 ms | ~6,200 ops/s |
+| Pattern A — function-XML envelope | 1.8 KB | 0.13 / 0.21 / 0.41 ms | 0.141 ms | ~7,100 ops/s |
+| Pattern A — large reasoning | 63.5 KB | 0.23 / 0.37 / 0.74 ms | 0.248 ms | ~4,000 ops/s |
+| Pattern A — 1 MB reasoning | 987 KB | 2.29 / 4.82 / 9.03 ms | 2.721 ms | ~370 ops/s |
+| Pattern B — trailing text | 1.0 KB | 0.14 / 0.24 / 0.42 ms | 0.152 ms | ~6,600 ops/s |
+| Pattern C — field leak | 0.5 KB | 0.09 / 0.15 / 0.31 ms | 0.096 ms | ~10,400 ops/s |
+| Healthy (tool_calls populated) | 1.1 KB | 0.08 / 0.12 / 0.21 ms | 0.080 ms | ~12,500 ops/s |
+| False-positive guard (discussion-only) | 1.5 KB | 0.08 / 0.12 / 0.20 ms | 0.083 ms | ~12,100 ops/s |
+| Streaming — typical reasoning stream (843 chunks, 19.7 KB) | — | 1.98 / 3.07 / 3.58 ms | 2.066 ms | ~480 streams/s |
+| Streaming — 500 KB content stream (5,323 chunks) | — | 15.11 / 17.93 / 18.58 ms | 15.180 ms | ~66 streams/s |
+| sanitizeHistory — 40-message history | — | 0.09 / 0.13 / 0.24 ms | 0.091 ms | ~11,000 ops/s |
+| matchMatrixEntry — 100k lookups | — | 0.00 / 0.01 / 0.01 ms | 0.002 ms | ~519,000 ops/s |
 
-Notes, honestly stated: every check is linear in payload size (a 1 MB reasoning block costs ~1.7 ms); recovery only runs when an envelope is found, and only the recovered path makes a deep copy; a healthy response (already-parsed `tool_calls`) is the cheapest path by design — it returns before any scanning. JSON.parse of the 64 KB payload alone measures ~0.30 ms, so the scan itself is the minority of the cost. Benchmarks are wall-clock on a shared dev machine — treat cross-machine comparisons with care, and run `npm run bench:perf` on your own hardware before quoting numbers anywhere.
+Notes, honestly stated: every check is linear in payload size (a 1 MB reasoning block costs ~1.7 ms); recovery only runs when an envelope is found, and only the recovered path makes a deep copy; a healthy response (already-parsed `tool_calls`) is the cheapest path by design — it returns before any scanning. JSON.parse of the 64 KB payload alone measures ~0.30 ms, so the scan itself is the minority of the cost. Two methodology notes: the corpus text is seeded word-salad, not production reasoning traces, so brace/quote-heavy real CoT may scan slightly differently; and `retained/op` is a post-GC floor (negative GC noise is clamped to `0.00`), i.e. "nothing retained after a full collection", not "nothing allocated". Benchmarks are wall-clock on a shared dev machine — the JSON.parse reference row in the full report is the load anchor (it reads ~0.24 ms on a quiet box, 0.333 ms in the run above): compare it across runs to judge machine load before comparing anything else. Treat cross-machine comparisons with care, and run `npm run bench:perf` on your own hardware before quoting numbers anywhere.
 
-### Python parity — 15/15, exact confidence equality
+### Python parity — 17/17, exact confidence equality
 
-`npm run bench:python` — the same pinned 15-fixture corpus runs through the Python core and is compared against the TypeScript results **including exact confidence values** (Python 3.14.6):
+`npm run bench:python` — the same pinned 17-fixture corpus runs through the Python core and is compared against the TypeScript results **including exact confidence values** (Python 3.14.6):
 
 ```
-15 / 15 fixtures: expectations + exact confidence parity with the TypeScript core
+17 / 17 fixtures: expectations + exact confidence parity with the TypeScript core
 ```
 
-Same seeds, same payloads, same percentile methodology — `packages/python/bench/results_python.md` mirrors the TS report. Honest headline numbers (Python 3.14.6, same machine):
+Same seeds, same payloads, same percentile methodology — `packages/python/bench/results_python.md` mirrors the TS report. Honest headline numbers (measured 2026-09-03, Python 3.14.6, same machine):
 
-| workload | Python | TypeScript (same machine) |
+| workload | Python | TypeScript (same run date) |
 | --- | --- | --- |
-| check_and_rescue, small reasoning | ~0.21 ms · ~4,800 ops/s | ~0.13 ms · ~7,700 ops/s |
-| check_and_rescue, 1 MB reasoning | ~0.47 ms · ~2,100 ops/s | ~1.7 ms · ~580 ops/s |
-| check_and_rescue_stream (843 chunks) | ~13.8 ms | ~0.95 ms |
-| sanitizeHistory (40-message history) | ~0.37 ms | ~0.06 ms |
-| match_matrix_entry, 100k lookups | ~0.009 ms · ~108k ops/s | ~0.001 ms · ~787k ops/s |
+| check_and_rescue, small reasoning | ~0.51 ms · ~2,000 ops/s | ~0.16 ms · ~6,200 ops/s |
+| check_and_rescue, 1 MB reasoning | ~1.73 ms · ~580 ops/s | ~2.7 ms · ~370 ops/s |
+| check_and_rescue_stream (843 chunks) | ~26.0 ms | ~2.07 ms |
+| sanitizeHistory (40-message history) | ~0.62 ms | ~0.09 ms |
+| match_matrix_entry, 100k lookups | ~0.016 ms · ~64k ops/s | ~0.002 ms · ~519k ops/s |
 
-### Proxy overhead — ~1 ms per request
+### Proxy overhead (measured 2026-09-03)
 
-Measured loopback with an in-process upstream (`npm run bench:perf`, proxy section): the proxy adds **+1.05–1.10 ms** per chat completion — dominated by the second HTTP roundtrip and JSON re-encoding, i.e. the cost of any proxy layer, not of the detection itself.
+Measured loopback with an in-process upstream (`npm run bench:perf`, proxy section). The added cost is dominated by the second HTTP roundtrip and JSON re-encoding, i.e. the cost of any proxy layer, not of the detection itself — note the direct baselines move with machine load, so read the `added` column, not the absolutes:
 
 | case | direct | via proxy | added |
 | --- | --- | --- | --- |
-| non-stream, swallowed (recovered) | 1.02 ms | 2.07 ms | +1.05 ms |
-| non-stream, healthy (passthrough) | 0.75 ms | 1.81 ms | +1.06 ms |
-| streaming, swallowed (recovery tail) | 0.84 ms | 1.93 ms | +1.10 ms |
+| non-stream, swallowed (recovered) | 2.67 ms | 5.88 ms | +3.22 ms |
+| non-stream, healthy (passthrough) | 2.01 ms | 4.72 ms | +2.71 ms |
+| streaming, swallowed (recovery tail) | 3.17 ms | 5.63 ms | +2.46 ms |
 
 ## API
 
@@ -349,7 +352,8 @@ function createProxyServer(               // OpenAI-compatible passthrough proxy
 interface SwallowCheckResult {
   detected: boolean;
   pattern: 'A' | 'B' | 'C' | null;
-  toolCall: { name: string; arguments: Record<string, unknown> } | null;
+  toolCall: { name: string; arguments: Record<string, unknown> } | null;  // first recovered call
+  toolCalls: Array<{ name: string; arguments: Record<string, unknown> }> | null;  // all recovered calls, in order
   recovered: boolean;
   source: 'reasoning' | 'reasoning_content' | 'thinking' | 'thought' | 'content';
   engineHint: 'vllm' | 'sglang' | 'llama.cpp' | 'unknown';
@@ -359,6 +363,8 @@ interface SwallowCheckResult {
   recoveredResponse: RawProviderResponse | null;  // healed deep copy, or null
 }
 ```
+
+**Parallel tool calls:** an agent turn that emits several tool calls at once (e.g. two search queries) gets all of them back — every structurally complete envelope is recovered in document order into `tool_calls[]`, and `toolCall` is just the first for convenience. Exact duplicates (same name + same arguments) collapse to a single recovery with a warning, since firing the same tool twice is worse than the swallow. The scan caps at 32 envelopes per response, also with a warning.
 
 ## Roadmap
 

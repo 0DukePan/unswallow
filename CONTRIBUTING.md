@@ -18,6 +18,7 @@ Rules that keep the corpus honest:
 - **Every fixture carries its source.** `sourced: true` means it's reconstructed from a real report; `false` means self-authored/adversarial. Sample size and sourcing are disclosed in every published result.
 - **Fixtures are cross-checked against the engine matrix.** `bench/run.mjs --check` fails if a fixture's expectations contradict its matrix row's behavior — flipping a matrix row to `resolved` forces the matching fixtures to flip too.
 - **Adversarial fixtures are welcome.** Especially attempts to make the false-positive guard misfire (model *discussing* a tool call without invoking one). Those are the most important fixtures in the corpus.
+- **Multi-envelope invariant.** A swallowed turn may carry several parallel calls: every structurally complete envelope must be recovered in document order (`toolCalls`), exact duplicates collapse to one with a warning, and the scan caps at 32. Fixtures with several calls set `toolCallCount` in `expect` — the runner enforces it in both languages.
 
 ## How to update the engine matrix
 
@@ -43,7 +44,7 @@ npm install
 npm run build     # tsc -> packages/unswallow/dist/
 npm test          # 52 tests (semver, core, false-positive guard, streaming, history hygiene, proxy)
 npm run test:python   # 42 tests, stdlib-only (mirrors the TS suite)
-npm run bench     # verify hash pins + run the 15-fixture corpus + matrix consistency, write packages/bench/results/
+npm run bench     # verify hash pins + run the 17-fixture corpus + matrix consistency, write packages/bench/results/
 npm run bench:perf     # TS latencies/throughput/memory + proxy overhead, write packages/bench/perf/
 npm run bench:python   # Python parity (15 fixtures vs TS, exact confidence) + Python perf, write packages/python/bench/
 npm run matrix:update  # poll tracked upstream issue threads (advisory + snapshot) + sync matrix into the Python package
@@ -65,7 +66,7 @@ Requirements for merged code:
 
 - Zero runtime dependencies (`unswallow` depends only on `unswallow-matrix`; the Python package is pure stdlib).
 - No test regressions; a new fixture for any new detection/recovery behavior; streaming behavior needs streaming fixtures; proxy behavior needs proxy tests with a fake upstream.
-- TS and Python must stay behaviorally identical — the Python test suite mirrors the TS suite, and the 15-fixture bench corpus runs against the TS core. If you change detection semantics, port the change to both.
+- TS and Python must stay behaviorally identical — the Python test suite mirrors the TS suite, and the 17-fixture bench corpus runs against the TS core. If you change detection semantics, port the change to both.
 - CLI output must stay dependency-free (plain ANSI, no chalk-style deps).
 - Comments in code are avoided by convention; the README is the documentation.
 

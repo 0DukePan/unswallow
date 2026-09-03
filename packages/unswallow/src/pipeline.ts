@@ -11,6 +11,7 @@ export const NOT_DETECTED = (engine: SwallowCheckResult['engineHint']): SwallowC
   detected: false,
   pattern: null,
   toolCall: null,
+  toolCalls: null,
   recovered: false,
   source: 'content',
   engineHint: engine,
@@ -45,7 +46,8 @@ export function checkMessage(
   const toolCall = cls.envelope
     ? { name: cls.envelope.name, arguments: cls.envelope.arguments }
     : null;
-  const recovered = cls.pattern !== 'C' && cls.envelope !== null;
+  const toolCalls = cls.envelopes.map((e) => ({ name: e.name, arguments: e.arguments }));
+  const recovered = cls.pattern !== 'C' && toolCalls.length > 0;
 
   const conf = scoreConfidence({
     pattern: cls.pattern,
@@ -66,6 +68,7 @@ export function checkMessage(
     detected: true,
     pattern,
     toolCall,
+    toolCalls,
     recovered,
     source: cls.source,
     engineHint: engine,

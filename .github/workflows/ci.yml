@@ -50,7 +50,7 @@ jobs:
           sys.exit(0 if a == b else 1)"
       - name: Run Python test suite (stdlib-only, no install needed)
         run: python -m unittest discover -s packages/python/tests -t packages/python
-      - name: Cross-language parity — 15-fixture corpus through the Python core
+      - name: Cross-language parity — 17-fixture corpus through the Python core
         run: python packages/python/bench/parity.py
       - name: Python CLI smoke
         run: |

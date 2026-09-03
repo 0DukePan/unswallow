@@ -227,3 +227,82 @@ test('multiple envelopes in different reasoning regions warn', () => {
   assert.equal(result.toolCall!.name, 'get_weather');
   assert.ok(result.warnings.some((w) => w.includes('additional envelope')));
 });
+
+test('Pattern A: parallel tool calls in reasoning are all recovered in order', () => {
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning:
+      '< thinking>\nCalling two searches at once.\n<tool_call>\n{"name": "search", "arguments": {"query": "first"}}\n</tool_call>\n<tool_call>\n{"name": "search", "arguments": {"query": "second"}}\n</tool_call>\n< response>\n',
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.pattern, 'A');
+  assert.equal(result.recovered, true);
+  assert.equal(result.confidence, 0.95);
+  assert.deepEqual(result.toolCall, { name: 'search', arguments: { query: 'first' } });
+  assert.deepEqual(
+    result.toolCalls,
+    [
+      { name: 'search', arguments: { query: 'first' } },
+      { name: 'search', arguments: { query: 'second' } },
+    ]
+  );
+  assert.ok(result.recoveredResponse);
+  const calls = result.recoveredResponse!.choices[0].message.tool_calls!;
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].function.name, 'search');
+  assert.equal(JSON.parse(calls[0].function.arguments).query, 'first');
+  assert.equal(JSON.parse(calls[1].function.arguments).query, 'second');
+  assert.equal(result.recoveredResponse!.choices[0].finish_reason, 'tool_calls');
+});
+
+test('Pattern A: mixed formats recover in document order', () => {
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning:
+      '< thinking>\n<tool_call>\n<function=Finish>\n<parameter=answer>\n204\n</parameter>\n</function>\n</tool_call>\n<tool_call>\n{"name": "get_weather", "arguments": {"city": "Tokyo"}}\n</tool_call>\n< response>\n',
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.pattern, 'A');
+  assert.deepEqual(
+    result.toolCalls!.map((t) => t.name),
+    ['Finish', 'get_weather']
+  );
+  assert.equal(result.recoveredResponse!.choices[0].message.tool_calls!.length, 2);
+});
+
+test('duplicate envelopes collapse to one recovery with a warning', () => {
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning:
+      '< thinking>\n<tool_call>\n{"name": "get_weather", "arguments": {"city": "Tokyo"}}\n</tool_call>\n<tool_call>\n{"name": "get_weather", "arguments": {"city": "Tokyo"}}\n</tool_call>\n< response>\n',
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.recovered, true);
+  assert.equal(result.toolCalls!.length, 1);
+  assert.equal(result.recoveredResponse!.choices[0].message.tool_calls!.length, 1);
+  assert.ok(result.warnings.some((w) => w.includes('duplicate')));
+});
+
+test('envelope scan caps at MAX_ENVELOPES with a warning', () => {
+  let reasoning = '< thinking>\n';
+  for (let i = 0; i < 40; i++) {
+    reasoning += `<tool_call>\n{"name": "f${i}", "arguments": {"i": ${i}}}\n</tool_call>\n`;
+  }
+  reasoning += '< response>\n';
+  const r = response({ role: 'assistant', content: '', reasoning, tool_calls: [] });
+  const result = checkAndRescue(r, {});
+  assert.equal(result.detected, true);
+  assert.equal(result.pattern, 'A');
+  assert.equal(result.toolCalls!.length, 32);
+  assert.equal(result.recoveredResponse!.choices[0].message.tool_calls!.length, 32);
+  assert.ok(result.warnings.some((w) => w.includes('capped at 32')));
+});

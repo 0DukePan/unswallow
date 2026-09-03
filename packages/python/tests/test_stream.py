@@ -168,6 +168,29 @@ class StreamTest(unittest.TestCase):
         self.assertEqual(response["choices"][0]["message"]["content"], "answer")
         self.assertEqual(response["choices"][0]["finish_reason"], "stop")
 
+    def test_parallel_calls_split_across_deltas(self):
+        chunks = [
+            chunk({"reasoning": "< thinking>\nTwo parallel searches.\n<tool_call>{\"name\": \"se"}),
+            chunk({"reasoning": 'arch", "arguments": {"query": "one"}}</tool_call>\n<tool_ca'}),
+            chunk({"reasoning": 'll>{"name": "search", "arguments": {"query": "two"}}</tool_call>\n< res'}),
+            chunk({"reasoning": "ponse>\n"}),
+            chunk({}, "stop"),
+        ]
+
+        async def run():
+            return await check_and_rescue_stream(it(chunks), engine_hint="vllm", engine_version="0.19.0")
+
+        result = asyncio.run(run())
+        self.assertTrue(result.detected)
+        self.assertEqual(result.pattern, "A")
+        self.assertTrue(result.recovered)
+        self.assertEqual(
+            [(t.name, t.arguments) for t in result.tool_calls],
+            [("search", {"query": "one"}), ("search", {"query": "two"})],
+        )
+        calls = result.recovered_response["choices"][0]["message"]["tool_calls"]
+        self.assertEqual(len(calls), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

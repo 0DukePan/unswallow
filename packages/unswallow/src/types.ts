@@ -75,6 +75,7 @@ export interface SwallowCheckResult {
   detected: boolean;
   pattern: 'A' | 'B' | 'C' | null;
   toolCall: { name: string; arguments: Record<string, unknown> } | null;
+  toolCalls: Array<{ name: string; arguments: Record<string, unknown> }> | null;
   recovered: boolean;
   source: ChannelSource;
   engineHint: EngineId | 'unknown';

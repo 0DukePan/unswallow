@@ -186,3 +186,132 @@ test('proxy passes non-chat routes through', async () => {
     await stop(upstream);
   }
 });
+
+function gatedUpstream() {
+  const state = { aborted: false, finished: false };
+  let releaseGate!: () => void;
+  const gate = new Promise<void>((r) => (releaseGate = r));
+  const server = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', async () => {
+      const payload = body ? JSON.parse(body) : {};
+      const isStream = payload.stream === true;
+      res.on('finish', () => {
+        state.finished = true;
+      });
+      res.on('close', () => {
+        if (!res.writableEnded) state.aborted = true;
+      });
+      if (isStream) {
+        res.writeHead(200, { 'content-type': 'text/event-stream' });
+        res.write(
+          `data: ${JSON.stringify({
+            id: 'up',
+            choices: [{ index: 0, finish_reason: null, delta: { reasoning: '< thinking>\npartial' } }],
+          })}\n\n`
+        );
+      }
+      await gate;
+      if (res.destroyed) return;
+      if (isStream) {
+        res.write(
+          `data: ${JSON.stringify({ id: 'up', choices: [{ index: 0, finish_reason: 'stop', delta: {} }] })}\n\n`
+        );
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } else {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(
+          JSON.stringify({
+            id: 'up',
+            choices: [{ index: 0, finish_reason: 'stop', message: { content: 'done', tool_calls: [] } }],
+          })
+        );
+      }
+    });
+  });
+  return { server, state, release: () => releaseGate() };
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+test('proxy aborts the upstream fetch when the client disconnects (non-streaming)', async () => {
+  const { server: upstream, state, release } = gatedUpstream();
+  await new Promise<void>((resolve) => upstream.listen(0, '127.0.0.1', () => resolve()));
+  const proxy = createProxyServer({
+    upstream: `http://127.0.0.1:${(upstream.address() as { port: number }).port}`,
+  });
+  const base = await start(proxy);
+  try {
+    const ctl = new AbortController();
+    const pending = fetch(`${base}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'm', messages: [{ role: 'user', content: 'hi' }] }),
+      signal: ctl.signal,
+    }).then(
+      () => {
+        throw new Error('request should have been aborted');
+      },
+      (e) => e
+    );
+    await sleep(200);
+    ctl.abort();
+    const err = (await pending) as Error;
+    assert.equal(err.name, 'AbortError');
+    await sleep(300);
+    release();
+    await sleep(200);
+    assert.equal(state.aborted, true);
+    assert.equal(state.finished, false);
+    const res = await fetch(`${base}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'm', messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    assert.equal(res.status, 200);
+    await res.text();
+  } finally {
+    await stop(proxy);
+    await stop(upstream);
+  }
+});
+
+test('proxy aborts a streaming upstream when the client disconnects mid-stream', async () => {
+  const { server: upstream, state, release } = gatedUpstream();
+  await new Promise<void>((resolve) => upstream.listen(0, '127.0.0.1', () => resolve()));
+  const proxy = createProxyServer({
+    upstream: `http://127.0.0.1:${(upstream.address() as { port: number }).port}`,
+  });
+  const base = await start(proxy);
+  try {
+    const ctl = new AbortController();
+    const res = await fetch(`${base}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'm', messages: [{ role: 'user', content: 'hi' }], stream: true }),
+      signal: ctl.signal,
+    });
+    const reader = res.body!.getReader();
+    const first = await reader.read();
+    assert.equal(first.done, false);
+    ctl.abort();
+    await reader.cancel().catch(() => undefined);
+    await sleep(300);
+    release();
+    await sleep(200);
+    assert.equal(state.aborted, true);
+    assert.equal(state.finished, false);
+    const health = await fetch(`${base}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'm', messages: [{ role: 'user', content: 'hi' }] }),
+    });
+    assert.equal(health.status, 200);
+    await health.text();
+  } finally {
+    await stop(proxy);
+    await stop(upstream);
+  }
+});

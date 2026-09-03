@@ -9,8 +9,11 @@ from .matrix import (
 )
 from .pipeline import check_and_rescue, check_message
 from .recover import (
+    MAX_ENVELOPES,
+    apply_recovery_many,
     apply_recovery_to_response,
     build_tool_calls_entry,
+    extract_all_envelopes,
     extract_envelope,
     validate_envelope_shape,
 )
@@ -40,8 +43,11 @@ __all__ = [
     "parse_range",
     "parse_version",
     "extract_envelope",
+    "extract_all_envelopes",
+    "MAX_ENVELOPES",
     "validate_envelope_shape",
     "build_tool_calls_entry",
+    "apply_recovery_many",
     "apply_recovery_to_response",
     "SwallowCheckResult",
     "SwallowMatrixEntry",

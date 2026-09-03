@@ -89,6 +89,9 @@ for (const file of fixtureFiles) {
       ['recovered', result.recovered, expect.recovered ?? false],
       ['confidence', result.confidence, expect.minConfidence ?? 0, '>='],
     ];
+    if (expect.toolCallCount !== undefined) {
+      checks.push(['toolCallCount', result.toolCalls?.length ?? 0, expect.toolCallCount]);
+    }
     const failures = checks
       .filter(([, actual, wanted, op]) =>
         op === '>=' ? actual < wanted : actual !== wanted
@@ -115,6 +118,7 @@ for (const file of fixtureFiles) {
       pattern: expect.pattern ?? null,
       recovered: expect.recovered ?? false,
       minConfidence: expect.minConfidence ?? 0,
+      ...(expect.toolCallCount !== undefined ? { toolCallCount: expect.toolCallCount } : {}),
     },
     actual: outcome.result
       ? {
@@ -123,6 +127,7 @@ for (const file of fixtureFiles) {
           recovered: outcome.result.recovered,
           confidence: outcome.result.confidence,
           toolCall: outcome.result.toolCall,
+          toolCallCount: outcome.result.toolCalls?.length ?? 0,
         }
       : null,
     failures: outcome.failures,
@@ -196,7 +201,7 @@ const md = [
       r.id,
       r.engine ?? '—',
       r.version ?? '—',
-      r.pattern ?? '—',
+      r.expect.pattern ?? 'none',
       r.actual ? (r.actual.pattern ?? 'none') : 'ERR',
       r.actual ? (r.actual.recovered ? 'yes' : 'no') : '—',
       r.actual ? r.actual.confidence.toFixed(2) : '—',

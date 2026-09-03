@@ -1,10 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import type { RawProviderResponse, ToolCallEntry, ToolEnvelope } from './types';
 
-const XML_TOOL_CALL = /<(tool_call|tool_calls)\b[^>]*>/i;
-const FUNCTION_OPEN = /<function=([^>]*)>/i;
+const TOOL_OPEN_AT = /<(tool_call|tool_calls)\b[^>]*>/iy;
+const FUNC_OPEN_AT = /<function=([^>]*)>/iy;
 const PARAMETER = /<parameter=([^>]*)>([\s\S]*?)<\/parameter\s*>/gi;
 const MAX_ENVELOPE_LENGTH = 20000;
+export const MAX_ENVELOPES = 32;
+
+export interface LocatedEnvelope extends ToolEnvelope {
+  start: number;
+  end: number;
+}
+
+export interface ExtractionResult {
+  envelopes: LocatedEnvelope[];
+  capped: boolean;
+}
 
 function findClose(text: string, tag: string, from: number): { start: number; end: number } | null {
   const close = new RegExp(`</${tag}\\s*>`, 'i');
@@ -56,17 +67,14 @@ export function validateEnvelopeShape(obj: unknown): {
   };
 }
 
-function extractQwenXml(text: string): ToolEnvelope | null {
-  const m = XML_TOOL_CALL.exec(text);
-  if (!m) return null;
-  const tag = m[1];
-  const innerStart = m.index + m[0].length;
+function tryQwenAt(text: string, tag: string, openStart: number, openLen: number): LocatedEnvelope | null {
+  const innerStart = openStart + openLen;
   const close = findClose(text, tag, innerStart);
   if (!close) return null;
   const inner = text.slice(innerStart, close.start).trim();
-  const raw = text.slice(m.index, close.end);
+  const raw = text.slice(openStart, close.end);
   if (inner.length === 0 || raw.length > MAX_ENVELOPE_LENGTH) return null;
-  const attrName = /name\s*=\s*"([^"]*)"/i.exec(m[0])?.[1]?.trim();
+  const attrName = /name\s*=\s*"([^"]*)"/i.exec(text.slice(openStart, innerStart))?.[1]?.trim();
   if (inner.startsWith('{') || inner.startsWith('[')) {
     let obj: unknown;
     try {
@@ -82,6 +90,8 @@ function extractQwenXml(text: string): ToolEnvelope | null {
       argumentsFromString: shape.argumentsFromString,
       raw,
       format: 'qwen-xml',
+      start: openStart,
+      end: close.end,
     };
   }
   if (attrName) {
@@ -94,22 +104,20 @@ function extractQwenXml(text: string): ToolEnvelope | null {
       any = true;
     }
     if (any) {
-      return { name: attrName, arguments: params, raw, format: 'qwen-xml' };
+      return { name: attrName, arguments: params, raw, format: 'qwen-xml', start: openStart, end: close.end };
     }
   }
   return null;
 }
 
-function extractFunctionXml(text: string): ToolEnvelope | null {
-  const m = FUNCTION_OPEN.exec(text);
-  if (!m) return null;
-  const name = m[1].trim().replace(/^["']|["']$/g, '');
-  if (!name) return null;
-  const innerStart = m.index + m[0].length;
+function tryFunctionAt(text: string, name: string, openStart: number, openLen: number): LocatedEnvelope | null {
+  const clean = name.trim().replace(/^["']|["']$/g, '');
+  if (!clean) return null;
+  const innerStart = openStart + openLen;
   const close = findClose(text, 'function', innerStart);
   if (!close) return null;
   const inner = text.slice(innerStart, close.start).trim();
-  const raw = text.slice(m.index, close.end);
+  const raw = text.slice(openStart, close.end);
   if (raw.length > MAX_ENVELOPE_LENGTH) return null;
   const params: Record<string, unknown> = {};
   PARAMETER.lastIndex = 0;
@@ -120,7 +128,7 @@ function extractFunctionXml(text: string): ToolEnvelope | null {
     any = true;
   }
   if (any) {
-    return { name, arguments: params, raw, format: 'function-xml' };
+    return { name: clean, arguments: params, raw, format: 'function-xml', start: openStart, end: close.end };
   }
   if (inner.startsWith('{')) {
     try {
@@ -132,6 +140,8 @@ function extractFunctionXml(text: string): ToolEnvelope | null {
           argumentsFromString: shape.argumentsFromString,
           raw,
           format: 'function-xml',
+          start: openStart,
+          end: close.end,
         };
       }
     } catch {
@@ -139,6 +149,87 @@ function extractFunctionXml(text: string): ToolEnvelope | null {
     }
   }
   return null;
+}
+
+function tryJsonAt(text: string, braceIndex: number): LocatedEnvelope | null {
+  const end = scanBalancedJson(text, braceIndex);
+  if (end === -1) return null;
+  const raw = text.slice(braceIndex, end);
+  if (raw.length > MAX_ENVELOPE_LENGTH) return null;
+  let shape: ReturnType<typeof validateEnvelopeShape> = null;
+  try {
+    shape = validateEnvelopeShape(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+  if (!shape) return null;
+  return {
+    name: shape.name,
+    arguments: shape.arguments,
+    argumentsFromString: shape.argumentsFromString,
+    raw,
+    format: 'json',
+    start: braceIndex,
+    end,
+  };
+}
+
+export function extractAllEnvelopes(text: string): ExtractionResult {
+  const envelopes: LocatedEnvelope[] = [];
+  let capped = false;
+  const n = text.length;
+  let pos = 0;
+  let guard = 0;
+  while (pos < n) {
+    if (guard++ > n + 16) break;
+    if (envelopes.length >= MAX_ENVELOPES) {
+      capped = true;
+      break;
+    }
+    const lt = text.indexOf('<', pos);
+    const brace = text.indexOf('{', pos);
+    let next = -1;
+    if (lt === -1) next = brace;
+    else if (brace === -1) next = lt;
+    else next = Math.min(lt, brace);
+    if (next === -1) break;
+    if (text[next] === '{') {
+      const hit = tryJsonAt(text, next);
+      if (hit) {
+        envelopes.push(hit);
+        pos = hit.end;
+      } else {
+        pos = next + 1;
+      }
+      continue;
+    }
+    TOOL_OPEN_AT.lastIndex = next;
+    const tool = TOOL_OPEN_AT.exec(text);
+    if (tool) {
+      const hit = tryQwenAt(text, tool[1], next, tool[0].length);
+      if (hit) {
+        envelopes.push(hit);
+        pos = hit.end;
+      } else {
+        pos = next + tool[0].length;
+      }
+      continue;
+    }
+    FUNC_OPEN_AT.lastIndex = next;
+    const func = FUNC_OPEN_AT.exec(text);
+    if (func) {
+      const hit = tryFunctionAt(text, func[1] ?? '', next, func[0].length);
+      if (hit) {
+        envelopes.push(hit);
+        pos = hit.end;
+      } else {
+        pos = next + func[0].length;
+      }
+      continue;
+    }
+    pos = next + 1;
+  }
+  return { envelopes, capped };
 }
 
 function scanBalancedJson(text: string, start: number): number {
@@ -163,34 +254,11 @@ function scanBalancedJson(text: string, start: number): number {
   return -1;
 }
 
-function extractJson(text: string): ToolEnvelope | null {
-  for (let i = 0; i < text.length; i++) {
-    if (text[i] !== '{') continue;
-    const end = scanBalancedJson(text, i);
-    if (end === -1) continue;
-    const raw = text.slice(i, end);
-    if (raw.length > MAX_ENVELOPE_LENGTH) continue;
-    let obj: unknown;
-    try {
-      obj = JSON.parse(raw);
-    } catch {
-      continue;
-    }
-    const shape = validateEnvelopeShape(obj);
-    if (!shape) continue;
-    return {
-      name: shape.name,
-      arguments: shape.arguments,
-      argumentsFromString: shape.argumentsFromString,
-      raw,
-      format: 'json',
-    };
-  }
-  return null;
-}
-
 export function extractEnvelope(text: string): ToolEnvelope | null {
-  return extractQwenXml(text) ?? extractFunctionXml(text) ?? extractJson(text);
+  const found = extractAllEnvelopes(text).envelopes[0];
+  if (!found) return null;
+  const { start: _s, end: _e, ...envelope } = found;
+  return envelope;
 }
 
 export function buildToolCallsEntry(
@@ -204,16 +272,23 @@ export function buildToolCallsEntry(
   };
 }
 
+export function applyRecoveryMany(
+  response: RawProviderResponse,
+  calls: Array<{ name: string; arguments: Record<string, unknown> }>
+): RawProviderResponse {
+  const clone = structuredClone(response);
+  const choice = clone.choices[0];
+  choice.message.tool_calls = calls.map((c) => buildToolCallsEntry(c.name, c.arguments));
+  if (choice.finish_reason === 'stop') {
+    choice.finish_reason = 'tool_calls';
+  }
+  return clone;
+}
+
 export function applyRecoveryToResponse(
   response: RawProviderResponse,
   name: string,
   argumentsObj: Record<string, unknown>
 ): RawProviderResponse {
-  const clone = structuredClone(response);
-  const choice = clone.choices[0];
-  choice.message.tool_calls = [buildToolCallsEntry(name, argumentsObj)];
-  if (choice.finish_reason === 'stop') {
-    choice.finish_reason = 'tool_calls';
-  }
-  return clone;
+  return applyRecoveryMany(response, [{ name, arguments: argumentsObj }]);
 }
