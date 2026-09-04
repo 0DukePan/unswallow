@@ -10,7 +10,7 @@ import shutil
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SOURCE = ROOT / "packages" / "matrix" / "data" / "engine-matrix.json"
 TARGET = ROOT / "packages" / "python" / "unswallow" / "data" / "engine-matrix.json"
 

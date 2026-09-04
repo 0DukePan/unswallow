@@ -1,0 +1,28 @@
+{
+  "id": "fp-guard-json-string-args",
+  "description": "Adversarial: a JSON envelope lookalike whose arguments are a bare non-JSON string. Only arguments that are objects — or JSON strings that parse to objects — are accepted, so nothing must be recovered.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Contrast with argumentsFromString recoveries, where the string parses to an object. A bare scalar is not dispatchable.",
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "response": {
+    "id": "chatcmpl-fp-string-args",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": \"Tokyo\"}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "id": "fp-guard-xml-empty-name",
+  "description": "Adversarial: a well-formed XML tool-call block with an empty function name. A nameless envelope cannot be dispatched, so nothing must be recovered.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Structural completeness includes a non-empty name; tags alone are not enough.",
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "response": {
+    "id": "chatcmpl-fp-empty-name",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\n<tool_call>\n<function=>\n<parameter=city>Tokyo</parameter>\n</function>\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

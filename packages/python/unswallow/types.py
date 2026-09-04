@@ -30,6 +30,7 @@ class SwallowMatrixEntry:
     version_range: str = "*"
     pattern: str = "A"
     behavior: str = "swallow"
+    verified: bool = False
     known_behavior: str = ""
     source: str = ""
     engine: Optional[str] = None
@@ -46,6 +47,7 @@ class SwallowMatrixEntry:
             pattern=row.get("pattern", "A"),
             model_families=row.get("modelFamilies"),
             behavior=row.get("behavior", "swallow"),
+            verified=row.get("verified", False),
             known_behavior=row.get("knownBehavior", ""),
             source=row.get("source", ""),
             fix_hint=row.get("fixHint"),

@@ -1,6 +1,6 @@
 {
   "name": "unswallow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Detect and recover tool calls trapped inside a model's reasoning channel — the reasoning-channel swallow bug class across vLLM, SGLang, and llama.cpp.",
   "keywords": [
     "llm",

@@ -51,7 +51,7 @@ Enable Discussions (useful for "my server swallowed a call" threads).
 > the direction of PR #35687.
 >
 > Zero runtime dependencies; `pip install unswallow` mirror with exact cross-language
-> parity; 17/17 pinned benchmark fixtures; the matrix is refreshed weekly from the tracked
+> parity; 22/22 pinned benchmark fixtures; the matrix is refreshed weekly from the tracked
 > upstream threads. If you hit this in production, your raw response becomes a pinned
 > fixture with attribution: https://github.com/0DukePan/unswallow
 
@@ -100,7 +100,7 @@ What I built: a library + CLI + proxy that detects and recovers this bug class.
   - recovery is structural, never keyword-based: a model merely *discussing* a tool call
     is never "recovered" (pinned adversarial fixtures enforce this)
   - engine/version behavior matrix, every row sourced, refreshed weekly
-  - `pip install unswallow` — 1:1 Python mirror, 17/17 fixtures with exact cross-language
+  - `pip install unswallow` — 1:1 Python mirror, 22/22 fixtures with exact cross-language
     parity; zero dependencies in both
 
 Numbers from the committed benchmark suite (run on your own hardware: npm run bench:perf):
@@ -124,7 +124,7 @@ Moonshot) where you can't set serving flags.
    No crash. This is the reasoning-channel swallow, confirmed on vLLM, SGLang, llama.cpp."
 2. "I built a zero-dep tool that finds and recovers it: `npx unswallow check` against your
    live endpoint. One command. Before/after: [demo.gif]."
-3. "17/17 pinned benchmark fixtures, exact TS↔Python parity, and a weekly-refreshed
+3. "22/22 pinned benchmark fixtures, exact TS↔Python parity, and a weekly-refreshed
    engine matrix where every row is sourced. If your server swallows a call, your raw
    response becomes a fixture. https://github.com/0DukePan/unswallow"
 

@@ -237,6 +237,46 @@ function measureRetained(fn, iterations) {
   return { iterations, retainedBytes: retained, perOpBytes: retained / iterations };
 }
 
+function scanBalanced(text, start) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return i + 1;
+    }
+  }
+  return -1;
+}
+
+function naiveCheck(message) {
+  const text = ['reasoning', 'reasoning_content', 'thinking', 'thought', 'content']
+    .map((f) => (typeof message[f] === 'string' ? message[f] : ''))
+    .join('\n');
+  if (!/<tool_call>|<function=|\{"name"\s*:/.test(text)) return { found: false, name: null };
+  const i = text.indexOf('{');
+  if (i === -1) return { found: true, name: null };
+  const end = scanBalanced(text, i);
+  if (end === -1) return { found: true, name: null };
+  try {
+    const obj = JSON.parse(text.slice(i, end));
+    const name = obj && (obj.name ?? obj.function?.name);
+    return { found: true, name: typeof name === 'string' ? name : null };
+  } catch {
+    return { found: true, name: null };
+  }
+}
+
 const SCENARIOS = [
   { key: 'a-small', label: 'Pattern A — small reasoning (~2–3KB)', iters: 3000, retained: 2000 },
   { key: 'a-xml', label: 'Pattern A — function-XML envelope (~1.5KB)', iters: 3000, retained: 2000 },
@@ -355,6 +395,26 @@ async function main() {
       opsPerSec: res.opsPerSec,
       retainedPerOpBytes: retained ? retained.perOpBytes : null,
     });
+  }
+
+  const baselineRows = [];
+  for (const s of SCENARIOS) {
+    const pool = payloads[s.key];
+    let i = 0;
+    const res = measure(() => naiveCheck(pool[i++ % pool.length].choices[0].message), Math.min(s.iters, 2000));
+    baselineRows.push({ scenario: s.key, label: s.label, n: res.n, meanMs: res.mean, opsPerSec: res.opsPerSec });
+  }
+
+  const baselineFp = [];
+  {
+    const fpDir = path.join(import.meta.dirname, 'fixtures');
+    const fpFiles = fs.readdirSync(fpDir).filter((f) => f.startsWith('fp-guard'));
+    for (const f of fpFiles) {
+      const fixture = JSON.parse(fs.readFileSync(path.join(fpDir, f), 'utf8'));
+      const message = fixture.response.choices[0].message;
+      const naive = naiveCheck(message);
+      baselineFp.push({ id: fixture.id ?? f, naiveFired: naive.found });
+    }
   }
 
   const streamChunks = [];
@@ -509,13 +569,23 @@ async function main() {
     '| --- | --- | --- | --- |',
     ...proxyRows.map((r) => `| ${r.label} | ${r.directMs.toFixed(2)} ms | ${r.proxyMs.toFixed(2)} ms | +${r.overheadMs.toFixed(2)} ms |`),
     '',
+    '## Naive baseline (marker scan, no validation, no recovery)',
+    '',
+    'What the simplest possible approach costs on the same payloads: one marker regex over the text channels plus a single `JSON.parse` attempt, no envelope validation, no false-positive guard, nothing recovered. The guard fixtures below show what that simplicity costs in correctness.',
+    '',
+    '| scenario | mean | throughput |',
+    '| --- | --- | --- |',
+    ...baselineRows.map((r) => `| ${r.label} | ${r.meanMs.toFixed(3)} ms | ${fmtOps(r)} |`),
+    '',
+    `False positives on the pinned guard fixtures (naive fired where nothing should recover): ${baselineFp.filter((f) => f.naiveFired).length}/${baselineFp.length} (${baselineFp.filter((f) => f.naiveFired).map((f) => f.id).join(', ') || 'none'})`,
+    '',
   ].join('\n');
 
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
   fs.writeFileSync(RESULTS_MD, md);
   fs.writeFileSync(
     RESULTS_JSON,
-    JSON.stringify({ machine, checkAndRescue: checkRows, streaming: { typical: streamRes, big: bigStreamRes, nonStreamReference: nonStreamRes }, history: historyRes, matrix: matrixRes, reference: refRes, proxy: proxyRows }, null, 2) + '\n'
+    JSON.stringify({ machine, checkAndRescue: checkRows, baseline: baselineRows, baselineFp, streaming: { typical: streamRes, big: bigStreamRes, nonStreamReference: nonStreamRes }, history: historyRes, matrix: matrixRes, reference: refRes, proxy: proxyRows }, null, 2) + '\n'
   );
 
   console.log(md);

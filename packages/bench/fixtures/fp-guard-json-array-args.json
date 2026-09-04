@@ -1,0 +1,28 @@
+{
+  "id": "fp-guard-json-array-args",
+  "description": "Adversarial: a JSON envelope lookalike whose arguments are an array, not an object. Tool arguments must be a keyed object to dispatch, so nothing must be recovered.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Shape validation requires arguments to be an object; arrays and scalars are rejected.",
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "response": {
+    "id": "chatcmpl-fp-array-args",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": [\"Tokyo\", \"Osaka\"]}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

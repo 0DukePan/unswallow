@@ -23,6 +23,7 @@ Edit `data/engine-matrix.json` and open a PR. That's it — no package release r
 | `versionRange` | semver range: `<=0.19.0`, `>=0.20.0 <0.24.0`, `*`, `a || b` |
 | `pattern` | `A` trapped-inside · `B` trailing-after · `C` field leak · `D` history drift |
 | `behavior` | `swallow` \| `partial` \| `resolved` |
+| `verified` | `true` only if a maintainer independently reproduced the behavior against the named engine/version; `false` means sourced from the linked community report, pending reproduction |
 | `knownBehavior` | short description, surfaced in `warnings[]` |
 | `source` | issue/PR URL — every row must be sourced |
 | `fixHint` | server-side remediation, surfaced by the CLI |

@@ -2,7 +2,12 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 deepseek-reasoning-content-pattern-a | sglang | 0.4.6 | A | A | yes | 0.95 | PASS
 fp-guard-discussion-only | vllm | 0.19.0 | none | none | no | 0.00 | PASS
+fp-guard-json-array-args | vllm | 0.19.0 | none | none | no | 0.00 | PASS
+fp-guard-json-string-args | vllm | 0.19.0 | none | none | no | 0.00 | PASS
+fp-guard-multiple-partial | vllm | 0.19.0 | none | none | no | 0.00 | PASS
 fp-guard-partial-json | vllm | 0.19.0 | none | none | no | 0.00 | PASS
+fp-guard-user-content-mention | vllm | 0.19.0 | none | none | no | 0.00 | PASS
+fp-guard-xml-empty-name | vllm | 0.19.0 | none | none | no | 0.00 | PASS
 llamacpp-qwen3.5-thinking-pattern-a | llama.cpp | b8461 | A | A | yes | 0.95 | PASS
 minimax-m3-pattern-c-leak | unknown | — | C | C | no | 0.50 | PASS
 minimax-m3-streaming-pattern-c-leak | unknown | — | C | C | no | 0.50 | PASS
@@ -18,4 +23,4 @@ vllm-qwen3.5-0.19-pattern-a-parallel | vllm | 0.19.0 | A | A | yes | 0.95 | PASS
 vllm-qwen3.5-0.19-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | PASS
 vllm-qwen3.5-0.19-streaming-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | PASS
 
-**17/17 fixtures passing** — fixtures are hash-pinned (see `fixtures.sha256`); engine/version hints per fixture; every `source` is cited in the fixture file. Matrix↔fixture consistency: 11/11.
+**22/22 fixtures passing** — fixtures are hash-pinned (see `fixtures.sha256`); engine/version hints per fixture; every `source` is cited in the fixture file. Matrix↔fixture consistency: 11/11.

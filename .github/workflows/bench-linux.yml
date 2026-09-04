@@ -1,0 +1,41 @@
+name: Bench (Linux numbers)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/bench-linux.yml']
+
+jobs:
+  perf-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: npm ci
+      - run: npm run build --workspace unswallow
+      - run: node --expose-gc packages/bench/perf.mjs
+      - run: python packages/python/bench/perf_python.py
+      - name: Keep Windows numbers intact; publish Linux numbers alongside
+        run: |
+          cp packages/bench/perf/results.md packages/bench/perf/results-linux.md
+          cp packages/bench/perf/results.json packages/bench/perf/results-linux.json
+          cp packages/python/bench/results_python.md packages/python/bench/results_python-linux.md
+          cp packages/python/bench/results_python.json packages/python/bench/results_python-linux.json
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: linux perf numbers [skip ci]'
+          file_pattern: |
+            packages/bench/perf/results-linux.md
+            packages/bench/perf/results-linux.json
+            packages/python/bench/results_python-linux.md
+            packages/python/bench/results_python-linux.json

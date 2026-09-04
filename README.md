@@ -231,19 +231,23 @@ These are pinned benchmark fixtures (`fp-guard-*` in [`packages/bench/fixtures/`
 | Pattern C (field leak) | ≤ 0.50, detection-only, no recovery |
 | No structural envelope found | **0**, response untouched |
 
+These are fixed heuristic tiers reflecting how the match was made (matrix hit vs. generic scan), not a statistically calibrated probability — 0.95 does not mean "correct 95% of the time."
+
 ## The engine matrix
 
 The genuinely hard part of this bug class is knowing **which engine, which version range, has which behavior** — it shifts under point releases, parser names get merged (the `qwen3_coder` → `qwen3_xml` folk-fix silently became a no-op on current vLLM), and community knowledge visibly goes stale. The matrix is a living, sourced data file, updated independently of package releases:
 
-| Engine / harness | Version range | Pattern | Behavior | Source |
-| --- | --- | --- | --- | --- |
-| vllm | `<=0.19.0` | A | swallow | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
-| vllm | `>=0.20.0 <0.24.0` | A | partial | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
-| vllm | `>=0.24.0` | A | resolved | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
-| vllm | `>=0.24.0` | B | partial | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
-| sglang | `*` | A | swallow | [#30744](https://github.com/sgl-project/sglang/issues/30744) |
-| llama.cpp | `*` | A | swallow | [#20837](https://github.com/ggml-org/llama.cpp/issues/20837) |
-| open-webui | `*` | D | swallow | [#23339](https://github.com/open-webui/open-webui/issues/23339) |
+| Engine / harness | Version range | Pattern | Behavior | Verified | Source |
+| --- | --- | --- | --- | --- | --- |
+| vllm | `<=0.19.0` | A | swallow | no | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
+| vllm | `>=0.20.0 <0.24.0` | A | partial | no | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
+| vllm | `>=0.24.0` | A | resolved | no | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
+| vllm | `>=0.24.0` | B | partial | no | [#39056](https://github.com/vllm-project/vllm/issues/39056) |
+| sglang | `*` | A | swallow | no | [#30744](https://github.com/sgl-project/sglang/issues/30744) |
+| llama.cpp | `*` | A | swallow | no | [#20837](https://github.com/ggml-org/llama.cpp/issues/20837) |
+| open-webui | `*` | D | swallow | no | [#23339](https://github.com/open-webui/open-webui/issues/23339) |
+
+On verification, stated plainly: every row is sourced from its linked upstream report, and **none has been independently reproduced by the maintainer** — running each named engine/version against the fixtures requires GPU serving infrastructure this project doesn't have. `verified: no` marks exactly that. If you reproduce a row against the real engine and version, open a PR flipping it to `verified: true` with evidence (server version output + the probe transcript) and it will be merged.
 
 Every row ships with a `source` URL — community PRs against [`packages/matrix/data/engine-matrix.json`](packages/matrix/data/engine-matrix.json) are welcome and don't require a release. The matrix is published as its own package, `unswallow-matrix`, **versioned independently of `unswallow`** — closer to an antivirus definitions file than a code release (see [`packages/matrix/README.md`](packages/matrix/README.md)). `npm run matrix:update` refreshes upstream issue status via the GitHub API (used by the weekly CI watcher) and reports which benchmark fixtures a behavior flip would force to change.
 
@@ -251,29 +255,34 @@ Every row ships with a `source` URL — community PRs against [`packages/matrix/
 
 Three layers, all independently rerunnable on your own hardware.
 
-### Correctness — 17/17 hash-pinned fixtures
+### Correctness — 22/22 hash-pinned fixtures
 
-Hash-pinned fixture corpus seeded from the real upstream reports — **every fixture is byte-checked against `packages/bench/fixtures.sha256` before it runs**, so results can't silently drift. Engine/version hints are recorded per fixture; sample size and sourcing (`sourced: true/false`) are disclosed in every published result.
+Hash-pinned fixture corpus seeded from the real upstream reports — **every fixture is byte-checked against `packages/bench/fixtures.sha256` before it runs**, so results can't silently drift. Engine/version hints are recorded per fixture; sample size and sourcing are disclosed in every published result. `sourced: yes` means reconstructed from the linked upstream report; `synthetic` means a constructed or adversarial self-authored case (its `source` field says so explicitly).
 
-| id | engine | version | expected | actual | recovered | confidence | status |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| vllm-qwen3.5-0.19-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | PASS |
-| vllm-qwen3.5-0.19-pattern-a-parallel | vllm | 0.19.0 | A | A | yes (2) | 0.95 | PASS |
-| vllm-qwen3.5-0.19-pattern-a-duplicate | vllm | 0.19.0 | A | A | yes (1) | 0.95 | PASS |
-| vllm-qwen3-0.19-pattern-a-json-envelope | vllm | 0.19.0 | A | A | yes | 0.95 | PASS |
-| vllm-qwen3-0.19-tool-choice-required-pattern-b | vllm | 0.19.0 | B | B | yes | 0.55 | PASS |
-| vllm-qwen3-0.23-pattern-a-partial | vllm | 0.23.4 | A | A | yes | 0.80 | PASS |
-| vllm-qwen3-0.24-clean | vllm | 0.24.0 | none | none | no | 0.00 | PASS |
-| vllm-qwen3.5-0.19-streaming-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | PASS |
-| sglang-qwen3.5-reasoning-content-pattern-a | sglang | 0.4.6 | A | A | yes | 0.95 | PASS |
-| llamacpp-qwen3.5-thinking-pattern-a | llama.cpp | b8461 | A | A | yes | 0.95 | PASS |
-| pi-kimi2-pattern-b | — | — | B | B | yes | 0.55 | PASS |
-| pi-kimi2-streaming-pattern-b | — | — | B | B | yes | 0.55 | PASS |
-| minimax-m3-pattern-c-leak | — | — | C | C | no | 0.50 | PASS |
-| minimax-m3-streaming-pattern-c-leak | — | — | C | C | no | 0.50 | PASS |
-| deepseek-reasoning-content-pattern-a | sglang | 0.4.6 | A | A | yes | 0.95 | PASS |
-| fp-guard-discussion-only | vllm | 0.19.0 | none | none | no | 0.00 | PASS |
-| fp-guard-partial-json | vllm | 0.19.0 | none | none | no | 0.00 | PASS |
+| id | engine | version | expected | actual | recovered | confidence | sourced | status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| vllm-qwen3.5-0.19-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | yes | PASS |
+| vllm-qwen3.5-0.19-pattern-a-parallel | vllm | 0.19.0 | A | A | yes (2) | 0.95 | synthetic | PASS |
+| vllm-qwen3.5-0.19-pattern-a-duplicate | vllm | 0.19.0 | A | A | yes (1) | 0.95 | synthetic | PASS |
+| vllm-qwen3-0.19-pattern-a-json-envelope | vllm | 0.19.0 | A | A | yes | 0.95 | yes | PASS |
+| vllm-qwen3-0.19-tool-choice-required-pattern-b | vllm | 0.19.0 | B | B | yes | 0.55 | yes | PASS |
+| vllm-qwen3-0.23-pattern-a-partial | vllm | 0.23.4 | A | A | yes | 0.80 | yes | PASS |
+| vllm-qwen3-0.24-clean | vllm | 0.24.0 | none | none | no | 0.00 | yes | PASS |
+| vllm-qwen3.5-0.19-streaming-pattern-a | vllm | 0.19.0 | A | A | yes | 0.95 | yes | PASS |
+| sglang-qwen3.5-reasoning-content-pattern-a | sglang | 0.4.6 | A | A | yes | 0.95 | yes | PASS |
+| llamacpp-qwen3.5-thinking-pattern-a | llama.cpp | b8461 | A | A | yes | 0.95 | yes | PASS |
+| pi-kimi2-pattern-b | — | — | B | B | yes | 0.55 | yes | PASS |
+| pi-kimi2-streaming-pattern-b | — | — | B | B | yes | 0.55 | yes | PASS |
+| minimax-m3-pattern-c-leak | — | — | C | C | no | 0.50 | synthetic | PASS |
+| minimax-m3-streaming-pattern-c-leak | — | — | C | C | no | 0.50 | synthetic | PASS |
+| deepseek-reasoning-content-pattern-a | sglang | 0.4.6 | A | A | yes | 0.95 | synthetic | PASS |
+| fp-guard-discussion-only | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
+| fp-guard-partial-json | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
+| fp-guard-json-array-args | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
+| fp-guard-json-string-args | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
+| fp-guard-multiple-partial | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
+| fp-guard-user-content-mention | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
+| fp-guard-xml-empty-name | vllm | 0.19.0 | none | none | no | 0.00 | synthetic | PASS |
 
 Regenerate with `npm run bench`; verified read-only in CI (`npm run bench:check`). Every fixture is also cross-checked against its engine matrix row: flip a row to a different behavior and the matching fixture must flip too, or CI fails.
 
@@ -300,12 +309,12 @@ Regenerate with `npm run bench`; verified read-only in CI (`npm run bench:check`
 
 Notes, honestly stated: every check is linear in payload size (a 1 MB reasoning block costs ~1.7 ms); recovery only runs when an envelope is found, and only the recovered path makes a deep copy; a healthy response (already-parsed `tool_calls`) is the cheapest path by design — it returns before any scanning. JSON.parse of the 64 KB payload alone measures ~0.30 ms, so the scan itself is the minority of the cost. Two methodology notes: the corpus text is seeded word-salad, not production reasoning traces, so brace/quote-heavy real CoT may scan slightly differently; and `retained/op` is a post-GC floor (negative GC noise is clamped to `0.00`), i.e. "nothing retained after a full collection", not "nothing allocated". Benchmarks are wall-clock on a shared dev machine — the JSON.parse reference row in the full report is the load anchor (it reads ~0.24 ms on a quiet box, 0.333 ms in the run above): compare it across runs to judge machine load before comparing anything else. Treat cross-machine comparisons with care, and run `npm run bench:perf` on your own hardware before quoting numbers anywhere.
 
-### Python parity — 17/17, exact confidence equality
+### Python parity — 22/22, exact confidence equality
 
-`npm run bench:python` — the same pinned 17-fixture corpus runs through the Python core and is compared against the TypeScript results **including exact confidence values** (Python 3.14.6):
+`npm run bench:python` — the same pinned 22-fixture corpus runs through the Python core and is compared against the TypeScript results **including exact confidence values** (Python 3.14.6):
 
 ```
-17 / 17 fixtures: expectations + exact confidence parity with the TypeScript core
+22 / 22 fixtures: expectations + exact confidence parity with the TypeScript core
 ```
 
 Same seeds, same payloads, same percentile methodology — `packages/python/bench/results_python.md` mirrors the TS report. Honest headline numbers (measured 2026-09-03, Python 3.14.6, same machine):
@@ -317,6 +326,8 @@ Same seeds, same payloads, same percentile methodology — `packages/python/benc
 | check_and_rescue_stream (843 chunks) | ~26.0 ms | ~2.07 ms |
 | sanitizeHistory (40-message history) | ~0.62 ms | ~0.09 ms |
 | match_matrix_entry, 100k lookups | ~0.016 ms · ~64k ops/s | ~0.002 ms · ~519k ops/s |
+
+Why the two implementations diverge on speed while agreeing exactly on behavior: the logic is identical — the runtimes aren't. Component probes on the same payloads, same box: on small inputs TypeScript wins because V8 JIT-compiles the shared call graph CPython interprets (visible even in pure lookup work: matrix match ~0.002 ms vs ~0.016 ms). On 1 MB inputs Python wins because recovery deep-copies the whole response, and V8's `structuredClone` serializes the 1 MB string (~0.54 ms measured) while CPython's `copy.deepcopy` shares the immutable string (~0.007 ms); the scan itself is actually faster in Python here (`str.find` plus anchored `re.match`, ~0.125 ms, vs V8's global-regex walk, ~0.259 ms). Streaming flips hard the other way because the per-chunk leak tracker is a character loop: ~9.4 of Python's ~11.7 ms per 843 pushes was measured inside that loop alone, versus ~1 µs/chunk JIT-compiled. None of this is a methodology artifact — same seeds, same payloads, same harness shapes on both sides.
 
 ### Proxy overhead (measured 2026-09-03)
 

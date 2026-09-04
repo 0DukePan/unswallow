@@ -1,7 +1,7 @@
 {
   "runner": "unswallow bench runner v1",
-  "fixtures": 17,
-  "passed": 17,
+  "fixtures": 22,
+  "passed": 22,
   "failed": 0,
   "manifest": "fixtures.sha256",
   "manifestVerified": true,
@@ -9,7 +9,7 @@
     "checked": 11,
     "failed": 0
   },
-  "generatedAt": "2026-09-03T12:36:04.453Z",
+  "generatedAt": "2026-09-04T17:45:50.135Z",
   "results": [
     {
       "id": "deepseek-reasoning-content-pattern-a",
@@ -67,6 +67,81 @@
       "failures": []
     },
     {
+      "id": "fp-guard-json-array-args",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "4f9327237c0d9d2e6de0125be994c6eb38f50d14eef7a27cc007c94bda2ad1d2",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null,
+        "toolCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "fp-guard-json-string-args",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "e633875a0e5ad7fbf7580bc324d82f9763cabc3a549483036d15c3dc281048da",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null,
+        "toolCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "fp-guard-multiple-partial",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "76bb359654b79dbbb273c9e306eab35ba893171dc4ad6f56a26ba2b2e66174e3",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null,
+        "toolCallCount": 0
+      },
+      "failures": []
+    },
+    {
       "id": "fp-guard-partial-json",
       "engine": "vllm",
       "version": "0.19.0",
@@ -75,6 +150,56 @@
       "sourced": false,
       "stream": false,
       "sha256": "993d697e833ebd2d7711e6d57c277578d256ab0a0caa03c3d02280e019aa5928",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null,
+        "toolCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "fp-guard-user-content-mention",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "cecbd19d2cbc48d18e92ee8a645aefdb5e7b0d6f27c49460846cc32e953d2caf",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "toolCall": null,
+        "toolCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "fp-guard-xml-empty-name",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "67569f2ec1793f7c81cc44a50199087f8e7d35702afd85701d255bb325f1bb8b",
       "expect": {
         "detected": false,
         "pattern": null,

@@ -1,4 +1,4 @@
-"""Cross-language parity bench: run the 17-fixture corpus through the Python core
+"""Cross-language parity bench: run the 22-fixture corpus through the Python core
 and compare against the fixture expectations AND the exact confidence values
 recorded by the TypeScript core in packages/bench/results/results.json.
 

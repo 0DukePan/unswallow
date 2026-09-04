@@ -58,6 +58,7 @@ export interface SwallowMatrixEntry {
   pattern: ToolPattern;
   modelFamilies?: string[];
   behavior: 'swallow' | 'partial' | 'resolved';
+  verified?: boolean;
   knownBehavior: string;
   source: string;
   fixHint?: string;

@@ -10,6 +10,7 @@ import asyncio
 import gc
 import json
 import platform
+import re
 import sys
 import time
 from pathlib import Path
@@ -226,6 +227,57 @@ SCENARIOS = [
 ]
 
 
+def _scan_balanced(text, start):
+    depth = 0
+    in_string = False
+    escaped = False
+    i = start
+    while i < len(text):
+        ch = text[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+        else:
+            if ch == '"':
+                in_string = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return i + 1
+        i += 1
+    return -1
+
+
+NAIVE_MARKER = re.compile(r"<tool_call>|<function=|\{\"name\"\s*:")
+
+
+def naive_check(message):
+    text = "\n".join(
+        message.get(f, "") if isinstance(message.get(f), str) else ""
+        for f in ("reasoning", "reasoning_content", "thinking", "thought", "content")
+    )
+    if not NAIVE_MARKER.search(text):
+        return {"found": False, "name": None}
+    i = text.find("{")
+    if i == -1:
+        return {"found": True, "name": None}
+    end = _scan_balanced(text, i)
+    if end == -1:
+        return {"found": True, "name": None}
+    try:
+        obj = json.loads(text[i:end])
+        name = obj.get("name") if isinstance(obj, dict) else None
+        return {"found": True, "name": name if isinstance(name, str) else None}
+    except ValueError:
+        return {"found": True, "name": None}
+
+
 async def main_async():
     rng = mulberry32(0x756E7377)
     payloads = {}
@@ -308,7 +360,29 @@ async def main_async():
 
     matrix_res = measure(matrix_run, 100000)
 
-    return check_rows, stream_chunks, stream_res, history_res, matrix_res
+    baseline_rows = []
+    for key, label, iters, _ret in SCENARIOS:
+        pool = payloads[key]
+        k = 0
+
+        def naive_run():
+            nonlocal k
+            p = pool[k % len(pool)]
+            k += 1
+            naive_check(p["choices"][0]["message"])
+
+        res = measure(naive_run, min(iters, 2000))
+        baseline_rows.append({"scenario": key, "label": label, "n": res["n"], "mean": res["mean"], "opsPerSec": res["opsPerSec"]})
+
+    baseline_fp = []
+    fixtures_dir = Path(__file__).resolve().parent.parent.parent / "bench" / "fixtures"
+    for f in sorted(fixtures_dir.glob("fp-guard-*.json")):
+        fixture = json.loads(f.read_text(encoding="utf-8"))
+        message = fixture["response"]["choices"][0]["message"]
+        naive = naive_check(message)
+        baseline_fp.append({"id": fixture.get("id") or f.name, "naiveFired": bool(naive["found"])})
+
+    return check_rows, stream_chunks, stream_res, history_res, matrix_res, baseline_rows, baseline_fp
 
 
 async def _iter(chunks):
@@ -317,7 +391,7 @@ async def _iter(chunks):
 
 
 def main():
-    check_rows, stream_chunks, stream_res, history_res, matrix_res = asyncio.run(main_async())
+    check_rows, stream_chunks, stream_res, history_res, matrix_res, baseline_rows, baseline_fp = asyncio.run(main_async())
 
     machine = {
         "platform": "{} {}".format(platform.system().lower(), platform.machine().lower()),
@@ -375,6 +449,22 @@ def main():
         "| --- | --- | --- | --- |",
         "| 100k lookups (engine/version/pattern) | {} | {} | {} |".format(fmt(matrix_res), fmt_mean(matrix_res), fmt_ops(matrix_res)),
         "",
+        "## Naive baseline (marker scan, no validation, no recovery)",
+        "",
+        "What the simplest possible approach costs on the same payloads: one marker regex over the text channels plus a single `json.loads` attempt, no envelope validation, no false-positive guard, nothing recovered.",
+        "",
+        "| scenario | mean | throughput |",
+        "| --- | --- | --- |",
+    ]
+    for r in baseline_rows:
+        lines.append("| {} | {} | {} |".format(r["label"], fmt_mean(r), fmt_ops(r)))
+    fired = [f["id"] for f in baseline_fp if f["naiveFired"]]
+    lines += [
+        "",
+        "False positives on the pinned guard fixtures (naive fired where nothing should recover): {}/{} ({})".format(
+            len(fired), len(baseline_fp), ", ".join(fired) if fired else "none"
+        ),
+        "",
     ]
     report = "\n".join(lines)
 
@@ -385,6 +475,8 @@ def main():
             {
                 "machine": machine,
                 "checkAndRescue": check_rows,
+                "baseline": baseline_rows,
+                "baselineFp": baseline_fp,
                 "streaming": stream_res,
                 "history": history_res,
                 "matrix": matrix_res,

@@ -5,7 +5,7 @@
     "cores": 12,
     "totalMemBytes": 17101832192,
     "node": "v22.16.0",
-    "date": "2026-09-03T02:55:53.751Z",
+    "date": "2026-09-04T17:55:12.586Z",
     "gcAvailable": true
   },
   "checkAndRescue": [
@@ -14,47 +14,47 @@
       "label": "Pattern A — small reasoning (~2–3KB)",
       "payloadBytes": 2874,
       "n": 3000,
-      "p50ms": 0.14879999996628612,
-      "p95ms": 0.23690000001806766,
-      "p99ms": 0.4603999999817461,
-      "meanMs": 0.16235233333384774,
-      "opsPerSec": 6159.443350553415,
-      "retainedPerOpBytes": 30.704
+      "p50ms": 0.10590000002412125,
+      "p95ms": 0.15919999999459833,
+      "p99ms": 0.24960000001010485,
+      "meanMs": 0.11486019999988882,
+      "opsPerSec": 8706.235928554608,
+      "retainedPerOpBytes": 30.612
     },
     {
       "scenario": "a-xml",
       "label": "Pattern A — function-XML envelope (~1.5KB)",
       "payloadBytes": 1857,
       "n": 3000,
-      "p50ms": 0.1312000000034459,
-      "p95ms": 0.20880000002216548,
-      "p99ms": 0.4108000000123866,
-      "meanMs": 0.14083736666724628,
-      "opsPerSec": 7100.388367546524,
-      "retainedPerOpBytes": 31.5
+      "p50ms": 0.08799999998882413,
+      "p95ms": 0.10619999998016283,
+      "p99ms": 0.15919999999459833,
+      "meanMs": 0.09175749999987116,
+      "opsPerSec": 10898.29169279246,
+      "retainedPerOpBytes": 31.572
     },
     {
       "scenario": "a-large",
       "label": "Pattern A — large reasoning (64KB)",
       "payloadBytes": 65023,
       "n": 500,
-      "p50ms": 0.2335000000311993,
-      "p95ms": 0.36560000001918525,
-      "p99ms": 0.7371000000275671,
-      "meanMs": 0.24831060000089927,
-      "opsPerSec": 4027.2143033619122,
-      "retainedPerOpBytes": 0
+      "p50ms": 0.12530000001424924,
+      "p95ms": 0.15080000000307336,
+      "p99ms": 0.1792999999888707,
+      "meanMs": 0.13015259999933187,
+      "opsPerSec": 7683.288693465466,
+      "retainedPerOpBytes": 0.36
     },
     {
       "scenario": "a-huge",
       "label": "Pattern A — 1MB reasoning",
       "payloadBytes": 1011116,
       "n": 100,
-      "p50ms": 2.285299999988638,
-      "p95ms": 4.820000000006985,
-      "p99ms": 9.03100000001723,
-      "meanMs": 2.721388000000152,
-      "opsPerSec": 367.45954637851867,
+      "p50ms": 1.2360000000044238,
+      "p95ms": 3.0134000000252854,
+      "p99ms": 3.409400000004098,
+      "meanMs": 1.3581379999991623,
+      "opsPerSec": 736.3022019858195,
       "retainedPerOpBytes": 0
     },
     {
@@ -62,23 +62,23 @@
       "label": "Pattern B — trailing text in content",
       "payloadBytes": 1064,
       "n": 2000,
-      "p50ms": 0.1414000000222586,
-      "p95ms": 0.23690000001806766,
-      "p99ms": 0.41929999995045364,
-      "meanMs": 0.1522027500005206,
-      "opsPerSec": 6570.183521628745,
-      "retainedPerOpBytes": 24.864
+      "p50ms": 0.08919999998761341,
+      "p95ms": 0.12589999998454005,
+      "p99ms": 0.18820000000414439,
+      "meanMs": 0.09358004999993136,
+      "opsPerSec": 10686.038316935432,
+      "retainedPerOpBytes": 24.664
     },
     {
       "scenario": "c-leak",
       "label": "Pattern C — field leak (detection-only)",
       "payloadBytes": 510,
       "n": 2000,
-      "p50ms": 0.09330000000772998,
-      "p95ms": 0.14629999996395782,
-      "p99ms": 0.30600000004051253,
-      "meanMs": 0.09619254999962869,
-      "opsPerSec": 10395.815476394586,
+      "p50ms": 0.05819999999948777,
+      "p95ms": 0.09219999998458661,
+      "p99ms": 0.13820000001578592,
+      "meanMs": 0.06330164999965927,
+      "opsPerSec": 15797.376529764746,
       "retainedPerOpBytes": 12.904
     },
     {
@@ -86,94 +86,182 @@
       "label": "Healthy — tool_calls already populated",
       "payloadBytes": 1150,
       "n": 2000,
-      "p50ms": 0.07659999997122213,
-      "p95ms": 0.12269999994896352,
-      "p99ms": 0.20880000002216548,
-      "meanMs": 0.07972059999898193,
-      "opsPerSec": 12543.809253979154,
-      "retainedPerOpBytes": 0.968
+      "p50ms": 0.04820000001927838,
+      "p95ms": 0.08000000001629815,
+      "p99ms": 0.10399999999208376,
+      "meanMs": 0.05262264999933541,
+      "opsPerSec": 19003.223897174114,
+      "retainedPerOpBytes": 0.92
     },
     {
       "scenario": "fp-discussion",
       "label": "False-positive guard — discussion-only",
       "payloadBytes": 1529,
       "n": 2000,
-      "p50ms": 0.07670000003417954,
-      "p95ms": 0.1172000000369735,
-      "p99ms": 0.2022999999462627,
-      "meanMs": 0.08288370000029681,
-      "opsPerSec": 12065.098445127558,
-      "retainedPerOpBytes": 29.92
+      "p50ms": 0.05239999998593703,
+      "p95ms": 0.062399999995250255,
+      "p99ms": 0.12320000000181608,
+      "meanMs": 0.05486634999976377,
+      "opsPerSec": 18226.10762342138,
+      "retainedPerOpBytes": 31.432
+    }
+  ],
+  "baseline": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A — small reasoning (~2–3KB)",
+      "n": 2000,
+      "meanMs": 0.004747350000019651,
+      "opsPerSec": 210643.83287431108
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A — function-XML envelope (~1.5KB)",
+      "n": 2000,
+      "meanMs": 0.002538249999837717,
+      "opsPerSec": 393972.224983329
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A — large reasoning (64KB)",
+      "n": 500,
+      "meanMs": 0.062008800000534395,
+      "opsPerSec": 16126.743300811851
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A — 1MB reasoning",
+      "n": 100,
+      "meanMs": 1.2160390000007464,
+      "opsPerSec": 822.3420465950403
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B — trailing text in content",
+      "n": 2000,
+      "meanMs": 0.002426399999996647,
+      "opsPerSec": 412133.20145127835
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C — field leak (detection-only)",
+      "n": 2000,
+      "meanMs": 0.0009875000002648449,
+      "opsPerSec": 1012658.227576509
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy — tool_calls already populated",
+      "n": 2000,
+      "meanMs": 0.0013566999998874962,
+      "opsPerSec": 737082.6270236048
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard — discussion-only",
+      "n": 2000,
+      "meanMs": 0.0014271500002214451,
+      "opsPerSec": 700697.1935990149
+    }
+  ],
+  "baselineFp": [
+    {
+      "id": "fp-guard-discussion-only",
+      "naiveFired": false
+    },
+    {
+      "id": "fp-guard-json-array-args",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-json-string-args",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-multiple-partial",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-partial-json",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-user-content-mention",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-xml-empty-name",
+      "naiveFired": true
     }
   ],
   "streaming": {
     "typical": {
       "n": 300,
-      "p50": 1.9813999999896623,
-      "p95": 3.070899999991525,
-      "p99": 3.5847000000067055,
-      "mean": 2.065720333333593,
-      "opsPerSec": 484.0926353211774
+      "p50": 0.9040000000095461,
+      "p95": 1.2973999999812804,
+      "p99": 1.64879999999539,
+      "mean": 0.946286666666468,
+      "opsPerSec": 1056.762221455313
     },
     "big": {
       "n": 20,
-      "p50": 15.110100000048988,
-      "p95": 17.934699999983422,
-      "p99": 18.57530000002589,
-      "mean": 15.180360000004294,
-      "opsPerSec": 65.87459058940085
+      "p50": 7.647400000016205,
+      "p95": 8.53179999999702,
+      "p99": 8.684399999998277,
+      "mean": 7.686559999999008,
+      "opsPerSec": 130.09720863430834
     },
     "nonStreamReference": {
       "n": 2000,
-      "p50": 0.16670000000158325,
-      "p95": 0.2906000000075437,
-      "p99": 0.6124999999883585,
-      "mean": 0.18580120000024908,
-      "opsPerSec": 5382.096563416488
+      "p50": 0.1132999999972526,
+      "p95": 0.166800000006333,
+      "p99": 0.3317000000097323,
+      "mean": 0.12165625000001455,
+      "opsPerSec": 8219.881839197578
     }
   },
   "history": {
     "n": 3000,
-    "p50": 0.08560000004945323,
-    "p95": 0.13360000000102445,
-    "p99": 0.24179999995976686,
-    "mean": 0.09073669999931008,
-    "opsPerSec": 11020.898930725974
+    "p50": 0.05380000002332963,
+    "p95": 0.07339999999385327,
+    "p99": 0.09979999999632128,
+    "mean": 0.05706400000019736,
+    "opsPerSec": 17524.18337299421
   },
   "matrix": {
     "n": 100000,
-    "p50": 0.000800000037997961,
-    "p95": 0.005400000023655593,
-    "p99": 0.010100000014062971,
-    "mean": 0.0019266010000539245,
-    "opsPerSec": 519048.83261869504
+    "p50": 0.0004000000189989805,
+    "p95": 0.003700000001117587,
+    "p99": 0.006400000012945384,
+    "mean": 0.0013915719999946304,
+    "opsPerSec": 718611.7570660078
   },
   "reference": {
     "n": 500,
-    "p50": 0.30310000001918525,
-    "p95": 0.4843000000109896,
-    "p99": 0.8964999999734573,
-    "mean": 0.33297940000111703,
-    "opsPerSec": 3003.188785842744
+    "p50": 0.22649999998975545,
+    "p95": 0.27009999999427237,
+    "p99": 0.37880000000586733,
+    "mean": 0.23407680000015535,
+    "opsPerSec": 4272.102147668356
   },
   "proxy": [
     {
       "label": "non-stream, swallowed (recovered)",
-      "directMs": 2.665553333328959,
-      "proxyMs": 5.880869999998443,
-      "overheadMs": 3.2153166666694837
+      "directMs": 1.2655450000025061,
+      "proxyMs": 2.740188333334421,
+      "overheadMs": 1.4746433333319147
     },
     {
       "label": "non-stream, healthy (passthrough)",
-      "directMs": 2.011831666667907,
-      "proxyMs": 4.724226666667771,
-      "overheadMs": 2.7123949999998636
+      "directMs": 0.9123449999994288,
+      "proxyMs": 1.9977183333350694,
+      "overheadMs": 1.0853733333356406
     },
     {
       "label": "streaming, swallowed (recovery tail)",
-      "directMs": 3.170769999997962,
-      "proxyMs": 5.6275283333379775,
-      "overheadMs": 2.4567583333400154
+      "directMs": 0.9342150000006465,
+      "proxyMs": 2.52561000000181,
+      "overheadMs": 1.5913950000011634
     }
   ]
 }
