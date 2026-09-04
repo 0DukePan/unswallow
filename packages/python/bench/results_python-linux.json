@@ -1,0 +1,217 @@
+{
+  "machine": {
+    "platform": "linux x86_64",
+    "python": "3.13.15",
+    "date": "2026-09-04T19:10:47Z"
+  },
+  "checkAndRescue": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A \u2014 small reasoning (~2\u20133KB)",
+      "payloadBytes": 2840,
+      "n": 3000,
+      "p50": 0.1349220001429785,
+      "p95": 0.15941699984978186,
+      "p99": 0.17523799988339306,
+      "mean": 0.1392501976716479,
+      "opsPerSec": 7181.3183515760675,
+      "retainedPerOpBytes": 2.79
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A \u2014 function-XML envelope (~1.5KB)",
+      "payloadBytes": 1872,
+      "n": 3000,
+      "p50": 0.14209599999048805,
+      "p95": 0.16640099988762813,
+      "p99": 0.18113800001628988,
+      "mean": 0.1466570179994354,
+      "opsPerSec": 6818.630391106478,
+      "retainedPerOpBytes": 5.144
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A \u2014 large reasoning (64KB)",
+      "payloadBytes": 65042,
+      "n": 500,
+      "p50": 0.1366950000374345,
+      "p95": 0.15961799999786308,
+      "p99": 0.16716200002520054,
+      "mean": 0.14086938200034638,
+      "opsPerSec": 7098.774664870334,
+      "retainedPerOpBytes": 49.44
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A \u2014 1MB reasoning",
+      "payloadBytes": 1011134,
+      "n": 100,
+      "p50": 0.22503000013784913,
+      "p95": 0.24886500000320666,
+      "p99": 0.2717479999319039,
+      "mean": 0.2307291100078146,
+      "opsPerSec": 4334.086843078148,
+      "retainedPerOpBytes": 182.42
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B \u2014 trailing text in content",
+      "payloadBytes": 1086,
+      "n": 2000,
+      "p50": 0.13251699988359178,
+      "p95": 0.15720300007160404,
+      "p99": 0.17696100007924542,
+      "mean": 0.1370838769985312,
+      "opsPerSec": 7294.803895944047,
+      "retainedPerOpBytes": 23.587
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C \u2014 field leak (detection-only)",
+      "payloadBytes": 522,
+      "n": 2000,
+      "p50": 0.08510899988323217,
+      "p95": 0.1064390000919957,
+      "p99": 0.11148799990223779,
+      "mean": 0.08778363000146783,
+      "opsPerSec": 11391.6455719965,
+      "retainedPerOpBytes": 9.263
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy \u2014 tool_calls already populated",
+      "payloadBytes": 1176,
+      "n": 2000,
+      "p50": 0.05921100000705337,
+      "p95": 0.07627299987689184,
+      "p99": 0.08275400000457012,
+      "mean": 0.06106122250514545,
+      "opsPerSec": 16377.005879889366,
+      "retainedPerOpBytes": 3.612
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard \u2014 discussion-only",
+      "payloadBytes": 1540,
+      "n": 2000,
+      "p50": 0.06876900010865938,
+      "p95": 0.08702200011612149,
+      "p99": 0.09269299994230096,
+      "mean": 0.07076914149740787,
+      "opsPerSec": 14130.452607463494,
+      "retainedPerOpBytes": 8.479
+    }
+  ],
+  "baseline": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A \u2014 small reasoning (~2\u20133KB)",
+      "n": 2000,
+      "mean": 0.030384980499093217,
+      "opsPerSec": 32910.99693250891
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A \u2014 function-XML envelope (~1.5KB)",
+      "n": 2000,
+      "mean": 0.014218013995900947,
+      "opsPerSec": 70333.31098761754
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A \u2014 large reasoning (64KB)",
+      "n": 500,
+      "mean": 0.5139479539993772,
+      "opsPerSec": 1945.7223094640665
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A \u2014 1MB reasoning",
+      "n": 100,
+      "mean": 7.885166470000513,
+      "opsPerSec": 126.82040433826566
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B \u2014 trailing text in content",
+      "n": 2000,
+      "mean": 0.009024820001286571,
+      "opsPerSec": 110805.53405579732
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C \u2014 field leak (detection-only)",
+      "n": 2000,
+      "mean": 0.004682497497356053,
+      "opsPerSec": 213561.24601553864
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy \u2014 tool_calls already populated",
+      "n": 2000,
+      "mean": 0.008562479503325449,
+      "opsPerSec": 116788.60073319013
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard \u2014 discussion-only",
+      "n": 2000,
+      "mean": 0.012433002000875604,
+      "opsPerSec": 80431.09780965002
+    }
+  ],
+  "baselineFp": [
+    {
+      "id": "fp-guard-discussion-only",
+      "naiveFired": false
+    },
+    {
+      "id": "fp-guard-json-array-args",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-json-string-args",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-multiple-partial",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-partial-json",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-user-content-mention",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-xml-empty-name",
+      "naiveFired": true
+    }
+  ],
+  "streaming": {
+    "n": 300,
+    "p50": 7.6075179999861575,
+    "p95": 7.752338000045711,
+    "p99": 7.877622000023621,
+    "mean": 7.599388943331178,
+    "opsPerSec": 131.58952745503927
+  },
+  "history": {
+    "n": 3000,
+    "p50": 0.30949800020607654,
+    "p95": 0.32337500010726217,
+    "p99": 0.34888300001512107,
+    "mean": 0.31391222900037974,
+    "opsPerSec": 3185.6038332255935
+  },
+  "matrix": {
+    "n": 100000,
+    "p50": 0.0009420000424142927,
+    "p95": 0.028923999934704625,
+    "p99": 0.03395299995645473,
+    "mean": 0.006489604199700807,
+    "opsPerSec": 154092.60244963836
+  }
+}

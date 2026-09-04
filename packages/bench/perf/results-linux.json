@@ -1,0 +1,267 @@
+{
+  "machine": {
+    "platform": "linux x64",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "cores": 4,
+    "totalMemBytes": 16766414848,
+    "node": "v22.23.2",
+    "date": "2026-09-04T19:10:20.638Z",
+    "gcAvailable": true
+  },
+  "checkAndRescue": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A — small reasoning (~2–3KB)",
+      "payloadBytes": 2874,
+      "n": 3000,
+      "p50ms": 0.03450399998109788,
+      "p95ms": 0.06282699998700991,
+      "p99ms": 0.08971799997380003,
+      "meanMs": 0.03963965166645357,
+      "opsPerSec": 25227.265073226783,
+      "retainedPerOpBytes": 25.96
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A — function-XML envelope (~1.5KB)",
+      "payloadBytes": 1857,
+      "n": 3000,
+      "p50ms": 0.02536800000234507,
+      "p95ms": 0.05309000000124797,
+      "p99ms": 0.0689589999965392,
+      "meanMs": 0.02987197566695007,
+      "opsPerSec": 33476.1922394837,
+      "retainedPerOpBytes": 4.764
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A — large reasoning (64KB)",
+      "payloadBytes": 65023,
+      "n": 500,
+      "p50ms": 0.05813799999305047,
+      "p95ms": 0.07785599998896942,
+      "p99ms": 0.09993699999176897,
+      "meanMs": 0.06133415800088551,
+      "opsPerSec": 16304.128606209326,
+      "retainedPerOpBytes": 0.28
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A — 1MB reasoning",
+      "payloadBytes": 1011116,
+      "n": 100,
+      "p50ms": 1.0035729999945033,
+      "p95ms": 2.273593999998411,
+      "p99ms": 2.3130179999861866,
+      "meanMs": 1.0840535699983593,
+      "opsPerSec": 922.4636380299116,
+      "retainedPerOpBytes": 0
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B — trailing text in content",
+      "payloadBytes": 1064,
+      "n": 2000,
+      "p50ms": 0.026849999994738027,
+      "p95ms": 0.054401000001234934,
+      "p99ms": 0.0783569999912288,
+      "meanMs": 0.03114881599995715,
+      "opsPerSec": 32103.948991235353,
+      "retainedPerOpBytes": 1.856
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C — field leak (detection-only)",
+      "payloadBytes": 510,
+      "n": 2000,
+      "p50ms": 0.01401600000099279,
+      "p95ms": 0.027220999996643513,
+      "p99ms": 0.05014300000038929,
+      "meanMs": 0.017827844999817898,
+      "opsPerSec": 56092.029070827935,
+      "retainedPerOpBytes": 12.912
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy — tool_calls already populated",
+      "payloadBytes": 1150,
+      "n": 2000,
+      "p50ms": 0.009958999988157302,
+      "p95ms": 0.01584900001762435,
+      "p99ms": 0.021369999973103404,
+      "meanMs": 0.01109043199957523,
+      "opsPerSec": 90167.81312380804,
+      "retainedPerOpBytes": 0
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard — discussion-only",
+      "payloadBytes": 1529,
+      "n": 2000,
+      "p50ms": 0.010951000003842637,
+      "p95ms": 0.01831399998627603,
+      "p99ms": 0.035545999999158084,
+      "meanMs": 0.013639101500069955,
+      "opsPerSec": 73318.61266630144,
+      "retainedPerOpBytes": 0.008
+    }
+  ],
+  "baseline": [
+    {
+      "scenario": "a-small",
+      "label": "Pattern A — small reasoning (~2–3KB)",
+      "n": 2000,
+      "meanMs": 0.0037516269995394396,
+      "opsPerSec": 266551.0190972511
+    },
+    {
+      "scenario": "a-xml",
+      "label": "Pattern A — function-XML envelope (~1.5KB)",
+      "n": 2000,
+      "meanMs": 0.004022595000016736,
+      "opsPerSec": 248595.7447856022
+    },
+    {
+      "scenario": "a-large",
+      "label": "Pattern A — large reasoning (64KB)",
+      "n": 500,
+      "meanMs": 0.06442087400017772,
+      "opsPerSec": 15522.918860076956
+    },
+    {
+      "scenario": "a-huge",
+      "label": "Pattern A — 1MB reasoning",
+      "n": 100,
+      "meanMs": 1.220030249998672,
+      "opsPerSec": 819.6518078146739
+    },
+    {
+      "scenario": "b-trailing",
+      "label": "Pattern B — trailing text in content",
+      "n": 2000,
+      "meanMs": 0.0017039904996199765,
+      "opsPerSec": 586857.7320255128
+    },
+    {
+      "scenario": "c-leak",
+      "label": "Pattern C — field leak (detection-only)",
+      "n": 2000,
+      "meanMs": 0.0014159450000151993,
+      "opsPerSec": 706242.1209787567
+    },
+    {
+      "scenario": "clean",
+      "label": "Healthy — tool_calls already populated",
+      "n": 2000,
+      "meanMs": 0.0009096204999077599,
+      "opsPerSec": 1099359.5681950934
+    },
+    {
+      "scenario": "fp-discussion",
+      "label": "False-positive guard — discussion-only",
+      "n": 2000,
+      "meanMs": 0.0012597385002154624,
+      "opsPerSec": 793815.5417405776
+    }
+  ],
+  "baselineFp": [
+    {
+      "id": "fp-guard-discussion-only",
+      "naiveFired": false
+    },
+    {
+      "id": "fp-guard-json-array-args",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-json-string-args",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-multiple-partial",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-partial-json",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-user-content-mention",
+      "naiveFired": true
+    },
+    {
+      "id": "fp-guard-xml-empty-name",
+      "naiveFired": true
+    }
+  ],
+  "streaming": {
+    "typical": {
+      "n": 300,
+      "p50": 0.6519339999940712,
+      "p95": 0.7013760000118054,
+      "p99": 0.9165269999939483,
+      "mean": 0.6612049333333077,
+      "opsPerSec": 1512.3904096703234
+    },
+    "big": {
+      "n": 20,
+      "p50": 5.8304300000017975,
+      "p95": 6.313900000008289,
+      "p99": 6.379322000022512,
+      "mean": 5.940617000001657,
+      "opsPerSec": 168.33268328857443
+    },
+    "nonStreamReference": {
+      "n": 2000,
+      "p50": 0.04328099999111146,
+      "p95": 0.08641099999658763,
+      "p99": 0.11823100000037812,
+      "mean": 0.05317180000024382,
+      "opsPerSec": 18806.961584814027
+    }
+  },
+  "history": {
+    "n": 3000,
+    "p50": 0.0454850000096485,
+    "p95": 0.08423700000275858,
+    "p99": 0.1019899999955669,
+    "mean": 0.0496591233330449,
+    "opsPerSec": 20137.28662291075
+  },
+  "matrix": {
+    "n": 100000,
+    "p50": 0.00018100001034326851,
+    "p95": 0.0029550000035669655,
+    "p99": 0.007634000008692965,
+    "mean": 0.0010367754199728369,
+    "opsPerSec": 964529.0394965186
+  },
+  "reference": {
+    "n": 500,
+    "p50": 0.22318500000983477,
+    "p95": 0.23496699999668635,
+    "p99": 0.2825569999986328,
+    "mean": 0.22694771399960154,
+    "opsPerSec": 4406.301268149173
+  },
+  "proxy": [
+    {
+      "label": "non-stream, swallowed (recovered)",
+      "directMs": 1.9558471666658686,
+      "proxyMs": 3.7179985166687404,
+      "overheadMs": 1.7621513500028718
+    },
+    {
+      "label": "non-stream, healthy (passthrough)",
+      "directMs": 1.697449766668918,
+      "proxyMs": 3.548457199999636,
+      "overheadMs": 1.851007433330718
+    },
+    {
+      "label": "streaming, swallowed (recovery tail)",
+      "directMs": 1.7414210333348212,
+      "proxyMs": 3.553489033335063,
+      "overheadMs": 1.8120680000002418
+    }
+  ]
+}
