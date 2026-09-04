@@ -263,12 +263,13 @@ function cmdMatrix(args: Map<string, string>): number {
   console.log();
   console.log(
     table([
-      ['engine / harness', 'version range', 'pattern', 'behavior', 'source'],
+      ['engine / harness', 'version range', 'pattern', 'behavior', 'verified', 'source'],
       ...entries.map((e) => [
         e.engine ?? e.harness ?? '—',
         e.versionRange,
         e.pattern,
         e.behavior,
+        e.verified ? 'yes' : 'no',
         e.source.replace('https://github.com/', ''),
       ]),
     ])

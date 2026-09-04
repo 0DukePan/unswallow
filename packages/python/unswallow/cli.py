@@ -217,8 +217,9 @@ def _cmd_matrix(args: argparse.Namespace) -> int:
     print("unswallow engine matrix — v{} (updated {})".format(file["matrixVersion"], file["updated"]))
     print("every row is sourced; update via PR against packages/matrix/data/engine-matrix.json")
     print()
+    print("  {:<14} {:<18} {:<8} {:<9} {:<9} {}".format("engine/harness", "version range", "pattern", "behavior", "verified", "source"))
     for e in entries:
-        print("  {:<14} {:<18} {:<8} {:<9} {}".format(e.engine or e.harness or "-", e.version_range, e.pattern, e.behavior, e.source.replace("https://github.com/", "")))
+        print("  {:<14} {:<18} {:<8} {:<9} {:<9} {}".format(e.engine or e.harness or "-", e.version_range, e.pattern, e.behavior, "yes" if e.verified else "no", e.source.replace("https://github.com/", "")))
     return 0
 
 
