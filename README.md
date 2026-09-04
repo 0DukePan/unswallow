@@ -343,6 +343,22 @@ Measured loopback with an in-process upstream (`npm run bench:perf`, proxy secti
 | non-stream, healthy (passthrough) | 0.85 ms | 2.11 ms | +1.26 ms |
 | streaming, swallowed (recovery tail) | 0.98 ms | 2.82 ms | +1.84 ms |
 
+### Same suite on Linux (CI, ubuntu-latest)
+
+The full performance suite — including the naive baseline — also runs on Linux CI and commits its reports next to the Windows ones: [packages/bench/perf/results-linux.md](packages/bench/perf/results-linux.md) and [packages/python/bench/results_python-linux.md](packages/python/bench/results_python-linux.md). Measured 2026-09-04 · Node v22.23.2 / Python 3.13.15 · AMD EPYC 7763 · linux x64:
+
+| workload | linux | win32 (above) |
+| --- | --- | --- |
+| check, small reasoning (TS) | 0.040 ms · ~25,200 ops/s | 0.108 ms · ~9,300 ops/s |
+| check, 1 MB reasoning (TS) | 1.084 ms · ~920 ops/s | 1.664 ms · ~600 ops/s |
+| stream, typical reasoning (TS) | 0.661 ms | 0.946 ms |
+| proxy added, non-stream swallowed | +1.76 ms | +1.74 ms |
+| check, small reasoning (Python) | 0.139 ms · ~7,200 ops/s | 0.219 ms · ~4,600 ops/s |
+| check, 1 MB reasoning (Python) | 0.231 ms · ~4,300 ops/s | 0.473 ms · ~2,100 ops/s |
+| stream, typical reasoning (Python) | 7.599 ms | 13.439 ms |
+
+Three things worth noting: Linux runs roughly 1.5–3x faster on TS across the board (server chip, no desktop contention); the naive baseline fires on the same 6/7 guard fixtures there too; and on 1 MB inputs the naive scan loses to the real check in *both* languages on Linux (TS 1.220 vs 1.084 ms, Python 7.885 vs 0.231 ms) — the structural short-circuit wins once regexes have room to run.
+
 ## API
 
 ```ts
