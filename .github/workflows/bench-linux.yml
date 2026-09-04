@@ -31,11 +31,10 @@ jobs:
           cp packages/bench/perf/results.json packages/bench/perf/results-linux.json
           cp packages/python/bench/results_python.md packages/python/bench/results_python-linux.md
           cp packages/python/bench/results_python.json packages/python/bench/results_python-linux.json
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'docs: linux perf numbers [skip ci]'
-          file_pattern: |
-            packages/bench/perf/results-linux.md
-            packages/bench/perf/results-linux.json
-            packages/python/bench/results_python-linux.md
-            packages/python/bench/results_python-linux.json
+      - name: Commit Linux numbers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/bench/perf/results-linux.md packages/bench/perf/results-linux.json packages/python/bench/results_python-linux.md packages/python/bench/results_python-linux.json
+          git diff --cached --quiet || git commit -m "docs: linux perf numbers [skip ci]"
+          git push
