@@ -27,6 +27,8 @@ jobs:
           grep -q "SWALLOW DETECTED" /tmp/unswallow-check.out
           node packages/unswallow/dist/cli/index.js matrix > /tmp/unswallow-matrix.out
           grep -q "open-webui" /tmp/unswallow-matrix.out
+          grep -q "verified" /tmp/unswallow-matrix.out
+          node packages/unswallow/dist/cli/index.js --version | grep -q "^0\.1\.2$"
           node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/vllm-qwen3-0.19-tool-choice-required-pattern-b.json > /tmp/unswallow-b.out
           grep -q "SWALLOW DETECTED" /tmp/unswallow-b.out
           node packages/unswallow/dist/cli/index.js check --fixture packages/bench/fixtures/fp-guard-discussion-only.json > /tmp/unswallow-fp.out
@@ -59,3 +61,5 @@ jobs:
           grep -q "SWALLOW DETECTED" /tmp/py-check.out
           python -m unswallow.cli matrix > /tmp/py-matrix.out
           grep -q "open-webui" /tmp/py-matrix.out
+          grep -q "verified" /tmp/py-matrix.out
+          python -c "import unswallow; assert unswallow.__version__ == '0.1.2', unswallow.__version__"

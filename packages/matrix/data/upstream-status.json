@@ -6,8 +6,10 @@
     "title": "vLLM 0.19 may lose tool calls for Qwen/Qwen3.5-35B-A3B-FP8 when XML tool_call is emitted inside <think>",
     "state": "open",
     "comments": 24,
-    "updatedAt": "2026-06-12T19:40:17Z",
-    "labels": []
+    "updatedAt": "2026-08-31T23:45:10Z",
+    "labels": [
+      "tool-calling"
+    ]
   },
   "sglang-30744": {
     "label": "SGLang pattern A",
