@@ -7,7 +7,9 @@ Run from the repo root:
 """
 
 import asyncio
+import copy
 import gc
+import hashlib
 import json
 import platform
 import re
@@ -17,8 +19,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from unswallow import check_and_rescue, check_and_rescue_stream, sanitize_history
+from unswallow import check_and_rescue, check_and_rescue_stream, extract_all_envelopes, sanitize_history
 from unswallow.matrix import load_matrix, match_matrix_entry
+from unswallow.stream import StreamAccumulator
 
 WORDS = [
     "the", "user", "asked", "about", "weather", "tokyo", "berlin", "need", "call", "tool",
@@ -33,14 +36,19 @@ CITIES = ["Tokyo", "Berlin", "Paris", "Oslo", "Shanghai", "Kyoto", "Rome", "Beij
 
 
 def mulberry32(seed):
+    """Bit-for-bit match of the canonical implementation used by perf.mjs.
+    The final `^ t` step is load-bearing: omitting it (as this function once
+    did) silently produces a different sequence, which breaks the
+    cross-language "same seeds, same payloads" guarantee."""
     a = seed & 0xFFFFFFFF
 
     def rng():
         nonlocal a
         a = (a + 0x6D2B79F5) & 0xFFFFFFFF
-        t = a
-        t = ((t ^ (t >> 15)) * (t | 1)) & 0xFFFFFFFF
-        t = (t + ((t ^ (t >> 7)) * (t | 61))) & 0xFFFFFFFF
+        t = ((a ^ (a >> 15)) * (a | 1)) & 0xFFFFFFFF
+        # JS evaluates `t + Math.imul(t ^ t >>> 7, 61 | t) ^ t` with ToInt32
+        # coercion on the sum before the XOR, so the sum must be masked here.
+        t = ((t + ((t ^ (t >> 7)) * (t | 61))) & 0xFFFFFFFF) ^ t
         return ((t ^ (t >> 14)) & 0xFFFFFFFF) / 4294967296.0
 
     return rng
@@ -162,42 +170,75 @@ def percentile(sorted_samples, p):
     return sorted_samples[idx]
 
 
-def measure(fn, iterations, warmup=200):
-    for _ in range(warmup):
-        fn()
-    samples = []
-    for _ in range(iterations):
-        t0 = time.perf_counter()
-        fn()
-        samples.append((time.perf_counter() - t0) * 1000.0)
-    sorted_samples = sorted(samples)
-    mean = sum(samples) / iterations
+def _mean(arr):
+    return sum(arr) / len(arr)
+
+
+def _median(arr):
+    s = sorted(arr)
+    m = len(s) >> 1
+    return s[m] if len(s) % 2 else (s[m - 1] + s[m]) / 2
+
+
+def measure(fn, iterations, warmup=200, runs=5):
+    """Repeat-run measurement mirroring perf.mjs: `runs` full passes, each with
+    its own warmup; percentiles from pooled samples; mean = median of the
+    per-run means with the per-run min-max spread reported alongside."""
+    per_run_means = []
+    pooled = []
+    for _ in range(runs):
+        for _ in range(warmup):
+            fn()
+        samples = []
+        for _ in range(iterations):
+            t0 = time.perf_counter()
+            fn()
+            samples.append((time.perf_counter() - t0) * 1000.0)
+        pooled.extend(samples)
+        per_run_means.append(_mean(samples))
+    sorted_samples = sorted(pooled)
+    mean = _median(per_run_means)
     return {
-        "n": iterations,
+        "n": iterations * runs,
+        "runs": runs,
+        "perRunN": iterations,
         "p50": percentile(sorted_samples, 0.5),
         "p95": percentile(sorted_samples, 0.95),
         "p99": percentile(sorted_samples, 0.99),
         "mean": mean,
+        "meanMin": min(per_run_means),
+        "meanMax": max(per_run_means),
+        "perRunMeans": per_run_means,
         "opsPerSec": 1000.0 / mean,
     }
 
 
-async def measure_stream_async(stream_fn, iterations, warmup=20):
-    for _ in range(warmup):
-        await stream_fn()
-    samples = []
-    for _ in range(iterations):
-        t0 = time.perf_counter()
-        await stream_fn()
-        samples.append((time.perf_counter() - t0) * 1000.0)
-    sorted_samples = sorted(samples)
-    mean = sum(samples) / iterations
+async def measure_stream_async(stream_fn, iterations, warmup=20, runs=3):
+    per_run_means = []
+    pooled = []
+    for _ in range(runs):
+        for _ in range(warmup):
+            await stream_fn()
+        samples = []
+        for _ in range(iterations):
+            t0 = time.perf_counter()
+            await stream_fn()
+            samples.append((time.perf_counter() - t0) * 1000.0)
+        pooled.extend(samples)
+        per_run_means.append(_mean(samples))
+    sorted_samples = sorted(pooled)
+    mean = _median(per_run_means)
     return {
-        "n": iterations,
+        "n": iterations * runs,
+        "runs": runs,
+        "perRunN": iterations,
         "p50": percentile(sorted_samples, 0.5),
         "p95": percentile(sorted_samples, 0.95),
         "p99": percentile(sorted_samples, 0.99),
         "mean": mean,
+        "meanMin": min(per_run_means),
+        "meanMax": max(per_run_means),
+        "perRunMeans": per_run_means,
         "opsPerSec": 1000.0 / mean,
     }
 
@@ -278,13 +319,40 @@ def naive_check(message):
         return {"found": True, "name": None}
 
 
+def probe_clone(payload):
+    """The recovery deep copy mechanism (CPython shares immutable strings)."""
+    return copy.deepcopy(payload)
+
+
+def probe_scan(reasoning_text):
+    """The envelope scan mechanism over the reasoning text."""
+    return extract_all_envelopes(reasoning_text)
+
+
+def probe_tracker_loop(chunks):
+    """The streaming per-chunk leak-tracker loop (push only, no final check)."""
+    acc = StreamAccumulator()
+    for c in chunks:
+        acc.push(c)
+    return acc
+
+
 async def main_async():
     rng = mulberry32(0x756E7377)
     payloads = {}
     sizes = {}
     for key, _label, _iters, _ret in SCENARIOS:
         payloads[key] = [make_payload(rng, key) for _ in range(50)]
-        sizes[key] = round(sum(len(json.dumps(p).encode("utf-8")) for p in payloads[key]) / 50)
+        # separators match JSON.stringify byte-for-byte so reported sizes line
+        # up with the TypeScript report.
+        sizes[key] = round(
+            sum(len(json.dumps(p, separators=(",", ":")).encode("utf-8")) for p in payloads[key]) / 50
+        )
+    # Cross-language corpus identity: must match the sha256 the TypeScript
+    # harness records, or the "same seeds, same payloads" guarantee is broken.
+    corpus_hash = hashlib.sha256(
+        json.dumps(payloads["a-small"], separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
     check_rows = []
     for key, label, iters, ret_iters in SCENARIOS:
@@ -304,10 +372,14 @@ async def main_async():
             "label": label,
             "payloadBytes": sizes[key],
             "n": res["n"],
+            "runs": res["runs"],
             "p50": res["p50"],
             "p95": res["p95"],
             "p99": res["p99"],
             "mean": res["mean"],
+            "meanMin": res["meanMin"],
+            "meanMax": res["meanMax"],
+            "perRunMeans": res["perRunMeans"],
             "opsPerSec": res["opsPerSec"],
             "retainedPerOpBytes": retained["perOpBytes"],
         })
@@ -372,7 +444,18 @@ async def main_async():
             naive_check(p["choices"][0]["message"])
 
         res = measure(naive_run, min(iters, 2000))
-        baseline_rows.append({"scenario": key, "label": label, "n": res["n"], "mean": res["mean"], "opsPerSec": res["opsPerSec"]})
+        baseline_rows.append(
+            {
+                "scenario": key,
+                "label": label,
+                "n": res["n"],
+                "mean": res["mean"],
+                "meanMin": res["meanMin"],
+                "meanMax": res["meanMax"],
+                "perRunMeans": res["perRunMeans"],
+                "opsPerSec": res["opsPerSec"],
+            }
+        )
 
     baseline_fp = []
     fixtures_dir = Path(__file__).resolve().parent.parent.parent / "bench" / "fixtures"
@@ -382,7 +465,46 @@ async def main_async():
         naive = naive_check(message)
         baseline_fp.append({"id": fixture.get("id") or f.name, "naiveFired": bool(naive["found"])})
 
-    return check_rows, stream_chunks, stream_res, history_res, matrix_res, baseline_rows, baseline_fp
+    # Real fixture corpus — the pinned upstream-derived shapes, same harness.
+    fixture_rows = []
+    for f in sorted(fixtures_dir.glob("*.json")):
+        fixture = json.loads(f.read_text(encoding="utf-8"))
+        fid = fixture.get("id") or fixture.get("response", {}).get("id") or f.name
+        opts = {"engine_hint": fixture.get("engine"), "engine_version": fixture.get("version")}
+        payload = fixture.get("response") or fixture.get("chunks") or {}
+        payload_bytes = len(json.dumps(payload).encode("utf-8"))
+        if fixture.get("stream"):
+            chunks = fixture.get("chunks") or []
+
+            async def run_stream(chunks=chunks, opts=opts):
+                await check_and_rescue_stream(_iter(chunks), **opts)
+
+            res = await measure_stream_async(run_stream, 200, warmup=20, runs=3)
+        else:
+            response = fixture["response"]
+            iters = max(100, min(3000, round(2_000_000 / max(1, payload_bytes))))
+
+            def run(response=response, opts=opts):
+                check_and_rescue(response, **opts)
+
+            res = measure(run, iters, warmup=100, runs=3)
+        fixture_rows.append({"id": fid, "stream": bool(fixture.get("stream")), "payloadBytes": payload_bytes, **res})
+
+    # Component probes — the mechanisms cited in the README divergence note.
+    huge = payloads["a-huge"][0]
+    huge_reasoning = huge["choices"][0]["message"]["reasoning"]
+    clone_res = measure(lambda: probe_clone(huge), 200, warmup=50, runs=3)
+    scan_res = measure(lambda: probe_scan(huge_reasoning), 300, warmup=50, runs=3)
+    tracker_loop_res = measure(lambda: probe_tracker_loop(stream_chunks), 200, warmup=50, runs=3)
+    probes = {"clone": clone_res, "scan": scan_res, "trackerLoop": tracker_loop_res}
+    probes_ctx = {
+        "clonePayloadBytes": len(json.dumps(huge).encode("utf-8")),
+        "scanBytes": len(huge_reasoning.encode("utf-8")),
+        "trackerChunks": len(stream_chunks) - 1,
+        "streamTotalMs": stream_res["mean"],
+    }
+
+    return check_rows, stream_chunks, stream_res, history_res, matrix_res, baseline_rows, baseline_fp, fixture_rows, probes, probes_ctx, corpus_hash
 
 
 async def _iter(chunks):
@@ -391,7 +513,19 @@ async def _iter(chunks):
 
 
 def main():
-    check_rows, stream_chunks, stream_res, history_res, matrix_res, baseline_rows, baseline_fp = asyncio.run(main_async())
+    (
+        check_rows,
+        stream_chunks,
+        stream_res,
+        history_res,
+        matrix_res,
+        baseline_rows,
+        baseline_fp,
+        fixture_rows,
+        probes,
+        probes_ctx,
+        corpus_hash,
+    ) = asyncio.run(main_async())
 
     machine = {
         "platform": "{} {}".format(platform.system().lower(), platform.machine().lower()),
@@ -401,6 +535,7 @@ def main():
 
     fmt = lambda r: "{:.2f} / {:.2f} / {:.2f} ms".format(r["p50"], r["p95"], r["p99"])
     fmt_mean = lambda r: "{:.3f} ms".format(r["mean"])
+    fmt_spread = lambda r: "{:.3f} ms ({:.3f}–{:.3f})".format(r["mean"], r["meanMin"], r["meanMax"])
     fmt_ops = lambda r: "{:,} ops/s".format(int(r["opsPerSec"]))
 
     lines = [
@@ -410,9 +545,13 @@ def main():
         "",
         "Mirrors packages/bench/perf.mjs scenario-for-scenario (same seeds, same payload generation, same percentile methodology).",
         "",
+        "Methodology: every scenario runs 5 full passes (3 for async work); percentiles are pooled across runs; the reported mean is the median of the per-run means, and the per-run min–max spread is in parentheses.",
+        "",
+        "Corpus identity: sha256 of the a-small payload pool is {} — the TypeScript report must carry the same hash (cross-language \"same seeds, same payloads\" check).".format(corpus_hash),
+        "",
         "## check_and_rescue — latency per call (warm)",
         "",
-        "| scenario | payload | n | p50 / p95 / p99 | mean | throughput | retained/op |",
+        "| scenario | payload | n | p50 / p95 / p99 | mean (min–max) | throughput | retained/op |",
         "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for r in check_rows:
@@ -422,7 +561,7 @@ def main():
                 r["payloadBytes"] / 1024,
                 r["n"],
                 fmt(r),
-                fmt_mean(r),
+                fmt_spread(r),
                 fmt_ops(r),
                 r["retainedPerOpBytes"] / 1024,
             )
@@ -431,33 +570,43 @@ def main():
         "",
         "## check_and_rescue_stream",
         "",
-        "| stream | chunks | payload | p50 / p95 / p99 | mean |",
+        "| stream | chunks | payload | p50 / p95 / p99 | mean (min–max) |",
         "| --- | --- | --- | --- | --- |",
         "| typical reasoning stream, envelope split across deltas | {} | 19.7 KB | {} | {} |".format(
-            len(stream_chunks) - 1, fmt(stream_res), fmt_mean(stream_res)
+            len(stream_chunks) - 1, fmt(stream_res), fmt_spread(stream_res)
         ),
+        "",
+        "## Component probes (why TS and Python diverge)",
+        "",
+        "The mechanisms cited in the README divergence note, measured in isolation on the same payloads: the recovery deep copy, the envelope scan over the reasoning text, and the streaming per-chunk leak-tracker loop (accumulator `push` only, no final check).",
+        "",
+        "| probe | payload | n | mean (min–max) |",
+        "| --- | --- | --- | --- |",
+        "| deep copy of 1 MB payload (copy.deepcopy) | {:.1f} KB | {} | {} |".format(probes_ctx["clonePayloadBytes"] / 1024, probes["clone"]["n"], fmt_spread(probes["clone"])),
+        "| envelope scan of 1 MB reasoning (extract_all_envelopes) | {:.1f} KB | {} | {} |".format(probes_ctx["scanBytes"] / 1024, probes["scan"]["n"], fmt_spread(probes["scan"])),
+        "| leak-tracker loop, {} chunk pushes (19.7 KB) | — | {} | {} |".format(probes_ctx["trackerChunks"], probes["trackerLoop"]["n"], fmt_spread(probes["trackerLoop"])),
         "",
         "## Pattern D — sanitizeHistory",
         "",
-        "| corpus | p50 / p95 / p99 | mean | throughput |",
+        "| corpus | p50 / p95 / p99 | mean (min–max) | throughput |",
         "| --- | --- | --- | --- |",
-        "| 40-message history with leaked reasoning | {} | {} | {} |".format(fmt(history_res), fmt_mean(history_res), fmt_ops(history_res)),
+        "| 40-message history with leaked reasoning | {} | {} | {} |".format(fmt(history_res), fmt_spread(history_res), fmt_ops(history_res)),
         "",
         "## Matrix lookup — match_matrix_entry",
         "",
-        "| workload | p50 / p95 / p99 | mean | throughput |",
+        "| workload | p50 / p95 / p99 | mean (min–max) | throughput |",
         "| --- | --- | --- | --- |",
-        "| 100k lookups (engine/version/pattern) | {} | {} | {} |".format(fmt(matrix_res), fmt_mean(matrix_res), fmt_ops(matrix_res)),
+        "| 100k lookups (engine/version/pattern) | {} | {} | {} |".format(fmt(matrix_res), fmt_spread(matrix_res), fmt_ops(matrix_res)),
         "",
         "## Naive baseline (marker scan, no validation, no recovery)",
         "",
         "What the simplest possible approach costs on the same payloads: one marker regex over the text channels plus a single `json.loads` attempt, no envelope validation, no false-positive guard, nothing recovered.",
         "",
-        "| scenario | mean | throughput |",
+        "| scenario | mean (min–max) | throughput |",
         "| --- | --- | --- |",
     ]
     for r in baseline_rows:
-        lines.append("| {} | {} | {} |".format(r["label"], fmt_mean(r), fmt_ops(r)))
+        lines.append("| {} | {} | {} |".format(r["label"], fmt_spread(r), fmt_ops(r)))
     fired = [f["id"] for f in baseline_fp if f["naiveFired"]]
     lines += [
         "",
@@ -465,7 +614,20 @@ def main():
             len(fired), len(baseline_fp), ", ".join(fired) if fired else "none"
         ),
         "",
+        "## Real fixture corpus (pinned upstream-derived shapes)",
+        "",
+        "The hash-pinned fixtures run through the same harness as the synthetic scenarios — real upstream-derived shapes (reconstructed from the linked vLLM/SGLang/llama.cpp reports), including the false-positive guards.",
+        "",
+        "| fixture | stream | payload | n | mean (min–max) | throughput |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
+    for r in fixture_rows:
+        lines.append(
+            "| {} | {} | {:.1f} KB | {} | {} | {} |".format(
+                r["id"], "yes" if r["stream"] else "no", r["payloadBytes"] / 1024, r["n"], fmt_spread(r), fmt_ops(r)
+            )
+        )
+    lines += [""]
     report = "\n".join(lines)
 
     out_dir = Path(__file__).resolve().parent
@@ -474,12 +636,16 @@ def main():
         json.dumps(
             {
                 "machine": machine,
+                "corpusHash": corpus_hash,
                 "checkAndRescue": check_rows,
                 "baseline": baseline_rows,
                 "baselineFp": baseline_fp,
                 "streaming": stream_res,
                 "history": history_res,
                 "matrix": matrix_res,
+                "probes": probes,
+                "probesCtx": probes_ctx,
+                "fixtures": fixture_rows,
             },
             indent=2,
         ),

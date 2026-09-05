@@ -288,30 +288,34 @@ Regenerate with `npm run bench`; verified read-only in CI (`npm run bench:check`
 
 ### Performance — measured
 
-`npm run bench:perf` — seeded, deterministic corpus; warm latencies, p50/p95/p99, throughput, and retained heap per call (measured with `--expose-gc`). Full report with machine info in [`packages/bench/perf/results.md`](packages/bench/perf/results.md). Latest run (measured 2026-09-04):
+`npm run bench:perf` — seeded, deterministic corpus; warm latencies, p50/p95/p99, throughput, and retained heap per call (measured with `--expose-gc`). Full report with machine info in [`packages/bench/perf/results.md`](packages/bench/perf/results.md). Latest run (measured 2026-09-05):
 
 *Node v22.16.0 · AMD Ryzen 5 2600X (12 cores) · 15.9 GB RAM · win32 x64*
 
-| scenario | payload | p50 / p95 / p99 | mean | throughput |
+Every scenario runs 5 full passes (3 for async work); percentiles are pooled across runs, the reported mean is the median of the per-run means, and the per-run min–max spread is in parentheses — a single noisy run shows up in the spread instead of hiding in the mean. Both reports print the sha256 of the generated corpus, and the TypeScript and Python reports carry the same hash (`3066ff5a…`) — that is the mechanical check behind the "same seeds, same payloads" claim.
+
+| scenario | payload | p50 / p95 / p99 | mean (min–max) | throughput |
 | --- | --- | --- | --- | --- |
-| Pattern A — small reasoning | 2.8 KB | 0.10 / 0.13 / 0.20 ms | 0.108 ms | ~9,300 ops/s |
-| Pattern A — function-XML envelope | 1.8 KB | 0.09 / 0.12 / 0.16 ms | 0.093 ms | ~10,800 ops/s |
-| Pattern A — large reasoning | 63.5 KB | 0.13 / 0.15 / 0.19 ms | 0.132 ms | ~7,600 ops/s |
-| Pattern A — 1 MB reasoning | 987 KB | 1.52 / 3.08 / 4.55 ms | 1.664 ms | ~600 ops/s |
-| Pattern B — trailing text | 1.0 KB | 0.09 / 0.11 / 0.16 ms | 0.093 ms | ~10,800 ops/s |
-| Pattern C — field leak | 0.5 KB | 0.06 / 0.09 / 0.11 ms | 0.061 ms | ~16,400 ops/s |
-| Healthy (tool_calls populated) | 1.1 KB | 0.05 / 0.06 / 0.08 ms | 0.048 ms | ~20,700 ops/s |
-| False-positive guard (discussion-only) | 1.5 KB | 0.05 / 0.07 / 0.09 ms | 0.052 ms | ~19,200 ops/s |
-| Streaming — typical reasoning stream (843 chunks, 19.7 KB) | — | 0.91 / 1.28 / 1.59 ms | 0.946 ms | ~1,060 streams/s |
-| Streaming — 500 KB content stream (5,323 chunks) | — | 7.46 / 8.30 / 8.75 ms | 7.640 ms | ~130 streams/s |
-| sanitizeHistory — 40-message history | — | 0.05 / 0.08 / 0.09 ms | 0.058 ms | ~17,200 ops/s |
-| matchMatrixEntry — 100k lookups | — | 0.00 / 0.00 / 0.01 ms | 0.001 ms | ~702,000 ops/s |
+| Pattern A — small reasoning | 2.8 KB | 0.10 / 0.18 / 0.31 ms | 0.115 ms (0.096–0.134) | ~8,700 ops/s |
+| Pattern A — function-XML envelope | 1.8 KB | 0.13 / 0.30 / 0.70 ms | 0.151 ms (0.133–0.208) | ~6,600 ops/s |
+| Pattern A — large reasoning | 63.5 KB | 0.23 / 0.58 / 1.24 ms | 0.277 ms (0.195–0.361) | ~3,600 ops/s |
+| Pattern A — 1 MB reasoning | 987 KB | 3.52 / 8.38 / 11.85 ms | 4.029 ms (2.142–5.027) | ~250 ops/s |
+| Pattern B — trailing text | 1.0 KB | 0.09 / 0.17 / 0.31 ms | 0.100 ms (0.086–0.135) | ~10,000 ops/s |
+| Pattern C — field leak | 0.5 KB | 0.05 / 0.09 / 0.13 ms | 0.057 ms (0.050–0.073) | ~17,500 ops/s |
+| Healthy (tool_calls populated) | 1.1 KB | 0.05 / 0.09 / 0.13 ms | 0.059 ms (0.050–0.067) | ~17,000 ops/s |
+| False-positive guard (discussion-only) | 1.5 KB | 0.05 / 0.09 / 0.11 ms | 0.057 ms (0.054–0.066) | ~17,700 ops/s |
+| Streaming — typical reasoning stream (843 chunks, 19.7 KB) | — | 2.44 / 4.37 / 5.71 ms | 2.420 ms (2.262–3.080) | ~410 streams/s |
+| Streaming — 500 KB content stream (5,323 chunks) | — | 11.45 / 19.54 / 22.38 ms | 12.729 ms (10.426–14.048) | ~80 streams/s |
+| sanitizeHistory — 40-message history | — | 0.09 / 0.20 / 0.63 ms | 0.114 ms (0.082–0.139) | ~8,800 ops/s |
+| matchMatrixEntry — 100k lookups | — | 0.00 / 0.01 / 0.01 ms | 0.002 ms (0.001–0.002) | ~615,000 ops/s |
+
+The pinned fixtures — the 22 upstream-derived shapes from the correctness table — also run through the same harness (0.05–0.33 ms per fixture in this run, reported per-fixture in [`results.md`](packages/bench/perf/results.md) §Real fixture corpus), so the synthetic word-salad corpus is anchored against real bug-report shapes.
 
 ### Naive baseline — what the simplest approach costs
 
-Same payloads, one marker regex plus a single `JSON.parse` attempt: no envelope validation, no false-positive guard, nothing recovered. It is 20–60× faster on small inputs — and it fires on **6 of the 7** pinned guard fixtures where nothing should recover (`fp-guard-json-array-args`, `fp-guard-json-string-args`, `fp-guard-multiple-partial`, `fp-guard-partial-json`, `fp-guard-user-content-mention`, `fp-guard-xml-empty-name`; only the marker-free discussion case stays silent). On 1 MB inputs it doesn't even win (1.218 ms vs 1.664 ms): a full-text regex scan with no structural short-circuiting scales worse than the real check. That gap — speed without correctness — is exactly what the guard fixtures exist to price.
+Same payloads, one marker regex plus a single `JSON.parse` attempt: no envelope validation, no false-positive guard, nothing recovered. It is 15–75× faster on small inputs — and it fires on **6 of the 7** pinned guard fixtures where nothing should recover (`fp-guard-json-array-args`, `fp-guard-json-string-args`, `fp-guard-multiple-partial`, `fp-guard-partial-json`, `fp-guard-user-content-mention`, `fp-guard-xml-empty-name`; only the marker-free discussion case stays silent). On 1 MB inputs the two trade places run to run (2.048 ms vs 4.029 ms in this run): the real check's 1 MB cost is dominated by the recovery deep copy, not the scan, so the comparison flips with machine load — on Linux CI the real check wins (see below). That gap — speed without correctness — is exactly what the guard fixtures exist to price.
 
-Notes, honestly stated: every check is linear in payload size (a 1 MB reasoning block costs ~1.7 ms); recovery only runs when an envelope is found, and only the recovered path makes a deep copy; a healthy response (already-parsed `tool_calls`) is the cheapest path by design — it returns before any scanning. JSON.parse of the 64 KB payload alone measures ~0.24 ms, so the scan itself is the minority of the cost. Two methodology notes: the corpus text is seeded word-salad, not production reasoning traces, so brace/quote-heavy real CoT may scan slightly differently; and `retained/op` is a post-GC floor (negative GC noise is clamped to `0.00`), i.e. "nothing retained after a full collection", not "nothing allocated". Benchmarks are wall-clock on a shared dev machine — the JSON.parse reference row in the full report is the load anchor (it reads ~0.24 ms on a quiet box, 0.236 ms in the run above): compare it across runs to judge machine load before comparing anything else. Treat cross-machine comparisons with care, and run `npm run bench:perf` on your own hardware before quoting numbers anywhere.
+Notes, honestly stated: every check is linear in payload size (this run: ~4 ms for a 1 MB reasoning block, ~0.3 ms for 64 KB); recovery only runs when an envelope is found, and only the recovered path makes a deep copy; a healthy response (already-parsed `tool_calls`) is the cheapest path by design — it returns before any scanning. The `JSON.parse(JSON.stringify(payload))` round-trip of the 64 KB payload alone measures ~0.41 ms in this run (~0.24 ms on quieter runs), so the scan is the minority of the cost. Two methodology notes: the corpus text is seeded word-salad, not production reasoning traces, so brace/quote-heavy real CoT may scan slightly differently (the pinned fixtures are the real-shaped anchor); and `retained/op` is a post-GC floor (negative GC noise is clamped to `0.00`), i.e. "nothing retained after a full collection", not "nothing allocated". Benchmarks are wall-clock on a shared dev machine — the JSON.parse reference row in the full report is the load anchor (0.409 ms this run): compare it across runs to judge machine load before comparing anything else. Treat cross-machine comparisons with care, and run `npm run bench:perf` on your own hardware before quoting numbers anywhere.
 
 ### Python parity — 22/22, exact confidence equality
 
@@ -321,33 +325,33 @@ Notes, honestly stated: every check is linear in payload size (a 1 MB reasoning 
 22 / 22 fixtures: expectations + exact confidence parity with the TypeScript core
 ```
 
-Same seeds, same payloads, same percentile methodology — `packages/python/bench/results_python.md` mirrors the TS report. Honest headline numbers (measured 2026-09-04, Python 3.14.6, same machine):
+Same seeds, same payloads (both reports print the same corpus sha256), same percentile methodology — `packages/python/bench/results_python.md` mirrors the TS report. Honest headline numbers (measured 2026-09-05, Python 3.14.6, same machine):
 
-| workload | Python | TypeScript (same run date) |
+| workload | Python | TypeScript (same run) |
 | --- | --- | --- |
-| check_and_rescue, small reasoning | ~0.22 ms · ~4,600 ops/s | ~0.11 ms · ~9,300 ops/s |
-| check_and_rescue, 1 MB reasoning | ~0.47 ms · ~2,100 ops/s | ~1.66 ms · ~600 ops/s |
-| check_and_rescue_stream (843 chunks) | ~13.4 ms | ~0.95 ms |
-| sanitizeHistory (40-message history) | ~0.38 ms | ~0.06 ms |
-| match_matrix_entry, 100k lookups | ~0.008 ms · ~119k ops/s | ~0.001 ms · ~702k ops/s |
+| check_and_rescue, small reasoning | ~0.36 ms · ~2,800 ops/s | ~0.12 ms · ~8,700 ops/s |
+| check_and_rescue, 1 MB reasoning | ~0.62 ms · ~1,600 ops/s | ~4.03 ms · ~250 ops/s |
+| check_and_rescue_stream (843 chunks) | ~18.2 ms | ~2.4 ms |
+| sanitizeHistory (40-message history) | ~0.54 ms | ~0.11 ms |
+| match_matrix_entry, 100k lookups | ~0.012 ms · ~82k ops/s | ~0.002 ms · ~615k ops/s |
 
-Why the two implementations diverge on speed while agreeing exactly on behavior: the logic is identical — the runtimes aren't. Component probes on the same payloads, same box: on small inputs TypeScript wins because V8 JIT-compiles the shared call graph CPython interprets (visible even in pure lookup work: matrix match ~0.001 ms vs ~0.008 ms). On 1 MB inputs Python wins because recovery deep-copies the whole response, and V8's `structuredClone` serializes the 1 MB string (~0.54 ms measured) while CPython's `copy.deepcopy` shares the immutable string (~0.007 ms); the scan itself is actually faster in Python here (`str.find` plus anchored `re.match`, ~0.125 ms, vs V8's global-regex walk, ~0.259 ms). Streaming flips hard the other way because the per-chunk leak tracker is a character loop: ~9.4 of Python's ~11.7 ms per 843 pushes was measured inside that loop alone, versus ~1 µs/chunk JIT-compiled. None of this is a methodology artifact — same seeds, same payloads, same harness shapes on both sides.
+Why the two implementations diverge on speed while agreeing exactly on behavior: the logic is identical — the runtimes aren't, and the divergence is backed by component probes measured in the same harness ([`results.md`](packages/bench/perf/results.md) §Component probes, mirrored in the Python report) on the same payloads. On small inputs TypeScript wins because V8 JIT-compiles the shared call graph CPython interprets — visible even in pure lookup work (matrix match ~0.002 ms vs ~0.012 ms). On 1 MB inputs Python wins because recovery deep-copies the whole response: the deep-copy probe measures `structuredClone` at ~1.88 ms while CPython's `copy.deepcopy` shares the immutable string at ~0.014 ms. The envelope-scan probe of the same 1 MB reasoning text is ~0.78 ms (TS) vs ~0.32 ms (Python). Streaming flips hard the other way because the per-chunk leak tracker is a character loop: the tracker-loop probe (accumulator `push` only, no final check) measures ~15.4 ms of Python's ~18.2 ms stream, versus ~1.0 ms of TypeScript's ~2.4 ms. None of this is a methodology artifact — same seeds, same payloads, same harness shapes on both sides.
 
-### Proxy overhead (measured 2026-09-04)
+### Proxy overhead (measured 2026-09-05)
 
 Measured loopback with an in-process upstream (`npm run bench:perf`, proxy section). The added cost is dominated by the second HTTP roundtrip and JSON re-encoding, i.e. the cost of any proxy layer, not of the detection itself — note the direct baselines move with machine load, so read the `added` column, not the absolutes:
 
 | case | direct | via proxy | added |
 | --- | --- | --- | --- |
-| non-stream, swallowed (recovered) | 1.20 ms | 2.94 ms | +1.74 ms |
-| non-stream, healthy (passthrough) | 0.85 ms | 2.11 ms | +1.26 ms |
-| streaming, swallowed (recovery tail) | 0.98 ms | 2.82 ms | +1.84 ms |
+| non-stream, swallowed (recovered) | 3.56 ms | 4.26 ms | +0.70 ms |
+| non-stream, healthy (passthrough) | 0.82 ms | 1.97 ms | +1.15 ms |
+| streaming, swallowed (recovery tail) | 1.04 ms | 2.54 ms | +1.50 ms |
 
 ### Same suite on Linux (CI, ubuntu-latest)
 
-The full performance suite — including the naive baseline — also runs on Linux CI and commits its reports next to the Windows ones: [packages/bench/perf/results-linux.md](packages/bench/perf/results-linux.md) and [packages/python/bench/results_python-linux.md](packages/python/bench/results_python-linux.md). Measured 2026-09-04 · Node v22.23.2 / Python 3.13.15 · AMD EPYC 7763 · linux x64:
+The full performance suite — including the naive baseline — also runs on Linux CI and commits its reports next to the Windows ones: [packages/bench/perf/results-linux.md](packages/bench/perf/results-linux.md) and [packages/python/bench/results_python-linux.md](packages/python/bench/results_python-linux.md). The committed Linux artifacts are from the last workflow run (2026-09-04, previous harness generation) and refresh automatically on the next push after a bench change — the table below compares that run against its same-day win32 run, so it is *not* directly comparable to the 2026-09-05 numbers above. Latest committed run · Node v22.23.2 / Python 3.13.15 · AMD EPYC 7763 · linux x64:
 
-| workload | linux | win32 (above) |
+| workload | linux (2026-09-04) | win32 (2026-09-04) |
 | --- | --- | --- |
 | check, small reasoning (TS) | 0.040 ms · ~25,200 ops/s | 0.108 ms · ~9,300 ops/s |
 | check, 1 MB reasoning (TS) | 1.084 ms · ~920 ops/s | 1.664 ms · ~600 ops/s |

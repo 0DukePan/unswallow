@@ -2,11 +2,12 @@ import { performance } from 'node:perf_hooks';
 import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const core = require('../unswallow/dist/src/index.js');
-const { checkAndRescue, checkAndRescueStream, sanitizeHistory, matchMatrixEntry } = core;
+const { checkAndRescue, checkAndRescueStream, sanitizeHistory, matchMatrixEntry, extractAllEnvelopes, createStreamAccumulator } = core;
 const matrixEntries = require('unswallow-matrix').entries;
 
 const RESULTS_DIR = path.join(import.meta.dirname, 'perf');
@@ -185,42 +186,80 @@ function percentile(sorted, p) {
   return sorted[idx];
 }
 
-function measure(fn, iterations, warmup = 200) {
-  for (let i = 0; i < warmup; i++) fn();
-  const samples = new Float64Array(iterations);
-  for (let i = 0; i < iterations; i++) {
-    const t0 = performance.now();
-    fn();
-    samples[i] = performance.now() - t0;
+function meanOf(arr) {
+  return arr.reduce((s, v) => s + v, 0) / arr.length;
+}
+
+function medianOf(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/**
+ * Repeat-run measurement: `runs` full passes, each with its own warmup and
+ * `iterations` samples. Percentiles come from the pooled samples; the reported
+ * mean is the median of the per-run means, with the per-run spread (min–max)
+ * reported so a single noisy run is visible instead of hidden.
+ */
+function measure(fn, iterations, warmup = 200, runs = 5) {
+  const perRunMeans = [];
+  const pooled = [];
+  for (let r = 0; r < runs; r++) {
+    for (let i = 0; i < warmup; i++) fn();
+    const samples = new Float64Array(iterations);
+    for (let i = 0; i < iterations; i++) {
+      const t0 = performance.now();
+      fn();
+      samples[i] = performance.now() - t0;
+    }
+    pooled.push(...samples);
+    perRunMeans.push(meanOf(samples));
   }
-  const sorted = Array.from(samples).sort((a, b) => a - b);
-  const mean = samples.reduce((s, v) => s + v, 0) / iterations;
+  const sorted = pooled.sort((a, b) => a - b);
+  const mean = medianOf(perRunMeans);
   return {
-    n: iterations,
+    n: iterations * runs,
+    runs,
+    perRunN: iterations,
     p50: percentile(sorted, 0.5),
     p95: percentile(sorted, 0.95),
     p99: percentile(sorted, 0.99),
     mean,
+    meanMin: Math.min(...perRunMeans),
+    meanMax: Math.max(...perRunMeans),
+    perRunMeans,
     opsPerSec: 1000 / mean,
   };
 }
 
-async function measureAsync(fn, iterations, warmup = 50) {
-  for (let i = 0; i < warmup; i++) await fn();
-  const samples = new Float64Array(iterations);
-  for (let i = 0; i < iterations; i++) {
-    const t0 = performance.now();
-    await fn();
-    samples[i] = performance.now() - t0;
+async function measureAsync(fn, iterations, warmup = 50, runs = 3) {
+  const perRunMeans = [];
+  const pooled = [];
+  for (let r = 0; r < runs; r++) {
+    for (let i = 0; i < warmup; i++) await fn();
+    const samples = new Float64Array(iterations);
+    for (let i = 0; i < iterations; i++) {
+      const t0 = performance.now();
+      await fn();
+      samples[i] = performance.now() - t0;
+    }
+    pooled.push(...samples);
+    perRunMeans.push(meanOf(samples));
   }
-  const sorted = Array.from(samples).sort((a, b) => a - b);
-  const mean = samples.reduce((s, v) => s + v, 0) / iterations;
+  const sorted = pooled.sort((a, b) => a - b);
+  const mean = medianOf(perRunMeans);
   return {
-    n: iterations,
+    n: iterations * runs,
+    runs,
+    perRunN: iterations,
     p50: percentile(sorted, 0.5),
     p95: percentile(sorted, 0.95),
     p99: percentile(sorted, 0.99),
     mean,
+    meanMin: Math.min(...perRunMeans),
+    meanMax: Math.max(...perRunMeans),
+    perRunMeans,
     opsPerSec: 1000 / mean,
   };
 }
@@ -275,6 +314,25 @@ function naiveCheck(message) {
   } catch {
     return { found: true, name: null };
   }
+}
+
+/**
+ * Component probes backing the README's Python-vs-TypeScript divergence
+ * paragraph — each is a single, directly comparable mechanism, measured on
+ * the same 1 MB payload the synthetic scenario uses.
+ */
+function probeClone(payload) {
+  return structuredClone(payload);
+}
+
+function probeScan(reasoningText) {
+  return extractAllEnvelopes(reasoningText);
+}
+
+function probeTrackerLoop(chunks) {
+  const acc = createStreamAccumulator();
+  for (const c of chunks) acc.push(c);
+  return acc;
 }
 
 const SCENARIOS = [
@@ -363,6 +421,13 @@ async function measureProxy() {
 
 async function main() {
   const rng = mulberry32(0x756e7377);
+  const streamIterable = (chunks) => {
+    return {
+      [Symbol.asyncIterator]: async function* () {
+        for (const c of chunks) yield c;
+      },
+    };
+  };
   const payloads = {};
   const sizes = {};
   for (const s of SCENARIOS) {
@@ -375,6 +440,9 @@ async function main() {
     }
     sizes[s.key] = Math.round(sizes[s.key] / 50);
   }
+  // Cross-language corpus identity: the Python harness must produce the same
+  // hash, or the "same seeds, same payloads" comparison guarantee is broken.
+  const corpusHash = createHash('sha256').update(JSON.stringify(payloads['a-small'])).digest('hex');
 
   const checkRows = [];
   for (const s of SCENARIOS) {
@@ -388,10 +456,14 @@ async function main() {
       label: s.label,
       payloadBytes: sizes[s.key],
       n: res.n,
+      runs: res.runs,
       p50ms: res.p50,
       p95ms: res.p95,
       p99ms: res.p99,
       meanMs: res.mean,
+      meanMin: res.meanMin,
+      meanMax: res.meanMax,
+      perRunMeans: res.perRunMeans,
       opsPerSec: res.opsPerSec,
       retainedPerOpBytes: retained ? retained.perOpBytes : null,
     });
@@ -402,7 +474,7 @@ async function main() {
     const pool = payloads[s.key];
     let i = 0;
     const res = measure(() => naiveCheck(pool[i++ % pool.length].choices[0].message), Math.min(s.iters, 2000));
-    baselineRows.push({ scenario: s.key, label: s.label, n: res.n, meanMs: res.mean, opsPerSec: res.opsPerSec });
+    baselineRows.push({ scenario: s.key, label: s.label, n: res.n, meanMs: res.mean, meanMin: res.meanMin, meanMax: res.meanMax, perRunMeans: res.perRunMeans, opsPerSec: res.opsPerSec });
   }
 
   const baselineFp = [];
@@ -414,6 +486,28 @@ async function main() {
       const message = fixture.response.choices[0].message;
       const naive = naiveCheck(message);
       baselineFp.push({ id: fixture.id ?? f, naiveFired: naive.found });
+    }
+  }
+
+  // Real fixture corpus — the pinned upstream-derived shapes, same harness.
+  const fixtureRows = [];
+  {
+    const fixDir = path.join(import.meta.dirname, 'fixtures');
+    const files = fs.readdirSync(fixDir).filter((f) => f.endsWith('.json')).sort();
+    for (const f of files) {
+      const fixture = JSON.parse(fs.readFileSync(path.join(fixDir, f), 'utf8'));
+      const fid = fixture.id ?? fixture.response?.id ?? f;
+      const opts = { engineHint: fixture.engine, engineVersion: fixture.version };
+      const payloadBytes = Buffer.byteLength(JSON.stringify(fixture.response ?? fixture.chunks ?? {}));
+      let res;
+      if (fixture.stream) {
+        const chunks = fixture.chunks ?? [];
+        res = await measureAsync(() => checkAndRescueStream(streamIterable(chunks), opts), 200, 20, 3);
+      } else {
+        const iters = Math.max(100, Math.min(3000, Math.round(2_000_000 / Math.max(1, payloadBytes))));
+        res = measure(() => checkAndRescue(fixture.response, opts), iters, 100, 3);
+      }
+      fixtureRows.push({ id: fid, stream: !!fixture.stream, payloadBytes, ...res });
     }
   }
 
@@ -429,16 +523,16 @@ async function main() {
     }
     streamChunks.push({ choices: [{ index: 0, finish_reason: 'stop', delta: {} }] });
   }
-  const streamIterable = (chunks) => {
-    return {
-      [Symbol.asyncIterator]: async function* () {
-        for (const c of chunks) yield c;
-      },
-    };
-  };
   const streamRes = await measureAsync(
     () => checkAndRescueStream(streamIterable(streamChunks), { engineHint: 'vllm', engineVersion: '0.19.0' }),
     300
+  );
+
+  const trackerLoopRes = measure(
+    () => probeTrackerLoop(streamChunks),
+    200,
+    50,
+    3
   );
   const assembled = streamChunks.reduce((acc, c) => {
     const d = c.choices?.[0]?.delta ?? {};
@@ -461,7 +555,7 @@ async function main() {
   }
   const bigStreamRes = await measureAsync(
     () => checkAndRescueStream(streamIterable(bigChunks)),
-    20
+    120
   );
 
   const history = [];
@@ -503,7 +597,20 @@ async function main() {
   const refRes = measure(() => {
     const p = payloads['a-large'][0];
     JSON.parse(JSON.stringify(p));
-  }, 500);
+  }, 500, 100, 3);
+
+  // Component probes — the mechanisms cited in the README's divergence note.
+  const hugePayload = payloads['a-huge'][0];
+  const hugeReasoning = hugePayload.choices[0].message.reasoning;
+  const cloneRes = measure(() => probeClone(hugePayload), 200, 50, 3);
+  const scanRes = measure(() => probeScan(hugeReasoning), 300, 50, 3);
+  const probes = { clone: cloneRes, scan: scanRes, trackerLoop: trackerLoopRes };
+  const probesCtx = {
+    clonePayloadBytes: Buffer.byteLength(JSON.stringify(hugePayload)),
+    scanBytes: Buffer.byteLength(hugeReasoning),
+    trackerChunks: streamChunks.length - 1,
+    streamTotalMs: streamRes.mean,
+  };
 
   const proxyRows = await measureProxy();
 
@@ -520,6 +627,8 @@ async function main() {
   const fmt = (r) =>
     `${(r.p50ms ?? r.p50).toFixed(2)} / ${(r.p95ms ?? r.p95).toFixed(2)} / ${(r.p99ms ?? r.p99).toFixed(2)} ms`;
   const fmtMean = (r) => `${(r.meanMs ?? r.mean).toFixed(3)} ms`;
+  const fmtSpread = (r) =>
+    `${(r.meanMs ?? r.mean).toFixed(3)} ms (${(r.meanMin ?? r.mean).toFixed(3)}–${(r.meanMax ?? r.mean).toFixed(3)})`;
   const fmtOps = (r) => `${r.opsPerSec.toLocaleString('en-US', { maximumFractionDigits: 0 })} ops/s`;
 
   const md = [
@@ -529,39 +638,52 @@ async function main() {
     '',
     'Reproduce on your own hardware: `npm run bench:perf`. Seeded, deterministic corpus; results are wall-clock on an unloaded-ish dev machine — treat cross-machine comparisons with care.',
     '',
+    'Methodology: every scenario runs 5 full passes (3 for async work); percentiles are pooled across runs; the reported mean is the median of the per-run means, and the per-run min–max spread is in parentheses — a single noisy run shows up in the spread instead of hiding in the mean.',
+    '',
+    `Corpus identity: sha256 of the a-small payload pool is ${corpusHash} — the Python report must carry the same hash (cross-language "same seeds, same payloads" check).`,
+    '',
     '## checkAndRescue — latency per call (warm)',
     '',
-    '| scenario | payload | n | p50 / p95 / p99 | mean | throughput | retained/op |',
+    '| scenario | payload | n | p50 / p95 / p99 | mean (min–max) | throughput | retained/op |',
     '| --- | --- | --- | --- | --- | --- | --- |',
     ...checkRows.map((r) =>
-      `| ${r.label} | ${(r.payloadBytes / 1024).toFixed(1)} KB | ${r.n} | ${fmt(r)} | ${fmtMean(r)} | ${fmtOps(r)} | ${r.retainedPerOpBytes !== null ? (r.retainedPerOpBytes / 1024).toFixed(2) + ' KB' : 'n/a' } |`
+      `| ${r.label} | ${(r.payloadBytes / 1024).toFixed(1)} KB | ${r.n} | ${fmt(r)} | ${fmtSpread(r)} | ${fmtOps(r)} | ${r.retainedPerOpBytes !== null ? (r.retainedPerOpBytes / 1024).toFixed(2) + ' KB' : 'n/a' } |`
     ),
     '',
     '## Streaming (checkAndRescueStream)',
     '',
-    '| stream | chunks | payload | p50 / p95 / p99 | mean |',
+    '| stream | chunks | payload | p50 / p95 / p99 | mean (min–max) |',
     '| --- | --- | --- | --- | --- |',
-    `| typical reasoning stream, envelope split across deltas | ${streamChunks.length - 1} | ${(streamChunks.reduce((s, c) => s + Buffer.byteLength(c.choices?.[0]?.delta?.reasoning ?? c.choices?.[0]?.delta?.content ?? ''), 0) / 1024).toFixed(1)} KB | ${fmt(streamRes)} | ${fmtMean(streamRes)} |`,
-    `| 500 KB content stream | ${bigChunks.length - 1} | 500.0 KB | ${fmt(bigStreamRes)} | ${fmtMean(bigStreamRes)} |`,
-    `| reference: same message, non-streaming checkAndRescue | — | — | ${fmt(nonStreamRes)} | ${fmtMean(nonStreamRes)} |`,
+    `| typical reasoning stream, envelope split across deltas | ${streamChunks.length - 1} | ${(streamChunks.reduce((s, c) => s + Buffer.byteLength(c.choices?.[0]?.delta?.reasoning ?? c.choices?.[0]?.delta?.content ?? ''), 0) / 1024).toFixed(1)} KB | ${fmt(streamRes)} | ${fmtSpread(streamRes)} |`,
+    `| 500 KB content stream | ${bigChunks.length - 1} | 500.0 KB | ${fmt(bigStreamRes)} | ${fmtSpread(bigStreamRes)} |`,
+    `| reference: same message, non-streaming checkAndRescue | — | — | ${fmt(nonStreamRes)} | ${fmtSpread(nonStreamRes)} |`,
+    '',
+    '## Component probes (why TS and Python diverge)',
+    '',
+    'The mechanisms cited in the README divergence note, measured in isolation on the same payloads: the recovery deep copy, the envelope scan over the reasoning text, and the streaming per-chunk leak-tracker loop (accumulator `push` only, no final check).',
+    '',
+    '| probe | payload | n | mean (min–max) |',
+    '| --- | --- | --- | --- |',
+    `| deep copy of 1 MB payload (structuredClone) | ${(probesCtx.clonePayloadBytes / 1024).toFixed(1)} KB | ${cloneRes.n} | ${fmtSpread(cloneRes)} |`,
+    `| envelope scan of 1 MB reasoning (extractAllEnvelopes) | ${(probesCtx.scanBytes / 1024).toFixed(1)} KB | ${scanRes.n} | ${fmtSpread(scanRes)} |`,
+    `| leak-tracker loop, ${probesCtx.trackerChunks} chunk pushes (${(streamChunks.reduce((s, c) => s + Buffer.byteLength(c.choices?.[0]?.delta?.reasoning ?? ''), 0) / 1024).toFixed(1)} KB) | — | ${trackerLoopRes.n} | ${fmtSpread(trackerLoopRes)} |`,
     '',
     '## Pattern D — sanitizeHistory',
     '',
-    `| corpus | p50 / p95 / p99 | mean | throughput |`,
+    `| corpus | p50 / p95 / p99 | mean (min–max) | throughput |`,
     `| --- | --- | --- | --- |`,
-    `| 40-message history with leaked reasoning | ${fmt(historyRes)} | ${fmtMean(historyRes)} | ${fmtOps(historyRes)} |`,
+    `| 40-message history with leaked reasoning | ${fmt(historyRes)} | ${fmtSpread(historyRes)} | ${fmtOps(historyRes)} |`,
     '',
     '## Matrix lookup — matchMatrixEntry',
     '',
-    `| workload | p50 / p95 / p99 | mean | throughput |`,
+    `| workload | p50 / p95 / p99 | mean (min–max) | throughput |`,
     `| --- | --- | --- | --- |`,
-    `| 100k lookups (engine/version/pattern) | ${fmt(matrixRes)} | ${fmtMean(matrixRes)} | ${fmtOps(matrixRes)} |`,
+    `| 100k lookups (engine/version/pattern) | ${fmt(matrixRes)} | ${fmtSpread(matrixRes)} | ${fmtOps(matrixRes)} |`,
+    '',    '## Reference point',
     '',
-'## Reference point',
-    '',
-    '| workload | mean |',
+    '| workload | mean (min–max) |',
     '| --- | --- |',
-    `| JSON.parse(JSON.stringify(payload)) of the 64KB pattern-A payload | ${fmtMean(refRes)} |`,
+    `| JSON.parse(JSON.stringify(payload)) of the 64KB pattern-A payload | ${fmtSpread(refRes)} |`,
     '',
     '## Proxy overhead (loopback, in-process upstream)',
     '',
@@ -573,11 +695,19 @@ async function main() {
     '',
     'What the simplest possible approach costs on the same payloads: one marker regex over the text channels plus a single `JSON.parse` attempt, no envelope validation, no false-positive guard, nothing recovered. The guard fixtures below show what that simplicity costs in correctness.',
     '',
-    '| scenario | mean | throughput |',
+    '| scenario | mean (min–max) | throughput |',
     '| --- | --- | --- |',
-    ...baselineRows.map((r) => `| ${r.label} | ${r.meanMs.toFixed(3)} ms | ${fmtOps(r)} |`),
+    ...baselineRows.map((r) => `| ${r.label} | ${fmtSpread(r)} | ${fmtOps(r)} |`),
     '',
     `False positives on the pinned guard fixtures (naive fired where nothing should recover): ${baselineFp.filter((f) => f.naiveFired).length}/${baselineFp.length} (${baselineFp.filter((f) => f.naiveFired).map((f) => f.id).join(', ') || 'none'})`,
+    '',
+    '## Real fixture corpus (pinned upstream-derived shapes)',
+    '',
+    'The hash-pinned fixtures run through the same harness as the synthetic scenarios — real upstream-derived shapes (reconstructed from the linked vLLM/SGLang/llama.cpp reports), including the false-positive guards.',
+    '',
+    '| fixture | stream | payload | n | mean (min–max) | throughput |',
+    '| --- | --- | --- | --- | --- | --- |',
+    ...fixtureRows.map((r) => `| ${r.id} | ${r.stream ? 'yes' : 'no'} | ${(r.payloadBytes / 1024).toFixed(1)} KB | ${r.n} | ${fmtSpread(r)} | ${fmtOps(r)} |`),
     '',
   ].join('\n');
 
@@ -585,7 +715,7 @@ async function main() {
   fs.writeFileSync(RESULTS_MD, md);
   fs.writeFileSync(
     RESULTS_JSON,
-    JSON.stringify({ machine, checkAndRescue: checkRows, baseline: baselineRows, baselineFp, streaming: { typical: streamRes, big: bigStreamRes, nonStreamReference: nonStreamRes }, history: historyRes, matrix: matrixRes, reference: refRes, proxy: proxyRows }, null, 2) + '\n'
+    JSON.stringify({ machine, corpusHash, checkAndRescue: checkRows, baseline: baselineRows, baselineFp, streaming: { typical: streamRes, big: bigStreamRes, nonStreamReference: nonStreamRes }, history: historyRes, matrix: matrixRes, reference: refRes, proxy: proxyRows, probes, probesCtx, fixtures: fixtureRows }, null, 2) + '\n'
   );
 
   console.log(md);

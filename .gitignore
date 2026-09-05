@@ -1,5 +1,6 @@
 node_modules/
 dist/
+pypi-dist/
 build/
 *.egg-info/
 __pycache__/

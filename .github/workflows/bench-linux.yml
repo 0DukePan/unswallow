@@ -4,7 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['.github/workflows/bench-linux.yml']
+    paths:
+      - '.github/workflows/bench-linux.yml'
+      - 'packages/bench/**'
+      - 'packages/python/bench/**'
 
 jobs:
   perf-linux:
