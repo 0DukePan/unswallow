@@ -29,6 +29,16 @@ Edit `data/engine-matrix.json` and open a PR. That's it — no package release r
 | `fixHint` | server-side remediation, surfaced by the CLI |
 | `modelFamilies` | optional: models the row applies to |
 
+## Data-format compatibility policy
+
+- **Additive changes are non-breaking** and land in any `0.x` release: new
+  rows, new fields, `fixHint` wording, additional `modelFamilies`.
+- **Removing or renaming a field, or flipping an existing row's behavior,
+  is a breaking change** and requires a major bump: it can change detection
+  results under a pinned install, so it must be opt-in.
+- `unswallow` consumes the matrix through a caret range; additive `0.x`
+  updates are picked up automatically, breaking ones are not.
+
 ## Release
 
 Bump the version here, publish with `npm publish` from this directory, and bump the `unswallow-matrix` range in `packages/unswallow/package.json` if needed. Matrix data itself never waits for this process.
