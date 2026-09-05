@@ -26,7 +26,7 @@ from .types import (
     ToolEnvelope,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.2"
 
 __all__ = [
     "check_and_rescue",

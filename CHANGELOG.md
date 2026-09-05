@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-09-05
+
+Release of the pre-launch hardening pass (unswallow 0.1.2, unswallow-matrix
+0.1.2, Python unswallow 0.1.2).
+
+### Added
+
+- `unswallow matrix` now renders a `verified` column (`yes`/`no`) in both the
+  TypeScript and Python CLIs, matching the `verified` field already carried by
+  every engine-matrix row.
+- Engine matrix data v1.1.0 (unswallow-matrix 0.1.2) marks every row
+  `verified: false` with a README legend: rows are sourced from upstream
+  reports, none has been independently reproduced by the maintainer yet, and
+  a PR flipping a row to `verified: true` requires server-version output +
+  probe transcript as evidence.
+- 5 new false-positive-guard fixtures (7 total), pinning the rule that
+  recovery requires a structurally complete envelope — a model merely
+  discussing a tool call is never recovered.
+- Naive-measurement baseline in both perf benches (TS + Python), explaining
+  the measured cross-language divergence (clone vs scan overhead).
+
+### Changed
+
+- README benchmark section now integrates the committed Linux numbers
+  (clone 0.54 vs 0.007 ms, scan 0.125 vs 0.259 ms, tracker loop ~9.4 of
+  11.7 ms); `unswallow --version` reports the package version.
+
 ## [0.1.1] - 2026-09-04
 
 ### Fixed
@@ -57,5 +84,6 @@ Initial release.
   per turn.
 - Proxy client aborts now cancel the upstream request instead of draining it.
 
+[0.1.2]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.2
 [0.1.1]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.1
 [0.1.0]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.0

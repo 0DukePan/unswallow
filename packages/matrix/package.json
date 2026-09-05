@@ -1,6 +1,6 @@
 {
   "name": "unswallow-matrix",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Living engine/version behavior matrix for the reasoning-channel tool-call swallow bug class — the sourced data file that unswallow's confidence scoring is built on. Versioned independently of the unswallow package, closer to an antivirus definitions file than a code release.",
   "keywords": [
     "vllm",
