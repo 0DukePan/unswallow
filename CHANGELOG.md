@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-09-05
+
+The launch release: everything committed since 0.1.2, all three packages
+(unswallow 0.1.3, unswallow-matrix 0.1.3, Python unswallow 0.1.3).
+
+### Added
+
+- **Benchmark hardening**: every scenario runs 5 full passes (3 for async)
+  with the per-run min–max spread reported; component probes back the
+  README's TS↔Python divergence note (deep copy, envelope scan, leak-tracker
+  loop); the 22 pinned fixtures run through the same harness (real fixture
+  corpus section); both reports print a matching corpus sha256. This also
+  fixed a `mulberry32` port bug — the Python RNG was missing the canonical
+  final XOR, so the two languages were generating different corpora while
+  the README claimed "same seeds, same payloads".
+- **Framework adapters**: LiteLLM `CustomLogger` callback, OpenTelemetry
+  adapters (TS + Python, spans + detection counter), and
+  `docs/integrations.md` with OpenAI SDK / Vercel AI SDK / LangChain
+  patterns — all lazily imported, core stays zero-dependency.
+- **Supply chain + stability**: npm provenance config, tag-triggered
+  `publish.yml` (matrix → unswallow → PyPI), README stability policy
+  (semver, matrix data-format compat), matrix package compat policy.
+- **Status page**: `render-status.mjs` + GitHub Pages deploy workflow,
+  regenerated weekly and on matrix data changes.
+- **Engine matrix v1.2.0**: sourced LM Studio row (pattern A swallow,
+  lmstudio-bug-tracker #827), tracked by the weekly watcher.
+- **CI**: verified-column + version assertions in CLI smoke tests; weekly
+  registry smoke workflow against the published npm/PyPI packages.
+
 ## [0.1.2] - 2026-09-05
 
 Release of the pre-launch hardening pass (unswallow 0.1.2, unswallow-matrix
@@ -84,6 +113,7 @@ Initial release.
   per turn.
 - Proxy client aborts now cancel the upstream request instead of draining it.
 
+[0.1.3]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.3
 [0.1.2]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.2
 [0.1.1]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.1
 [0.1.0]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.0

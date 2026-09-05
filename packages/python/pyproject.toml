@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "unswallow"
-version = "0.1.2"
+version = "0.1.3"
 description = "Detect and recover tool calls trapped inside a model's reasoning channel — the reasoning-channel swallow bug class across vLLM, SGLang, and llama.cpp. 1:1 mirror of the TypeScript library."
 readme = "README.md"
 requires-python = ">=3.9"
