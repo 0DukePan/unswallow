@@ -1,0 +1,1230 @@
+{
+  "summary": {
+    "corpus": {
+      "pinnedPositives": 11,
+      "pinnedNegatives": 8,
+      "syntheticNegatives": 200,
+      "total": 219
+    },
+    "results": {
+      "falsePositives": 0,
+      "falseNegatives": 0,
+      "syntheticFalsePositives": 0,
+      "detectionAccuracy": 1
+    },
+    "generatedAt": "2026-09-05T23:33:41.830Z"
+  },
+  "rows": [
+    {
+      "id": "deepseek-reasoning-content-pattern-a",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://api-docs.deepseek.com/guides/function_calling"
+    },
+    {
+      "id": "fp-guard-discussion-only",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: the model merely discusses calling a tool inside its reasoning channel without ever emitting a structural envelope. Must NOT be recovered."
+    },
+    {
+      "id": "fp-guard-json-array-args",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: a JSON envelope lookalike whose arguments are an array, not an object. Tool arguments must be a keyed object to dispatch, so nothing must be recovered."
+    },
+    {
+      "id": "fp-guard-json-string-args",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: a JSON envelope lookalike whose arguments are a bare non-JSON string. Only arguments that are objects — or JSON strings that parse to objects — are accepted, so nothing must be recovered."
+    },
+    {
+      "id": "fp-guard-multiple-partial",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: reasoning holds two different structurally incomplete JSON fragments. Neither is a complete envelope, so nothing must be recovered."
+    },
+    {
+      "id": "fp-guard-partial-json",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: reasoning contains a partial, unparseable JSON-looking fragment — structurally incomplete, must NOT be recovered."
+    },
+    {
+      "id": "fp-guard-user-content-mention",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: tool-call-shaped text appears in user-authored content (a question about <tool_call> tags), not as a model invocation. Must NOT be recovered."
+    },
+    {
+      "id": "fp-guard-xml-empty-name",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "Adversarial: a well-formed XML tool-call block with an empty function name. A nameless envelope cannot be dispatched, so nothing must be recovered."
+    },
+    {
+      "id": "llamacpp-qwen3.5-thinking-pattern-a",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/ggml-org/llama.cpp/issues/20837"
+    },
+    {
+      "id": "minimax-m3-pattern-c-leak",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": false,
+      "pattern": "C",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056 (pattern C documented in unswallow plan; MiniMax M3 <mm:think> streaming leak)"
+    },
+    {
+      "id": "pi-kimi2-pattern-b",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "B",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/earendil-works/pi/issues/952"
+    },
+    {
+      "id": "sglang-qwen3.5-reasoning-content-pattern-a",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/sgl-project/sglang/issues/30744"
+    },
+    {
+      "id": "vllm-qwen3-0.19-pattern-a-json-envelope",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056"
+    },
+    {
+      "id": "vllm-qwen3-0.19-tool-choice-required-pattern-b",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "B",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056 (comment: Bug 2, PR #35936)"
+    },
+    {
+      "id": "vllm-qwen3-0.23-pattern-a-partial",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056"
+    },
+    {
+      "id": "vllm-qwen3-0.24-clean",
+      "label": "negative",
+      "expectedDetected": false,
+      "detected": false,
+      "recovered": false,
+      "pattern": null,
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "vLLM 0.24.0+: code path rewritten, swallow resolved for Qwen3. Response is healthy — tool_calls populated, must be left untouched."
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a-duplicate",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056"
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a-parallel",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056"
+    },
+    {
+      "id": "vllm-qwen3.5-0.19-pattern-a",
+      "label": "positive",
+      "expectedDetected": true,
+      "detected": true,
+      "recovered": true,
+      "pattern": "A",
+      "falsePositive": false,
+      "falseNegative": false,
+      "note": "https://github.com/vllm-project/vllm/issues/39056"
+    }
+  ],
+  "synthetic": [
+    {
+      "id": "synthetic-negative-0",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-1",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-2",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-3",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-4",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-5",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-6",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-7",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-8",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-9",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-10",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-11",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-12",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-13",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-14",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-15",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-16",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-17",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-18",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-19",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-20",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-21",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-22",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-23",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-24",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-25",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-26",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-27",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-28",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-29",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-30",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-31",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-32",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-33",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-34",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-35",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-36",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-37",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-38",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-39",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-40",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-41",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-42",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-43",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-44",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-45",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-46",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-47",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-48",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-49",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-50",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-51",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-52",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-53",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-54",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-55",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-56",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-57",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-58",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-59",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-60",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-61",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-62",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-63",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-64",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-65",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-66",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-67",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-68",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-69",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-70",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-71",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-72",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-73",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-74",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-75",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-76",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-77",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-78",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-79",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-80",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-81",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-82",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-83",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-84",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-85",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-86",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-87",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-88",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-89",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-90",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-91",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-92",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-93",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-94",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-95",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-96",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-97",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-98",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-99",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-100",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-101",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-102",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-103",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-104",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-105",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-106",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-107",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-108",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-109",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-110",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-111",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-112",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-113",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-114",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-115",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-116",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-117",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-118",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-119",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-120",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-121",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-122",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-123",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-124",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-125",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-126",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-127",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-128",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-129",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-130",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-131",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-132",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-133",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-134",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-135",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-136",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-137",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-138",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-139",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-140",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-141",
+      "text": "< thinking>\nShould I call search? Maybe; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-142",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-143",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-144",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-145",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-146",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-147",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-148",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-149",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-150",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-151",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-152",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-153",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-154",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-155",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-156",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-157",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-158",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-159",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-160",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-161",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-162",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-163",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-164",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-165",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-166",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-167",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-168",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-169",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-170",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-171",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-172",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-173",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-174",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-175",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-176",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-177",
+      "text": "< thinking>\nThe user might expect a tool call here but. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-178",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-179",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-180",
+      "text": "< thinking>\nThe user might expect a tool call here but; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-181",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-182",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-183",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-184",
+      "text": "< thinking>\nShould I call search? Maybe, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-185",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-186",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-187",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-188",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-189",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-190",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-191",
+      "text": "< thinking>\nShould I call search? Maybe. I will answer directly instead. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-192",
+      "text": "< thinking>\nI could call get_weather; there is nothing to look up. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-193",
+      "text": "< thinking>\nI could call get_weather, yet no tool result is needed for this answer. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-194",
+      "text": "< thinking>\nThe user might expect a tool call here but, yet no tool result is needed for this answer. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-195",
+      "text": "< thinking>\nI could call get_weather. I will answer directly instead. Let me just answer.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-196",
+      "text": "< thinking>\nShould I call search? Maybe but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-197",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-198",
+      "text": "< thinking>\nThe user might expect a tool call here but but the question does not actually require one. No tool call is warranted.\n< response>\n",
+      "detected": false
+    },
+    {
+      "id": "synthetic-negative-199",
+      "text": "< thinking>\nI could call get_weather but the question does not actually require one. I will respond with what I know.\n< response>\n",
+      "detected": false
+    }
+  ]
+}
