@@ -41,7 +41,7 @@ Issues = "https://github.com/0DukePan/unswallow/issues"
 unswallow = "unswallow.cli:main"
 
 [tool.setuptools]
-packages = ["unswallow"]
+packages = ["unswallow", "unswallow.integrations"]
 
 [tool.setuptools.package-data]
 unswallow = ["data/*.json"]

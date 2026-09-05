@@ -17,6 +17,8 @@ from .recover import (
     extract_envelope,
     validate_envelope_shape,
 )
+from .integrations.litellm import check_message_dict
+from .integrations.otel import observe_check_result
 from .semver import matches_range, parse_range, parse_version
 from .stream import StreamAccumulator, check_and_rescue_stream
 from .types import (
@@ -54,4 +56,6 @@ __all__ = [
     "ToolCall",
     "ToolEnvelope",
     "__version__",
+    "observe_check_result",
+    "check_message_dict",
 ]

@@ -32,5 +32,9 @@
   },
   "scripts": {
     "update": "node scripts/update-matrix.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

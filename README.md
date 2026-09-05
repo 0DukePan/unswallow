@@ -249,7 +249,7 @@ The genuinely hard part of this bug class is knowing **which engine, which versi
 
 On verification, stated plainly: every row is sourced from its linked upstream report, and **none has been independently reproduced by the maintainer** — running each named engine/version against the fixtures requires GPU serving infrastructure this project doesn't have. `verified: no` marks exactly that. If you reproduce a row against the real engine and version, open a PR flipping it to `verified: true` with evidence (server version output + the probe transcript) and it will be merged.
 
-Every row ships with a `source` URL — community PRs against [`packages/matrix/data/engine-matrix.json`](packages/matrix/data/engine-matrix.json) are welcome and don't require a release. The matrix is published as its own package, `unswallow-matrix`, **versioned independently of `unswallow`** — closer to an antivirus definitions file than a code release (see [`packages/matrix/README.md`](packages/matrix/README.md)). `npm run matrix:update` refreshes upstream issue status via the GitHub API (used by the weekly CI watcher) and reports which benchmark fixtures a behavior flip would force to change.
+Every row ships with a `source` URL — community PRs against [`packages/matrix/data/engine-matrix.json`](packages/matrix/data/engine-matrix.json) are welcome and don't require a release. The matrix is published as its own package, `unswallow-matrix`, **versioned independently of `unswallow`** — closer to an antivirus definitions file than a code release (see [`packages/matrix/README.md`](packages/matrix/README.md)). `npm run matrix:update` refreshes upstream issue status via the GitHub API (used by the weekly CI watcher) and reports which benchmark fixtures a behavior flip would force to change. A public status page — the matrix rendered as a linkable, always-current page — is published to GitHub Pages weekly ([status page](https://0DukePan.github.io/unswallow/)), and framework adapters (LiteLLM callback, OpenTelemetry, OpenAI SDK, Vercel AI SDK) are in [`docs/integrations.md`](docs/integrations.md).
 
 ## Benchmarks
 
@@ -407,6 +407,29 @@ interface SwallowCheckResult {
 ```
 
 **Parallel tool calls:** an agent turn that emits several tool calls at once (e.g. two search queries) gets all of them back — every structurally complete envelope is recovered in document order into `tool_calls[]`, and `toolCall` is just the first for convenience. Exact duplicates (same name + same arguments) collapse to a single recovery with a warning, since firing the same tool twice is worse than the swallow. The scan caps at 32 envelopes per response, also with a warning.
+
+## Stability & supply chain
+
+- **Semver.** The core library follows semantic versioning. During `0.x` the
+  convention applies as usual: breaking changes land in minor bumps
+  (`0.2.0`, not `0.1.1`) and are called out in the CHANGELOG.
+- **Zero runtime dependencies is a compatibility promise.** No new *required*
+  dependency enters the runtime path without a major version. Integrations
+  (LiteLLM callback, OpenTelemetry, framework adapters) live in
+  `integrations/` modules that import their framework lazily — installing
+  `unswallow` never drags in litellm or an OTel SDK.
+- **`unswallow-matrix` data-format policy.** The matrix is versioned
+  independently, closer to a definitions file. Additive changes — new rows,
+  new fields, fixHint wording — are non-breaking and land in any `0.x`.
+  Removing or renaming a field, or flipping an existing row's behavior, is a
+  breaking change requiring a major bump: it can change detection results
+  under a pinned install, so it must be opt-in. See
+  [`packages/matrix/README.md`](packages/matrix/README.md).
+- **Provenance.** npm releases are published from CI with sigstore
+  provenance (see `.github/workflows/publish.yml`); PyPI builds publish
+  through twine from the same workflow. Tag `vX.Y.Z` and the workflow
+  publishes `unswallow-matrix` first (dependency order), then `unswallow`,
+  then PyPI.
 
 ## Roadmap
 

@@ -1,0 +1,39 @@
+name: Status page
+
+# Publishes the auto-updating "swallow status across engines" page to
+# GitHub Pages. Requires Settings → Pages → Source: "GitHub Actions".
+# Runs weekly, on demand, and whenever the matrix data changes (the
+# matrix-update workflow commits data changes, which triggers this).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+  push:
+    paths:
+      - 'packages/matrix/data/**'
+      - 'packages/matrix/scripts/render-status.mjs'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node packages/matrix/scripts/render-status.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/matrix/status
+      - id: deployment
+        uses: actions/deploy-pages@v4

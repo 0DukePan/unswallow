@@ -1,6 +1,7 @@
 node_modules/
 dist/
 pypi-dist/
+packages/matrix/status/
 build/
 *.egg-info/
 __pycache__/
