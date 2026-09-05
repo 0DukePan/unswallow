@@ -1,4 +1,5 @@
 node_modules/
+.commandcode/
 dist/
 pypi-dist/
 packages/matrix/status/
