@@ -1,6 +1,6 @@
 {
-  "matrixVersion": "1.1.0",
-  "updated": "2026-08-26",
+  "matrixVersion": "1.2.0",
+  "updated": "2026-09-05",
   "note": "Living data file, not code. Every row is sourced to an upstream issue/PR thread. Update cadence is independent of package releases: edit this file directly via community PR, or run `npm run matrix:update` to refresh upstream issue status.",
   "entries": [
     {
@@ -77,6 +77,17 @@
       "knownBehavior": "Reasoning tags leak into conversation history and the model starts imitating/duplicating fake thinking tags over subsequent turns. Not a per-response repair — the fix is a history hygiene pass that strips reasoning artifacts before re-sending.",
       "source": "https://github.com/open-webui/open-webui/issues/23339",
       "fixHint": "Run the Pattern D hygiene pass (sanitizeHistory / stripReasoningTags) over conversation history before the next request."
+    },
+    {
+      "harness": "lmstudio",
+      "versionRange": "*",
+      "pattern": "A",
+      "modelFamilies": ["qwen3", "qwen3.5", "qwen3.6"],
+      "behavior": "swallow",
+      "verified": false,
+      "knownBehavior": "Qwen3-family responses that emit the tool call inside the thinking block are not parsed by LM Studio's tool parser — the call is silently dropped. Corroborated by lmstudio-bug-tracker #2045 (qwen3.6 calls tools into think), #1870, and #1589. No pinned fixture yet — needs a captured raw response.",
+      "source": "https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/827",
+      "fixHint": "Detect + recover with unswallow until LM Studio's parser handles thinking-block tool calls; a prompt-template workaround exists in #2045."
     }
   ]
 }

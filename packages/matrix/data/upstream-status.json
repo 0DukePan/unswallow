@@ -56,5 +56,27 @@
     "comments": 43,
     "updatedAt": "2026-07-10T10:51:27Z",
     "labels": []
+  },
+  "lmstudio-827": {
+    "label": "LM Studio pattern A",
+    "issueUrl": "https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/827",
+    "key": 827,
+    "title": "tool parser cannot identify the tool calls of qwen3's response with thinking tags",
+    "state": "open",
+    "comments": 1,
+    "updatedAt": "2026-03-02T16:26:37Z",
+    "labels": [
+      "needs-investigation"
+    ]
+  },
+  "lmstudio-2045": {
+    "label": "LM Studio pattern A (qwen3.6)",
+    "issueUrl": "https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/2045",
+    "key": 2045,
+    "title": "Qwen3.6-35b-a3b issue with thinking and calling tool (fix included)",
+    "state": "open",
+    "comments": 3,
+    "updatedAt": "2026-06-24T06:46:17Z",
+    "labels": []
   }
 }

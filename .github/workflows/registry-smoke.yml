@@ -1,0 +1,52 @@
+name: Registry smoke (published packages)
+
+# Installs unswallow@latest from the live npm and PyPI registries into clean
+# directories and asserts the acceptance checks from the release runbook:
+# version, the matrix verified column, and the self-test demo. Catches a
+# registry/docs drift on the release commit even when nothing in the repo
+# changed. Run manually via workflow_dispatch; also weekly.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * 1'
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fresh npm install of the published package
+        run: |
+          mkdir -p /tmp/smoke-npm
+          cd /tmp/smoke-npm
+          npm init -y >/dev/null
+          npm i unswallow@latest >/dev/null
+          npx unswallow --version > /tmp/smoke-version.out
+          grep -q "^0\." /tmp/smoke-version.out
+          npx unswallow matrix > /tmp/smoke-matrix.out
+          grep -q "verified" /tmp/smoke-matrix.out
+          grep -q "open-webui" /tmp/smoke-matrix.out
+          npx unswallow check > /tmp/smoke-check.out
+          grep -q "SWALLOW DETECTED" /tmp/smoke-check.out
+
+  pypi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fresh venv install of the published package
+        run: |
+          python -m venv /tmp/smoke-pip
+          /tmp/smoke-pip/bin/pip install --quiet unswallow
+          /tmp/smoke-pip/bin/python -c "import unswallow; assert unswallow.__version__.startswith('0.'), unswallow.__version__"
+          /tmp/smoke-pip/bin/python -m unswallow.cli matrix > /tmp/smoke-py-matrix.out
+          grep -q "verified" /tmp/smoke-py-matrix.out
+          grep -q "open-webui" /tmp/smoke-py-matrix.out
+          /tmp/smoke-pip/bin/unswallow check > /tmp/smoke-py-check.out
+          grep -q "SWALLOW DETECTED" /tmp/smoke-py-check.out

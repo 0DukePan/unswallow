@@ -59,6 +59,22 @@ Emits a `unswallow.check` span (attributes: `detected`, `pattern`,
 That turns the library from "a debugging tool you run once" into something
 that stays in the request path as your swallow-rate monitor.
 
+The counter surfaces as `unswallow_detections_total` on whatever Prometheus
+exporter you already run — the standard OTel→Prometheus bridge is enough, no
+unswallow-specific infrastructure:
+
+```python
+from opentelemetry import metrics
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.sdk.metrics import MeterProvider
+
+metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricReader()]))
+```
+
+The Node equivalent wires the same counter through your `OTLPMetricExporter`
+or Prometheus reader; with that in place you get a fleet-wide swallow rate
+(detections / total checks) as a standard metric.
+
 ## OpenAI SDK (Python + Node)
 
 A response interceptor — detect and log after every completion; recover in

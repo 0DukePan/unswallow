@@ -246,6 +246,7 @@ The genuinely hard part of this bug class is knowing **which engine, which versi
 | sglang | `*` | A | swallow | no | [#30744](https://github.com/sgl-project/sglang/issues/30744) |
 | llama.cpp | `*` | A | swallow | no | [#20837](https://github.com/ggml-org/llama.cpp/issues/20837) |
 | open-webui | `*` | D | swallow | no | [#23339](https://github.com/open-webui/open-webui/issues/23339) |
+| lmstudio | `*` | A | swallow | no | [#827](https://github.com/lmstudio-ai/lmstudio-bug-tracker/issues/827) |
 
 On verification, stated plainly: every row is sourced from its linked upstream report, and **none has been independently reproduced by the maintainer** — running each named engine/version against the fixtures requires GPU serving infrastructure this project doesn't have. `verified: no` marks exactly that. If you reproduce a row against the real engine and version, open a PR flipping it to `verified: true` with evidence (server version output + the probe transcript) and it will be merged.
 

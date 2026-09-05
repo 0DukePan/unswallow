@@ -11,6 +11,8 @@ const TRACKED = [
   { key: 'llamacpp-20837', url: 'https://api.github.com/repos/ggml-org/llama.cpp/issues/20837', label: 'llama.cpp pattern A' },
   { key: 'pi-952', url: 'https://api.github.com/repos/earendil-works/pi/issues/952', label: 'pi pattern B' },
   { key: 'openwebui-23339', url: 'https://api.github.com/repos/open-webui/open-webui/issues/23339', label: 'history drift (pattern D)' },
+  { key: 'lmstudio-827', url: 'https://api.github.com/repos/lmstudio-ai/lmstudio-bug-tracker/issues/827', label: 'LM Studio pattern A' },
+  { key: 'lmstudio-2045', url: 'https://api.github.com/repos/lmstudio-ai/lmstudio-bug-tracker/issues/2045', label: 'LM Studio pattern A (qwen3.6)' },
 ];
 
 async function fetchIssue(url, token) {
