@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Dict, List, Tuple
 
-from .types import ChannelSource
 
 REASONING_FIELDS: Tuple[str, ...] = ("reasoning", "reasoning_content", "thinking", "thought")
 

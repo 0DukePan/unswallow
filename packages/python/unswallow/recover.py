@@ -4,7 +4,7 @@ import copy
 import json
 import re
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .types import ToolEnvelope
 
@@ -159,7 +159,7 @@ def _try_json_at(text: str, brace_index: int) -> Optional[ToolEnvelope]:
 
 
 def extract_all_envelopes(text: str):
-    envelopes = []
+    envelopes: List[ToolEnvelope] = []
     capped = False
     n = len(text)
     pos = 0

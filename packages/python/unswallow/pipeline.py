@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from .classify import classify
 from .confidence import score_confidence
@@ -24,7 +24,9 @@ def check_message(message: Dict[str, Any], **opts) -> SwallowCheckResult:
 
     matrix_match = None
     if engine != "unknown" and version is not None:
-        matrix_match = match_matrix_entry(matrix, engine, version, cls.pattern)
+        # normalize_engine narrows the possible spellings to the three known
+        # engines or "unknown", so a cast here is safe after the check above.
+        matrix_match = match_matrix_entry(matrix, engine, version, cls.pattern)  # type: ignore[arg-type]
 
     tool_call = None
     if cls.envelope:

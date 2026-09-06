@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import AsyncIterable, Dict, List, Optional
+from typing import AsyncIterable, Dict, List
 
 from .pipeline import check_message
 from .recover import apply_recovery_many

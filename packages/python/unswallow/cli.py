@@ -210,7 +210,7 @@ def _to_dict(result: SwallowCheckResult) -> dict:
 
 def _cmd_matrix(args: argparse.Namespace) -> int:
     file = get_matrix_file()
-    entries = [e for e in file["entries"] if not args.engine or e.engine == args.engine or e.harness == args.engine]
+    entries = [e for e in file["entries"] if not args.engine or e.engine == args.engine or e.harness == args.engine]  # type: ignore[attr-defined]
     if args.json:
         print(json.dumps({"matrixVersion": file["matrixVersion"], "updated": file["updated"], "entries": [e.__dict__ for e in entries]}, indent=2))
         return 0
@@ -226,7 +226,7 @@ def _cmd_matrix(args: argparse.Namespace) -> int:
 def main(argv: Optional[list] = None) -> int:
     for stream in (sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(encoding="utf-8", errors="replace")
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[union-attr]
         except (AttributeError, ValueError):
             pass
     parser = argparse.ArgumentParser(prog="unswallow", description="Detect and recover tool calls trapped inside a model's reasoning channel.")

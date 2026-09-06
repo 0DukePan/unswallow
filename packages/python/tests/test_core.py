@@ -1,6 +1,6 @@
 import unittest
 
-from unswallow import check_and_rescue, match_matrix_entry, normalize_engine
+from unswallow import check_and_rescue, normalize_engine
 
 
 def response(message, finish_reason="stop"):

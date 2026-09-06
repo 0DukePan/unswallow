@@ -12,6 +12,12 @@
   },
   "scripts": {
     "build": "npm run build --workspace unswallow",
+    "lint": "node packages/scripts/lint.mjs",
+    "typecheck": "node packages/scripts/typecheck.mjs",
+    "coverage": "npm run build --workspace unswallow && node --import tsx --experimental-test-coverage --test packages/unswallow/test/*.test.ts",
+    "coverage:python": "python packages/scripts/coverage_python.py",
+    "bench:fp": "npm run build --workspace unswallow && node packages/bench/fp-eval.mjs",
+    "bench:fp:python": "python packages/python/bench/fp_eval.py",
     "test": "npm run build --workspace unswallow && node --import tsx --test packages/unswallow/test/semver.test.ts packages/unswallow/test/core.test.ts packages/unswallow/test/fp-guard.test.ts packages/unswallow/test/stream.test.ts packages/unswallow/test/stream-sweep.test.ts packages/unswallow/test/torture.test.ts packages/unswallow/test/history.test.ts packages/unswallow/test/proxy.test.ts packages/unswallow/test/otel.test.ts",
     "bench": "npm run build --workspace unswallow && node packages/bench/run.mjs",
     "bench:check": "npm run build --workspace unswallow && node packages/bench/run.mjs --check",
@@ -24,7 +30,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "eslint": "^9.39.5",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.69.0"
   }
 }

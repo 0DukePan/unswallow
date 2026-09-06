@@ -1,0 +1,2 @@
+# Marker for PEP 561 — unswallow ships inline type annotations usable by
+# type checkers without a stub package.

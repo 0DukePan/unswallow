@@ -44,4 +44,4 @@ unswallow = "unswallow.cli:main"
 packages = ["unswallow", "unswallow.integrations"]
 
 [tool.setuptools.package-data]
-unswallow = ["data/*.json"]
+unswallow = ["data/*.json", "py.typed"]

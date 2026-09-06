@@ -359,7 +359,7 @@ async def main_async():
         pool = payloads[key]
         i = 0
 
-        def run():
+        def run(pool=pool):
             nonlocal i
             p = pool[i % len(pool)]
             i += 1
@@ -437,7 +437,7 @@ async def main_async():
         pool = payloads[key]
         k = 0
 
-        def naive_run():
+        def naive_run(pool=pool):
             nonlocal k
             p = pool[k % len(pool)]
             k += 1
@@ -533,10 +533,9 @@ def main():
         "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
 
-    fmt = lambda r: "{:.2f} / {:.2f} / {:.2f} ms".format(r["p50"], r["p95"], r["p99"])
-    fmt_mean = lambda r: "{:.3f} ms".format(r["mean"])
-    fmt_spread = lambda r: "{:.3f} ms ({:.3f}–{:.3f})".format(r["mean"], r["meanMin"], r["meanMax"])
-    fmt_ops = lambda r: "{:,} ops/s".format(int(r["opsPerSec"]))
+    fmt = lambda r: "{:.2f} / {:.2f} / {:.2f} ms".format(r["p50"], r["p95"], r["p99"])  # noqa: E731
+    fmt_spread = lambda r: "{:.3f} ms ({:.3f}\u2013{:.3f})".format(r["mean"], r["meanMin"], r["meanMax"])  # noqa: E731
+    fmt_ops = lambda r: "{:,} ops/s".format(int(r["opsPerSec"]))  # noqa: E731
 
     lines = [
         "# unswallow — Python performance report",

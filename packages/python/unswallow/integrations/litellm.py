@@ -61,7 +61,7 @@ def make_swallow_logger(on_detect: Optional[OnDetect] = None) -> Any:
     streaming response that carried a swallowed, recoverable tool call.
     """
     try:
-        from litellm.integrations.custom_logger import CustomLogger
+        from litellm.integrations.custom_logger import CustomLogger  # type: ignore[import-not-found]
     except ImportError:
         return None
 

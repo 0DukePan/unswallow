@@ -1,0 +1,28 @@
+# Dev-only tooling — the published packages keep zero runtime dependencies.
+# ruff is a dev tool in CI only; it never ships in the wheel.
+#
+# Conservative ruleset: this package is a deliberate 1:1 mirror of the TS
+# core (Python 3.9+, typing.Optional style on purpose). We lint for real
+# bugs (undefined names, unused imports, syntax) without churning the
+# mirrored style.
+
+line-length = 100
+target-version = "py39"
+exclude = ["packages/python/bench/results_python*.md", "packages/python/bench/results_python_fp*"]
+
+[lint]
+select = [
+  "E4",   # import/syntax problems
+  "E7",   # statement bugs
+  "E9",   # runtime errors
+  "F",    # pyflakes: undefined names, unused imports
+  "W",    # whitespace warnings
+  "B",    # bugbear: real bugs
+]
+ignore = [
+  "E501", # long strings are idiomatic in fixtures/tests
+]
+
+[lint.per-file-ignores]
+"packages/python/tests/*" = ["B011"]
+"packages/python/bench/*" = ["B011"]
