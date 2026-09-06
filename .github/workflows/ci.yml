@@ -120,3 +120,37 @@ jobs:
       - run: npm run coverage
       - name: Python coverage
         run: python packages/scripts/coverage_python.py
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: npm ci
+      - name: Build npm packages
+        run: npm run build --workspace unswallow
+      - name: Pack npm artifacts and verify they install
+        run: |
+          cd packages/unswallow
+          npm pack --silent > /tmp/unswallow-tgz.txt
+          TGZ=$(tail -1 /tmp/unswallow-tgz.txt)
+          cd ../matrix
+          npm pack --silent > /tmp/matrix-tgz.txt
+          MTGZ=$(tail -1 /tmp/matrix-tgz.txt)
+          cd /tmp
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund "$GITHUB_WORKSPACE/packages/unswallow/$TGZ" "$GITHUB_WORKSPACE/packages/matrix/$MTGZ"
+          node -e "const u = require('unswallow'); const r = u.checkAndRescue({choices:[{finish_reason:'stop',message:{role:'assistant',content:'',reasoning:'<thinking>\n<tool_call>\n{\"name\":\"get_weather\",\"arguments\":{\"city\":\"Tokyo\"}}\n</tool_call>\n</thinking>\n',tool_calls:[]}}]}); if (!r.detected || !r.recovered) { console.error('packed artifact failed smoke check'); process.exit(1); } console.log('npm artifact smoke: detected=' + r.detected + ' recovered=' + r.recovered)"
+      - name: Build + verify Python wheel
+        run: |
+          python -m pip install --quiet build
+          python -m build --wheel --outdir pypi-dist packages/python > /dev/null
+          python -m pip install --quiet pypi-dist/*.whl --force-reinstall
+          cd /tmp
+          python -c "import unswallow; r = unswallow.check_and_rescue({'choices':[{'finish_reason':'stop','message':{'role':'assistant','content':'','reasoning':'<thinking>\n<tool_call>\n{\"name\":\"get_weather\",\"arguments\":{\"city\":\"Tokyo\"}}\n</tool_call>\n</thinking>\n','tool_calls':[]}}]}); assert r.detected and r.recovered, 'wheel smoke failed'; print('python wheel smoke: detected=' + str(r.detected) + ' recovered=' + str(r.recovered))"
