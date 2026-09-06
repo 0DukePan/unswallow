@@ -206,7 +206,11 @@ def run_case(probe, args):
             record["rawResponseCaptured"] = True
         else:
             if not args.endpoint:
-                raise RuntimeError("case {} is live but no --endpoint given".format(probe["id"]))
+                # Live case without a configured endpoint: skip, so the default
+                # (no-arg) run stays a clean synthetic-only gate.
+                record["skipped"] = True
+                record["passed"] = True
+                return record
             request = build_request(probe, args, probe.get("stream", False))
             record["request"] = request
             if probe.get("stream"):
@@ -276,6 +280,10 @@ async def _iter(chunks):
 def render_human(records, args):
     lines = ["unswallow live-probe (python)", "  endpoint: {}".format(args.endpoint or "(synthetic only)"), ""]
     for r in records:
+        if r.get("skipped"):
+            lines.append("[SKIP] {}  (live case — no endpoint configured)".format(r["caseId"]))
+            lines.append("")
+            continue
         status = "PASS" if r["passed"] else "FAIL"
         lines.append(
             "[{}] {}  ({} mode, {}, engine={} {}, model={})".format(
@@ -310,8 +318,13 @@ def render_human(records, args):
         for i in r.get("issues") or []:
             lines.append("    expected: {}".format(i))
         lines.append("")
-    passed = sum(1 for r in records if r["passed"])
-    lines.append("{}/{} cases passed their expectation.".format(passed, len(records)))
+    run = [r for r in records if not r.get("skipped")]
+    passed = sum(1 for r in run if r["passed"])
+    suffix = ""
+    skipped = sum(1 for r in records if r.get("skipped"))
+    if skipped:
+        suffix = " ({} live case(s) skipped — no endpoint)".format(skipped)
+    lines.append("{}/{} cases passed their expectation.{}".format(passed, len(run), suffix))
     return "\n".join(lines)
 
 
@@ -319,11 +332,13 @@ def main(argv=None):
     args = parse_args(argv)
     cases = load_cases(args)
     records = [run_case(probe, args) for probe in cases]
+    run = [r for r in records if not r.get("skipped")]
+    skipped = sum(1 for r in records if r.get("skipped"))
     report = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "harness": {"language": "python", "version": "0.1.3"},
         "provider": {"endpoint": args.endpoint, "engine": args.engine, "engineVersion": args.version, "model": args.model},
-        "summary": {"passed": sum(1 for r in records if r["passed"]), "total": len(records)},
+        "summary": {"passed": sum(1 for r in run if r["passed"]), "total": len(run), "skipped": skipped},
         "records": records,
     }
     if args.out:
@@ -331,7 +346,7 @@ def main(argv=None):
     print(render_human(records, args))
     if args.out:
         print("report written to {}".format(Path(args.out).resolve()))
-    return 0 if all(r["passed"] for r in records) else 1
+    return 0 if all(r["passed"] for r in run) else 1
 
 
 if __name__ == "__main__":

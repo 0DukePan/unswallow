@@ -201,7 +201,14 @@ async function runCase(probe, args, ctx) {
       response = rawAcc.end();
       record.rawResponseCaptured = true;
     } else {
-      if (!args.endpoint) throw new Error(`case ${probe.id} is live but no --endpoint given`);
+      // Live case: requires a configured endpoint. Without one, skip so the
+      // default (no-arg) run stays a clean synthetic-only gate.
+      if (!args.endpoint) {
+        record.skipped = true;
+        record.passed = true;
+        ctx.skipped += 1;
+        return record;
+      }
       const request = buildRequest(probe, args, probe.stream);
       record.request = request;
       if (probe.stream) {
@@ -280,6 +287,11 @@ function renderHuman(records, args) {
   lines.push(`  endpoint: ${args.endpoint ?? '(synthetic only)'}`);
   lines.push('');
   for (const r of records) {
+    if (r.skipped) {
+      lines.push(`[SKIP] ${r.caseId}  (live case — no --endpoint configured)`);
+      lines.push('');
+      continue;
+    }
     const status = r.passed ? 'PASS' : 'FAIL';
     lines.push(`[${status}] ${r.caseId}  (${r.mode}, ${r.stream ? 'streaming' : 'non-streaming'}, engine=${r.engine ?? '-'} ${r.engineVersion ?? ''}, model=${r.model ?? '-'})`);
     for (const e of r.errors) lines.push(`    error: ${e}`);
@@ -293,7 +305,8 @@ function renderHuman(records, args) {
     for (const i of r.issues ?? []) lines.push(`    expected: ${i}`);
     lines.push('');
   }
-  lines.push(`${records.filter((r) => r.passed).length}/${records.length} cases passed their expectation.`);
+  const run = records.filter((r) => !r.skipped);
+  lines.push(`${run.filter((r) => r.passed).length}/${run.length} cases passed their expectation${records.some((r) => r.skipped) ? ` (${records.filter((r) => r.skipped).length} live case(s) skipped — no endpoint)` : ''}.`);
   return lines.join('\n');
 }
 
@@ -315,19 +328,23 @@ async function main() {
     process.exit(2);
   }
 
-  const ctx = { passed: 0, total: 0 };
+  const ctx = { passed: 0, total: 0, skipped: 0 };
   const records = [];
   for (const probe of cases) {
     const record = await runCase(probe, args, ctx);
     records.push(record);
-    if (args.failFast && !record.passed && record.errors.length === 0) break;
+    if (args.failFast && !record.passed && !record.skipped) break;
   }
 
   const report = {
     generatedAt: new Date().toISOString(),
     harness: { language: 'typescript', version: '0.1.3' },
     provider: { endpoint: args.endpoint, engine: args.engine, engineVersion: args.version, model: args.model },
-    summary: { passed: records.filter((r) => r.passed).length, total: records.length },
+    summary: {
+      passed: records.filter((r) => r.passed && !r.skipped).length,
+      total: records.filter((r) => !r.skipped).length,
+      skipped: records.filter((r) => r.skipped).length,
+    },
     records,
   };
   if (args.outPath) fs.writeFileSync(path.resolve(args.outPath), JSON.stringify(report, null, 2));
