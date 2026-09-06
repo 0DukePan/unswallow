@@ -9,6 +9,7 @@ __pycache__/
 *.pyc
 .coverage
 packages/bench/live-probe/results-*.json
+packages/bench/live-probe/.live-probe.env.json
 *.log
 *.tsbuildinfo
 .DS_Store

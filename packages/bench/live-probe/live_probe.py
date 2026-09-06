@@ -71,17 +71,24 @@ def load_cases(args):
     return cases
 
 
+def chat_url(endpoint):
+    """Accept both a full endpoint (…/chat/completions) and a base URL (…/v1)."""
+    if endpoint.rstrip("/").endswith("/chat/completions"):
+        return endpoint
+    return endpoint.rstrip("/") + "/chat/completions"
+
+
 def post_json(endpoint, api_key, body):
     headers = {"content-type": "application/json"}
     if api_key and api_key != "none":
         headers["authorization"] = "Bearer {}".format(api_key)
-    req = urllib.request.Request(endpoint, data=json.dumps(body).encode(), headers=headers)
+    req = urllib.request.Request(chat_url(endpoint), data=json.dumps(body).encode(), headers=headers)
     t0 = time.perf_counter()
     try:
         with urllib.request.urlopen(req, timeout=300) as res:
             text = res.read().decode()
     except urllib.error.HTTPError as e:
-        raise RuntimeError("HTTP {}: {}".format(e.code, e.read().decode()[:500]))
+        raise RuntimeError("HTTP {}: {}".format(e.code, e.read().decode()[:500])) from None
     latency_ms = (time.perf_counter() - t0) * 1000.0
     return json.loads(text), latency_ms
 
@@ -90,7 +97,7 @@ def post_stream(endpoint, api_key, body):
     headers = {"content-type": "application/json", "accept": "text/event-stream"}
     if api_key and api_key != "none":
         headers["authorization"] = "Bearer {}".format(api_key)
-    req = urllib.request.Request(endpoint, data=json.dumps(body).encode(), headers=headers)
+    req = urllib.request.Request(chat_url(endpoint), data=json.dumps(body).encode(), headers=headers)
     t0 = time.perf_counter()
     chunks = []
     with urllib.request.urlopen(req, timeout=600) as res:

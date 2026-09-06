@@ -27,8 +27,18 @@ import { checkAndRescue, checkAndRescueStream } from 'unswallow';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CASES_DIR = path.join(HERE, 'cases');
 
+// Optional defaults file (gitignored): { "endpoint": …, "model": …, "engine": …, "version": …, "apiKey": … }
+let DEFAULTS = {};
+try {
+  DEFAULTS = JSON.parse(fs.readFileSync(path.join(HERE, '.live-probe.env.json'), 'utf8'));
+} catch { /* no defaults file — fine */ }
+
 function parseArgs(argv) {
-  const out = { cases: [], endpoint: null, model: null, engine: null, version: null, apiKey: null, outPath: null, failFast: false };
+  const out = {
+    cases: [], endpoint: DEFAULTS.endpoint ?? null, model: DEFAULTS.model ?? null,
+    engine: DEFAULTS.engine ?? null, version: DEFAULTS.version ?? null,
+    apiKey: DEFAULTS.apiKey ?? null, outPath: null, failFast: false,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const val = () => argv[++i];
@@ -67,11 +77,17 @@ function loadCases(args) {
 
 // ---- minimal OpenAI-compatible client (no SDK dependency) ----
 
+// Accept both a full endpoint (…/v1/chat/completions) and a base URL
+// (…/v1) — the docs and README use the base form.
+function chatUrl(endpoint) {
+  return /\/chat\/completions$/.test(endpoint) ? endpoint : `${endpoint.replace(/\/$/, '')}/chat/completions`;
+}
+
 async function postJson(endpoint, apiKey, body) {
   const headers = { 'content-type': 'application/json' };
   if (apiKey && apiKey !== 'none') headers.authorization = `Bearer ${apiKey}`;
   const t0 = performance.now();
-  const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+  const res = await fetch(chatUrl(endpoint), { method: 'POST', headers, body: JSON.stringify(body) });
   const text = await res.text();
   const latencyMs = performance.now() - t0;
   let json = null;
@@ -84,7 +100,7 @@ async function postStream(endpoint, apiKey, body) {
   const headers = { 'content-type': 'application/json', accept: 'text/event-stream' };
   if (apiKey && apiKey !== 'none') headers.authorization = `Bearer ${apiKey}`;
   const t0 = performance.now();
-  const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+  const res = await fetch(chatUrl(endpoint), { method: 'POST', headers, body: JSON.stringify(body) });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`HTTP ${res.status} ${res.statusText}: ${text.slice(0, 500)}`);
@@ -114,7 +130,11 @@ function buildRequest(probe, args, stream) {
   const req = { ...(probe.request ?? {}) };
   req.messages = req.messages ?? [{ role: 'user', content: 'Hello.' }];
   req.stream = stream;
-  if (!req.model) req.model = args.model ?? probe.model ?? 'unknown';
+  // Only set model when explicitly provided: llama.cpp single-model servers
+  // reject a model id they do not recognize, and honor an omitted model.
+  const model = args.model ?? probe.model;
+  if (model) req.model = model;
+  else delete req.model;
   delete req._file;
   return req;
 }

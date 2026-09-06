@@ -1,0 +1,24 @@
+{
+  "probe": {
+    "id": "live-llamacpp-qwen3-0.6b-pattern-a",
+    "description": "Live llama.cpp probe: Qwen3-0.6B-Q8_0 asked a tool-requiring question; if the tool call lands inside the think block and tool_calls comes back empty, this is a live Pattern A reproduction.",
+    "mode": "live",
+    "engine": "llama.cpp",
+    "version": "b10819",
+    "model": "..\\Qwen3-0.6B-Q8_0.gguf",
+    "pattern": "A",
+    "stream": false,
+    "expect": { "detected": false, "pattern": null, "recovered": false },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools. When a user asks for something a tool can do, call the tool with the correct arguments. Think carefully before answering." },
+        { "role": "user", "content": "What is the current weather in Tokyo? Use the get_weather tool." }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Get the current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string", "description": "City name" } }, "required": ["city"] } } }
+      ],
+      "temperature": 0.2,
+      "max_tokens": 300
+    }
+  }
+}
