@@ -434,6 +434,8 @@ interface SwallowCheckResult {
   the `CHANGELOG.md` entry for that version, so the changelog update must
   land in the same commit as the version bump (it becomes the release
   prose). Review and publish the draft; releases are never auto-published.
+  Full versioning + release policy (lifecycle 0.1.x → 1.0.0, migration
+  notes, pre-release checklist) is in [`docs/release-policy.md`](docs/release-policy.md).
 
 ## Roadmap
 
