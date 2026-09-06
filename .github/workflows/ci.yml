@@ -36,6 +36,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Runnable example walkthrough (broken → recovered)
+        run: npm run examples
       - name: "Bench (read-only: hash pins + fixture expectations + matrix consistency)"
         run: node packages/bench/run.mjs --check
       - name: CLI smoke test
@@ -87,6 +89,8 @@ jobs:
         run: python -m unittest discover -s packages/python/tests -t packages/python
       - name: Cross-language parity — 22-fixture corpus through the Python core
         run: python packages/python/bench/parity.py
+      - name: Runnable example walkthrough (broken → recovered)
+        run: python packages/examples/walkthrough.py
       - name: Python CLI smoke
         run: |
           cd packages/python

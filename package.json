@@ -26,6 +26,8 @@
     "bench:python": "python packages/python/bench/parity.py && python packages/python/bench/perf_python.py",
     "matrix:update": "node packages/matrix/scripts/update-matrix.mjs && python packages/python/scripts/sync_matrix.py",
     "test:python": "python -m unittest discover -s packages/python/tests -t packages/python",
+    "examples": "npm run walkthrough --workspace=@unswallow/examples",
+    "examples:python": "python packages/examples/walkthrough.py",
     "pin": "node packages/bench/scripts/pin-fixtures.mjs"
   },
   "devDependencies": {
