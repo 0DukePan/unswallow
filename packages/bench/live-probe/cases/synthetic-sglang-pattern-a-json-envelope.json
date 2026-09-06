@@ -1,0 +1,39 @@
+{
+  "probe": {
+    "id": "synthetic-sglang-pattern-a-json-envelope",
+    "description": "SGLang-style Qwen3 swallow: JSON tool-call envelope inside reasoning_content (Pattern A), SGLang #30744 shape.",
+    "mode": "synthetic",
+    "engine": "sglang",
+    "version": "0.4.6",
+    "model": "synthetic/qwen3",
+    "pattern": "A",
+    "stream": false,
+    "expect": { "detected": true, "pattern": "A", "recovered": true },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools." },
+        { "role": "user", "content": "What is the weather in Tokyo?" }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string" } }, "required": ["city"] } } }
+      ]
+    },
+    "rawResponse": {
+      "id": "chatcmpl-synthetic-sglang-a",
+      "object": "chat.completion",
+      "model": "synthetic/qwen3",
+      "choices": [
+        {
+          "index": 0,
+          "finish_reason": "stop",
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": "<thinking>\nI need to fetch the weather for Tokyo.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Tokyo\"}}\n</tool_call>\n</thinking>\n",
+            "tool_calls": []
+          }
+        }
+      ]
+    }
+  }
+}

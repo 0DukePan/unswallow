@@ -1,0 +1,40 @@
+{
+  "probe": {
+    "id": "synthetic-healthy-tool-call",
+    "description": "Healthy baseline: a well-formed tool_calls response that must pass through untouched (no detection).",
+    "mode": "synthetic",
+    "engine": "vllm",
+    "version": "0.24.0",
+    "model": "synthetic/qwen3",
+    "pattern": "none",
+    "stream": false,
+    "expect": { "detected": false, "pattern": null, "recovered": false },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools." },
+        { "role": "user", "content": "What is the weather in Osaka?" }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string" } }, "required": ["city"] } } }
+      ]
+    },
+    "rawResponse": {
+      "id": "chatcmpl-synthetic-healthy",
+      "object": "chat.completion",
+      "model": "synthetic/qwen3",
+      "choices": [
+        {
+          "index": 0,
+          "finish_reason": "tool_calls",
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+              { "id": "call_1", "type": "function", "function": { "name": "get_weather", "arguments": "{\"city\": \"Osaka\"}" } }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

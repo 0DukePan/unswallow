@@ -1,0 +1,36 @@
+{
+  "probe": {
+    "id": "synthetic-pattern-c-leak",
+    "description": "Pattern C: unclosed think block leaks into the content field (detection-only, never recovered).",
+    "mode": "synthetic",
+    "engine": "minimax",
+    "version": "0.0.0",
+    "model": "synthetic/m3",
+    "pattern": "C",
+    "stream": false,
+    "expect": { "detected": true, "pattern": "C", "recovered": false },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant." },
+        { "role": "user", "content": "Hello!" }
+      ],
+      "tools": []
+    },
+    "rawResponse": {
+      "id": "chatcmpl-synthetic-c",
+      "object": "chat.completion",
+      "model": "synthetic/m3",
+      "choices": [
+        {
+          "index": 0,
+          "finish_reason": "stop",
+          "message": {
+            "role": "assistant",
+            "content": "<mm:think>\nLet me plan my answer carefully.\nI will greet the user warmly and concisely.\n",
+            "tool_calls": []
+          }
+        }
+      ]
+    }
+  }
+}

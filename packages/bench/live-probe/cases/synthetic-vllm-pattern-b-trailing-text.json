@@ -1,0 +1,39 @@
+{
+  "probe": {
+    "id": "synthetic-vllm-pattern-b-trailing-text",
+    "description": "vLLM 0.19 tool_choice=required silent-empty variant: complete JSON envelope in content followed by reasoning text (Pattern B), #39056 PR #35936 shape.",
+    "mode": "synthetic",
+    "engine": "vllm",
+    "version": "0.19.0",
+    "model": "synthetic/qwen3",
+    "pattern": "B",
+    "stream": false,
+    "expect": { "detected": true, "pattern": "B", "recovered": true },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools." },
+        { "role": "user", "content": "What is the weather in Tokyo?" }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string" } }, "required": ["city"] } } }
+      ],
+      "tool_choice": "required"
+    },
+    "rawResponse": {
+      "id": "chatcmpl-synthetic-vllm-b",
+      "object": "chat.completion",
+      "model": "synthetic/qwen3",
+      "choices": [
+        {
+          "index": 0,
+          "finish_reason": "stop",
+          "message": {
+            "role": "assistant",
+            "content": "<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Tokyo\"}}\n</tool_call>\nI have called the tool and will wait for the result.\n",
+            "tool_calls": []
+          }
+        }
+      ]
+    }
+  }
+}

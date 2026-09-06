@@ -1,0 +1,38 @@
+{
+  "probe": {
+    "id": "synthetic-fp-discussion-only",
+    "description": "False-positive control: reasoning that merely discusses a tool call must never be recovered.",
+    "mode": "synthetic",
+    "engine": "vllm",
+    "version": "0.19.0",
+    "model": "synthetic/qwen3",
+    "pattern": "none",
+    "stream": false,
+    "expect": { "detected": false, "pattern": null, "recovered": false },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools." },
+        { "role": "user", "content": "What is the weather in Tokyo?" }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string" } }, "required": ["city"] } } }
+      ]
+    },
+    "rawResponse": {
+      "id": "chatcmpl-synthetic-fp",
+      "object": "chat.completion",
+      "model": "synthetic/qwen3",
+      "choices": [
+        {
+          "index": 0,
+          "finish_reason": "stop",
+          "message": {
+            "role": "assistant",
+            "content": "I could call get_weather for Tokyo, but I do not need it for this answer.",
+            "tool_calls": []
+          }
+        }
+      ]
+    }
+  }
+}

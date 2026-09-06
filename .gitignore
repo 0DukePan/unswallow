@@ -8,6 +8,7 @@ build/
 __pycache__/
 *.pyc
 .coverage
+packages/bench/live-probe/results-*.json
 *.log
 *.tsbuildinfo
 .DS_Store

@@ -1,0 +1,31 @@
+{
+  "probe": {
+    "id": "synthetic-streaming-pattern-a-split",
+    "description": "Streaming variant of the Pattern A swallow: the envelope arrives split mid-tag and mid-JSON across reasoning deltas, then finish_reason stop.",
+    "mode": "synthetic",
+    "engine": "vllm",
+    "version": "0.19.0",
+    "model": "synthetic/qwen3",
+    "pattern": "A",
+    "stream": true,
+    "expect": { "detected": true, "pattern": "A", "recovered": true },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools." },
+        { "role": "user", "content": "What is the weather in Tokyo?" }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string" } }, "required": ["city"] } } }
+      ],
+      "stream": true
+    },
+    "chunks": [
+      { "id": "chatcmpl-synthetic-stream-a", "object": "chat.completion.chunk", "model": "synthetic/qwen3", "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "< think" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "ing>\nI need the weather in Tokyo, so I will call the tool.\n<tool_ca" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "ll>\n{\"name\": \"get_weather\", \"arguments\": {\"ci" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "ty\": \"Tokyo\"}}\n</tool_call>\n< resp" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "onse>\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": "stop", "delta": {} }] }
+    ]
+  }
+}
