@@ -28,6 +28,8 @@
     "test:python": "python -m unittest discover -s packages/python/tests -t packages/python",
     "examples": "npm run walkthrough --workspace=@unswallow/examples",
     "examples:python": "python packages/examples/walkthrough.py",
+    "integration": "npm run build --workspace unswallow && node packages/examples/integration-openai.mjs",
+    "integration:python": "python packages/examples/integration_openai.py",
     "live-probe": "npm run build --workspace unswallow && node packages/bench/live-probe/live-probe.mjs",
     "live-probe:python": "python packages/bench/live-probe/live_probe.py",
     "pin": "node packages/bench/scripts/pin-fixtures.mjs"
