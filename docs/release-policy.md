@@ -72,10 +72,9 @@ confidence or recovery for an engine/version combination).
 - [ ] `npm test`, `python -m unittest discover -s packages/python/tests -t packages/python`
 - [ ] `npm run lint`, `python -m ruff check packages/python`
 - [ ] `npm run typecheck` (tsc + mypy)
+- [ ] `npm run docs:check` (internal markdown links resolve)
 - [ ] `npm run coverage`, `python packages/scripts/coverage_python.py`
-- [ ] `npm run bench:check` (hash pins + fixture expectations + matrix consistency)
-- [ ] `npm run bench:fp`, `npm run bench:fp:python` (0 FP / 0 FN on the pinned corpus)
-- [ ] `python packages/python/bench/parity.py` (22/22 exact confidence parity)
+- [ ] `npm run bench:smoke` (fixture pins + matrix consistency + fp-eval gates + parity)
 - [ ] `npm run examples`, `npm run examples:python`, `npm run integration`,
       `npm run integration:python`
 - [ ] package artifact validation (npm pack + wheel install smoke)
