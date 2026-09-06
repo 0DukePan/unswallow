@@ -42,11 +42,17 @@ Matrix changes don't require a package release. `npm run matrix:update` polls th
 ```bash
 npm install
 npm run build     # tsc -> packages/unswallow/dist/
-npm test          # 52 tests (semver, core, false-positive guard, streaming, history hygiene, proxy)
-npm run test:python   # 42 tests, stdlib-only (mirrors the TS suite)
+npm test          # 85 tests (semver, core, false-positive guard, streaming, history hygiene, proxy)
+npm run test:python   # 80 tests, stdlib-only (mirrors the TS suite)
+npm run lint      # eslint (TS) — python: python -m ruff check packages/python
+npm run typecheck # tsc --noEmit + mypy
+npm run coverage  # TS coverage report
+python packages/scripts/coverage_python.py   # Python coverage report
+npm run examples  # TS runnable broken→recovered walkthrough
+npm run examples:python   # Python walkthrough
 npm run bench     # verify hash pins + run the 22-fixture corpus + matrix consistency, write packages/bench/results/
 npm run bench:perf     # TS latencies/throughput/memory + proxy overhead, write packages/bench/perf/
-npm run bench:python   # Python parity (15 fixtures vs TS, exact confidence) + Python perf, write packages/python/bench/
+npm run bench:python   # Python parity (22 fixtures vs TS, exact confidence) + Python perf, write packages/python/bench/
 npm run matrix:update  # poll tracked upstream issue threads (advisory + snapshot) + sync matrix into the Python package
 ```
 
@@ -58,6 +64,9 @@ packages/
   matrix/      # the published `unswallow-matrix` package: data/engine-matrix.json, update tooling
   bench/       # private: fixtures/, run.mjs, perf.mjs, results/
   python/      # the published PyPI `unswallow` package: 1:1 Python mirror (stdlib-only)
+  examples/    # private: runnable broken→recovered walkthroughs, exercised in CI
+scripts (root): packages/scripts/ — lint.mjs, typecheck.mjs, coverage_python.py
+config (root): eslint.config.mjs, ruff.toml, mypy.ini
 ```
 
 The engine matrix is bundled in the Python package as data — `npm run matrix:update` syncs it automatically (`python packages/python/scripts/sync_matrix.py`), and CI fails if the copies drift apart.

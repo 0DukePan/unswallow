@@ -218,7 +218,7 @@ raw provider response + optional engine hint + optional tool schemas
 - `{"name": "get_weather"}` (no `arguments`) → not detected
 - `{"name": "get_weather", "arguments": {"city": "Tokyo"}` (unbalanced) → not detected
 
-These are pinned benchmark fixtures (`fp-guard-*` in [`packages/bench/fixtures/`](packages/bench/fixtures/)) — the guard can't regress silently.
+These are pinned benchmark fixtures (`fp-guard-*` in [`packages/bench/fixtures/`](packages/bench/fixtures/)) — the guard can't regress silently. The full false-positive methodology — what counts as a false positive, what the guard does and doesn't promise — is in [`docs/false-positives.md`](docs/false-positives.md).
 
 ## Confidence
 
@@ -254,7 +254,7 @@ Every row ships with a `source` URL — community PRs against [`packages/matrix/
 
 ## Benchmarks
 
-Three layers, all independently rerunnable on your own hardware.
+Three layers, all independently rerunnable on your own hardware — the full repro guide (commands, methodology notes, Linux reference numbers) is in [`docs/benchmarks.md`](docs/benchmarks.md).
 
 ### Correctness — 22/22 hash-pinned fixtures
 
@@ -439,6 +439,8 @@ interface SwallowCheckResult {
 - **Phase 3 (shipped):** Pattern D — history-drift prevention pass (`sanitizeHistory` / `stripReasoningTags`); lightweight proxy mode (`unswallow proxy` / `createProxyServer`) — OpenAI-compatible passthrough scoped strictly to this bug class.
 - **Shipped:** Python port (`pip install unswallow`) — 1:1 interface mirror, stdlib-only, same bundled matrix.
 - **Open:** Phase 4 integration options with broader tool-call repair tooling (technical decision, not a promise).
+
+Known edges and honest limitations are spelled out in [`docs/limitations.md`](docs/limitations.md).
 
 ## Contributing
 
