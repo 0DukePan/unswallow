@@ -18,7 +18,7 @@
     "coverage:python": "python packages/scripts/coverage_python.py",
     "bench:fp": "npm run build --workspace unswallow && node packages/bench/fp-eval.mjs",
     "bench:fp:python": "python packages/python/bench/fp_eval.py",
-    "test": "npm run build --workspace unswallow && node --import tsx --test packages/unswallow/test/semver.test.ts packages/unswallow/test/core.test.ts packages/unswallow/test/fp-guard.test.ts packages/unswallow/test/stream.test.ts packages/unswallow/test/stream-sweep.test.ts packages/unswallow/test/torture.test.ts packages/unswallow/test/history.test.ts packages/unswallow/test/proxy.test.ts packages/unswallow/test/otel.test.ts",
+    "test": "npm run build --workspace unswallow && node --import tsx --test packages/unswallow/test/semver.test.ts packages/unswallow/test/core.test.ts packages/unswallow/test/fp-guard.test.ts packages/unswallow/test/stream.test.ts packages/unswallow/test/stream-sweep.test.ts packages/unswallow/test/torture.test.ts packages/unswallow/test/edge-cases.test.ts packages/unswallow/test/history.test.ts packages/unswallow/test/proxy.test.ts packages/unswallow/test/otel.test.ts",
     "bench": "npm run build --workspace unswallow && node packages/bench/run.mjs",
     "bench:check": "npm run build --workspace unswallow && node packages/bench/run.mjs --check",
     "bench:update": "npm run build --workspace unswallow && node packages/bench/run.mjs --update-pins",
