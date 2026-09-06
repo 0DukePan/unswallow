@@ -1,0 +1,29 @@
+name: framework-integrations
+
+# Real LangChain + LlamaIndex drivers through the unswallow proxy.
+# Heavy dependency install (langchain-openai, llama-index, openai), so this
+# runs only on manual dispatch / workflow_dispatch — not on every PR.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  langchain-llamaindex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: npm ci
+      - name: Build TS core (proxy)
+        run: npm run build --workspace unswallow
+      - name: Install framework deps
+        run: |
+          python -m pip install --quiet langchain-openai llama-index openai
+      - name: Run framework integrations through the proxy
+        run: python packages/examples/run_framework_integrations.py

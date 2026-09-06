@@ -21,8 +21,21 @@ Both are exercised by the runnable examples below.
 | --- | --- | --- |
 | `packages/examples/integration-openai.mjs` | TypeScript | `npm run integration` |
 | `packages/examples/integration_openai.py` | Python | `npm run integration:python` |
+| `packages/examples/integration_langchain.py` | Python (real LangChain) | `npm run integration:langchain` (via the runner) |
+| `packages/examples/integration_llama_index.py` | Python (real LlamaIndex) | `npm run integration:langchain` (via the runner) |
 
-What they do (same assertions in both languages):
+The **real-framework** examples (`integration_langchain.py` +
+`integration_llama_index.py`, driven by
+`run_framework_integrations.py`) run against an actual installed
+`langchain-openai` / `llama-index` + `openai` stack: a mock upstream that
+swallows the tool call (it serves the live-captured b8461 swallow), the
+unswallow proxy in front of it, and the framework's agent binding the tool.
+They are verified end-to-end — the framework receives the healed response
+and executes the recovered `read_file`. Install the deps in a venv and run
+`npm run integration:langchain`, or trigger the `framework-integrations`
+workflow (manual dispatch) in CI.
+
+What the SDK-shape examples do (same assertions in both languages):
 
 1. an SDK-shaped response arrives with `tool_calls: []` + `finish_reason: stop`
    while the call sits in `reasoning` (the vLLM 0.19 swallow shape);
@@ -77,6 +90,13 @@ Troubleshooting:
 
 ## LangChain (Python)
 
+**Verified with a real install** — see
+`packages/examples/integration_langchain.py` (driven by
+`run_framework_integrations.py`), which binds `read_file` on a
+`ChatOpenAI` pointed at the unswallow proxy and executes the recovered
+call. Reproduce it with `npm run integration:langchain` after
+`pip install langchain-openai llama-index openai`.
+
 ```bash
 pip install langchain-openai unswallow
 ```
@@ -113,8 +133,15 @@ first — the proxy seam avoids that entirely and is the recommended path.
 
 ## LlamaIndex (Python)
 
+**Verified with a real install** — see
+`packages/examples/integration_llama_index.py`, which runs a
+`FunctionAgent` (current llama-index workflow API, `api_base` pointed at
+the unswallow proxy) that executes the recovered `read_file` and reports
+the file contents. Note: llama-index validates the model name against
+OpenAI's list, and its OpenAI LLM takes `api_base` (not `base_url`).
+
 ```bash
-pip install llama-index-core unswallow
+pip install llama-index-core llama-index-llms-openai unswallow
 ```
 
 LlamaIndex's `OpenAIAgent`/`FunctionCallingAgent` also speak OpenAI-compatible
