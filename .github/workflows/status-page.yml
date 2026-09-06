@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: 22
       - run: node packages/matrix/scripts/render-status.mjs
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v3
         with:
           path: packages/matrix/status
