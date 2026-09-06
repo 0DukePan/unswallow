@@ -120,13 +120,39 @@ passing is *not* verification, it is a synthetic reconstruction of a report.
 
 | date | engine | version | model | pattern | result |
 | --- | --- | --- | --- | --- | --- |
-| 2026-09-06 | llama.cpp (CUDA, GTX 1060) | b10819 | Qwen3-0.6B-Q8_0 | A | **Negative live run** — the server parsed the tool call correctly (`reasoning_content` + `tool_calls: [get_weather]`, `finish_reason: tool_calls`); no swallow occurred. This is a real-engine observation (healthy), **not** a reproduction. Model too small / server too new to exhibit the bug; see the compatibility matrix. |
+| 2026-09-06 | llama.cpp (CPU, 6-core) | b8461 (bug-era, cea560f) | Qwen3.5-9B-UD-Q4_K_XL | A | **VERIFIED swallow reproduction** (non-streaming + streaming): multi-turn agent loop with thinking enabled. After one successful `list_directory` tool call, the next turn emitted the XML envelope inside `reasoning_content` and stopped — `finish_reason: stop`, `tool_calls` absent. Raw responses captured pre-unswallow; unswallow detected pattern A at 0.95 and recovered `read_file({"path": "package.json"})` with `finish_reason` upgraded to `tool_calls`. Evidence pinned as fixtures `llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a` and `-streaming-multiturn-pattern-a`; exact repro commands below. |
+| 2026-09-06 | llama.cpp (CUDA, GTX 1060) | b10819 | Qwen3-0.6B-Q8_0 | A | **Negative live run** — the server parsed the tool call correctly (`reasoning_content` + `tool_calls: [get_weather]`, `finish_reason: tool_calls`); no swallow occurred. This is a real-engine observation (healthy), **not** a reproduction. Model too small / server too new to exhibit the bug. |
+| 2026-09-06 | llama.cpp (CPU) | b8461 | Qwen3.5-9B-UD-Q4_K_XL | B | **Negative live run** — 9/9 single-turn `get_weather` prompts produced healthy parsed `tool_calls`. The B silent-empty variant is a vLLM `tool_choice: required` parser bug; not reproducible on this stack. |
+| 2026-09-06 | llama.cpp (CPU) | b8461 | Qwen3.5-9B-UD-Q4_K_XL | C | **Negative live run** — mid-think truncation stays in `reasoning_content`; think markup never leaks into `content`. b8461 cleanly separates the channels. |
 
 The 7 synthetic cases (A/B/C, streaming, healthy, fp-guard) pass in both TS
-and Python with no engine installed. To attempt a swallow reproduction on
-this class of setup, an older llama.cpp build plus a Qwen3 4B–30B model that
-outpaces its parser is the realistic combination — a 0.6B model reliably
-stops short of emitting the envelope.
+and Python with no engine installed, plus the live-b8461 streaming case
+(replays the recorded chunks).
+
+### Exact repro commands (llama.cpp b8461)
+
+```bash
+# 1. engine: the #20837 build
+curl -L -o b8461.zip https://github.com/ggml-org/llama.cpp/releases/download/b8461/llama-b8461-bin-win-cpu-x64.zip
+#    (Linux: llama-b8461-bin-ubuntu-x64.zip; any platform works — the bug is in the parser, not the GPU)
+
+# 2. model: the #20837 model
+curl -L -o Qwen3.5-9B-UD-Q4_K_XL.gguf \
+  https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/resolve/main/Qwen3.5-9B-UD-Q4_K_XL.gguf
+
+# 3. serve (thinking enabled is the default chat template for this model)
+llama-server -m Qwen3.5-9B-UD-Q4_K_XL.gguf --port 8080 --no-webui --no-repack
+
+# 4. drive a multi-turn agent loop (single-turn prompts reliably produce
+#    healthy parsed calls; the swallow appears AFTER a successful tool call,
+#    when the model starts planning the next one in its thinking block):
+#    see the reproduction notes in the fixture description + the loop used by
+#    the harness probe (list_directory -> result -> read_file -> swallow).
+```
+
+The swallow is stochastic — the loop in the pinned fixtures reproduced it on
+the second turn of the first session, but expect to retry a session if the
+model stays healthy.
 
 Pattern D (history drift) is not reproducible through a single completion
 endpoint by design — it is a multi-turn history phenomenon, handled

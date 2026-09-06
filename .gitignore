@@ -14,3 +14,4 @@ packages/bench/live-probe/.live-probe.env.json
 *.tsbuildinfo
 .DS_Store
 *.tgz
+.repro/

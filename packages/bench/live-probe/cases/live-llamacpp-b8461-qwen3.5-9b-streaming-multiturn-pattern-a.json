@@ -1,0 +1,68 @@
+{
+  "probe": {
+    "id": "live-llamacpp-b8461-qwen3.5-9b-streaming-multiturn-pattern-a",
+    "description": "LIVE streaming reproduction (2026-09-06): llama.cpp b8461 + Qwen3.5-9B-UD-Q4_K_XL, multi-turn agent loop with thinking enabled. After one successful tool call, turn 2 streamed the XML envelope token-by-token through reasoning_content then stopped (finish stop, tool_calls absent). Chunks captured raw from the server.",
+    "mode": "live",
+    "engine": "llama.cpp",
+    "version": "b8461",
+    "model": "Qwen3.5-9B-UD-Q4_K_XL.gguf",
+    "pattern": "A",
+    "stream": true,
+    "expect": { "detected": true, "pattern": "A", "recovered": true },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a coding agent working in a repository. You read files with the read_file tool and list directories with list_directory. Work step by step: think, call the tool, wait for the result, then continue until the task is done." },
+        { "role": "user", "content": "Explore this repository and summarize: what top-level files and directories exist, and what scripts are defined in package.json?" }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "read_file", "description": "Read a file from the project.", "parameters": { "type": "object", "properties": { "path": { "type": "string" } }, "required": ["path"] } } },
+        { "type": "function", "function": { "name": "list_directory", "description": "List files in a directory.", "parameters": { "type": "object", "properties": { "path": { "type": "string" } }, "required": ["path"] } } }
+      ],
+      "temperature": 0.8,
+      "max_tokens": 600,
+      "stream": true
+    },
+    "chunks": [
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\nI" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " need" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " to" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " read" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " the" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " package" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": ".json" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " file" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " to" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " see" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " what" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " scripts" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " are" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " defined" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " in" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " it" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "." } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "<tool_call>" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "<function" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "=read" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "_file" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": ">" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "<parameter" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "=path" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": ">" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "package" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": ".json" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "</parameter" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": ">" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "</function" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": ">" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\n" } }] },
+      { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "</tool_call>" } }] },
+      { "choices": [{ "index": 0, "finish_reason": "stop", "delta": {} }] }
+    ]
+  }
+}

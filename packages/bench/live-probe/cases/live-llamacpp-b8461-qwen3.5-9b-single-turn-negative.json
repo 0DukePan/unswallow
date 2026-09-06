@@ -1,0 +1,24 @@
+{
+  "probe": {
+    "id": "live-llamacpp-b8461-qwen3.5-9b-single-turn-negative",
+    "description": "Live llama.cpp b8461 negative control: single-turn get_weather prompt. 9/9 attempts produced healthy parsed tool_calls (finish tool_calls) — the swallow needs the multi-turn agentic context, it does not appear on a single tool-requiring question.",
+    "mode": "live",
+    "engine": "llama.cpp",
+    "version": "b8461",
+    "model": "Qwen3.5-9B-UD-Q4_K_XL.gguf",
+    "pattern": "A",
+    "stream": false,
+    "expect": { "detected": false, "pattern": null, "recovered": false },
+    "request": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant with access to tools. When a user asks for something a tool can do, call the tool with the correct arguments. Think carefully before answering." },
+        { "role": "user", "content": "What is the current weather in Tokyo? Use the get_weather tool." }
+      ],
+      "tools": [
+        { "type": "function", "function": { "name": "get_weather", "description": "Get the current weather for a city.", "parameters": { "type": "object", "properties": { "city": { "type": "string", "description": "City name" } }, "required": ["city"] } } }
+      ],
+      "temperature": 0.6,
+      "max_tokens": 512
+    }
+  }
+}

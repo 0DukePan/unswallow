@@ -12,12 +12,12 @@ recorded raw response from the real engine.
 
 | Provider | Version | Model | Pattern | Streaming | Reproduced | Detected | Recovered | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| llama.cpp | b8461 (bug-era) | Qwen3.5-9B-UD-Q4_K_XL | A | both | **Verified** (2026-09-06) | yes (0.95) | yes (`read_file`) | Live repro of [#20837](https://github.com/ggml-org/llama.cpp/issues/20837): multi-turn agent loop, thinking enabled; XML envelope in `reasoning_content` after a prior tool call, `finish: stop`, no `tool_calls`. Pinned as fixtures `llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a` / `-streaming-multiturn-pattern-a`. |
 | llama.cpp | b10819 (CUDA) | Qwen3-0.6B-Q8_0 | A | both | **Negative live run** (2026-09-06) | no | no | Healthy: server parsed `get_weather` correctly into `tool_calls`; harness verified passthrough. Not a swallow reproduction — evidence the bug needs a larger model / older build. |
 | vLLM | 0.19.x | Qwen3 / Qwen3.5 (reported) | A | — | Not reproduced | — | — | Sourced: [#39056](https://github.com/vllm-project/vllm/issues/39056). Synthetic fixtures only. |
 | vLLM | 0.19.x | Qwen3 (reported) | B | — | Not reproduced | — | — | Sourced: `tool_choice: required` silent-empty bug, [#39056](https://github.com/vllm-project/vllm/issues/39056) PR #35936. |
 | vLLM | >= 0.24.0 | Qwen3 | A/B | — | Not reproduced | — | — | Reported resolved / partial upstream. Running a recovery against this range is expected to warn (confidence 0.60) — see matrix rows. |
 | SGLang | 0.4.x | Qwen3 (reported) | A | — | Not reproduced | — | — | Sourced: [#30744](https://github.com/sgl-project/sglang/issues/30744). |
-| llama.cpp | b8461+ | Qwen3 (reported) | A | — | Not reproduced | — | — | Sourced: [#20837](https://github.com/ggml-org/llama.cpp/issues/20837). |
 | pi (Kimi-K2) | — | Kimi-K2-Thinking | B | — | Not reproduced | — | — | Sourced: [pi #952](https://github.com/earendil-works/pi/issues/952). |
 | MiniMax M3 | — | M3 | C | yes | Not reproduced | — | — | Sourced + synthetic streaming fixture. Detection-only. |
 | open-webui | — | — | D | — | Not reproduced | — | — | History-drift pattern; prevention via `sanitizeHistory`, not single-response reproducible. |

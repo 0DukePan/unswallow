@@ -1,0 +1,29 @@
+{
+  "id": "llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a",
+  "description": "LIVE reproduction (2026-09-06): llama.cpp b8461 (bug-era, #20837) + Qwen3.5-9B-UD-Q4_K_XL, thinking enabled, multi-turn agent loop. After one successful list_directory call, turn 2 emitted the XML tool-call envelope inside reasoning_content and stopped (finish stop, tool_calls absent) — the swallow. Raw response captured by the live-probe harness before unswallow processing.",
+  "engine": "llama.cpp",
+  "version": "b8461",
+  "pattern": "A",
+  "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
+  "sourced": true,
+  "live": true,
+  "note": "Function-XML envelope in reasoning_content after a prior successful tool call; recovery produces read_file({\"path\": \"package.json\"}).",
+  "stream": false,
+  "expect": { "detected": true, "pattern": "A", "recovered": true },
+  "response": {
+    "id": "chatcmpl-live-b8461-a",
+    "object": "chat.completion",
+    "model": "Qwen3.5-9B-UD-Q4_K_XL.gguf",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning_content": "\nI found the top-level files and directories. Now I need to read the package.json to see what scripts are defined there.\n\n<tool_call>\n<function=read_file>\n<parameter=path>\npackage.json\n</parameter>\n</function>\n</tool_call>\n"
+        }
+      }
+    ]
+  }
+}
