@@ -18,10 +18,14 @@ jobs:
         with:
           python-version: '3.13'
       - run: npm ci
-      - name: ESLint
+      - name: ESLint (TypeScript)
         run: npm run lint
+      - name: Ruff (Python)
+        run: python -m pip install --quiet ruff && python -m ruff check packages/python
       - name: TypeScript + Python typechecks
         run: npm run typecheck
+      - name: Docs link check
+        run: python packages/scripts/check_docs.py
 
   test:
     runs-on: ubuntu-latest
@@ -40,8 +44,8 @@ jobs:
         run: npm run examples
       - name: OpenAI-compatible integration example
         run: npm run integration
-      - name: "Bench (read-only: hash pins + fixture expectations + matrix consistency)"
-        run: node packages/bench/run.mjs --check
+      - name: "Benchmark smoke: corpus check + fp-eval gates + parity"
+        run: npm run bench:smoke
       - name: CLI smoke test
         run: |
           node packages/unswallow/dist/cli/index.js check > /tmp/unswallow-check.out
@@ -89,7 +93,9 @@ jobs:
           sys.exit(0 if a == b else 1)"
       - name: Run Python test suite (stdlib-only, no install needed)
         run: python -m unittest discover -s packages/python/tests -t packages/python
-      - name: Cross-language parity — 22-fixture corpus through the Python core
+      - name: "False-positive evaluation gate (Python)"
+        run: python packages/python/bench/fp_eval.py --check
+      - name: "Cross-language parity — 22-fixture corpus through the Python core"
         run: python packages/python/bench/parity.py
       - name: Runnable example walkthrough (broken → recovered)
         run: python packages/examples/walkthrough.py

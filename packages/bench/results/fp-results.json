@@ -20,9 +20,19 @@
         "recall": 1,
         "specificity": 1,
         "f1": 1
+      },
+      "engineMatrix": {
+        "matrixVersion": "1.2.0",
+        "updated": "2026-09-05",
+        "engines": [
+          "llama.cpp",
+          "sglang",
+          "vllm"
+        ],
+        "entries": 8
       }
     },
-    "generatedAt": "2026-09-06T00:42:07.856Z"
+    "generatedAt": "2026-09-06T01:00:01.262Z"
   },
   "rows": [
     {

@@ -122,8 +122,23 @@ function mulberry32(seed) {
   };
 }
 
+function matrixMeta() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(FIXTURES_DIR, '..', '..', 'matrix', 'data', 'engine-matrix.json'), 'utf8'));
+    return {
+      matrixVersion: raw.matrixVersion ?? null,
+      updated: raw.updated ?? null,
+      engines: [...new Set((raw.entries ?? []).map((e) => e.engine).filter(Boolean))].sort(),
+      entries: Array.isArray(raw.entries) ? raw.entries.length : 0,
+    };
+  } catch {
+    return { matrixVersion: null, updated: null, engines: [], entries: 0 };
+  }
+}
+
 function main() {
   const fixtures = loadFixtures();
+  const meta = matrixMeta();
   const rows = [];
   let fp = 0;
   let fn = 0;
@@ -179,6 +194,7 @@ function main() {
       syntheticFalsePositives: syntheticFp,
       detectionAccuracy: accuracy,
       metrics: { truePositives: tp, falsePositives: fp, trueNegatives: tn, falseNegatives: fn, precision, recall, specificity, f1 },
+      engineMatrix: meta,
     },
     generatedAt: new Date().toISOString(),
   };
@@ -192,6 +208,8 @@ function main() {
     `generated ${summary.generatedAt}`,
     '',
     'Methodology and full definitions: [docs/false-positives.md](../../docs/false-positives.md).',
+    '',
+    `Evaluation engine matrix: v${meta.matrixVersion ?? '?'} (updated ${meta.updated ?? '?'}) — ${meta.engines.join(', ') || 'none'}, ${meta.entries} rows.`,
     '',
     `The pinned corpus is adversarial and small — these are regression counts over documented examples, **not** population estimates.`,
     '',

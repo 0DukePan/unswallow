@@ -1,8 +1,10 @@
 # unswallow — Python false-positive evaluation
 
-generated 2026-09-06T00:42:08Z
+generated 2026-09-06T01:00:01Z
 
 Methodology and full definitions: [docs/false-positives.md](../../../docs/false-positives.md).
+
+Evaluation engine matrix: v1.2.0 (updated 2026-09-05) — llama.cpp, sglang, vllm, 8 rows.
 
 The pinned corpus is adversarial and small — these are regression counts over documented examples, **not** population estimates.
 

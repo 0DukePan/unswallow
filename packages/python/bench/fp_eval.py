@@ -104,11 +104,28 @@ def synthetic_negatives():
     return out
 
 
+def matrix_meta():
+    try:
+        # packages/python/bench/fp_eval.py -> packages/bench/fixtures; the
+        # matrix data lives at packages/matrix/data/engine-matrix.json.
+        raw = json.loads((FIXTURES.parent.parent / "matrix" / "data" / "engine-matrix.json").read_text(encoding="utf-8"))
+        engines = sorted({e.get("engine") for e in raw.get("entries", []) if e.get("engine")})
+        return {
+            "matrixVersion": raw.get("matrixVersion"),
+            "updated": raw.get("updated"),
+            "engines": engines,
+            "entries": len(raw.get("entries", [])),
+        }
+    except (OSError, ValueError):
+        return {"matrixVersion": None, "updated": None, "engines": [], "entries": 0}
+
+
 def main():
     fixtures = []
     for f in sorted(FIXTURES.glob("*.json")):
         fixtures.append(json.loads(f.read_text(encoding="utf-8")))
 
+    meta = matrix_meta()
     rows = []
     fp = 0
     fn = 0
@@ -176,6 +193,7 @@ def main():
                 "specificity": specificity,
                 "f1": f1,
             },
+            "engineMatrix": meta,
         },
         "generatedAt": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
     }
@@ -191,6 +209,13 @@ def main():
         "generated {}".format(summary["generatedAt"]),
         "",
         "Methodology and full definitions: [docs/false-positives.md](../../../docs/false-positives.md).",
+        "",
+        "Evaluation engine matrix: v{} (updated {}) — {}, {} rows.".format(
+            meta["matrixVersion"] or "?",
+            meta["updated"] or "?",
+            ", ".join(meta["engines"]) or "none",
+            meta["entries"],
+        ),
         "",
         "The pinned corpus is adversarial and small — these are regression counts over documented examples, **not** population estimates.",
         "",
