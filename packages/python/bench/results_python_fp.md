@@ -1,6 +1,6 @@
 # unswallow — Python false-positive evaluation
 
-generated 2026-09-05T23:34:08Z
+generated 2026-09-06T00:42:08Z
 
 Methodology and full definitions: [docs/false-positives.md](../../../docs/false-positives.md).
 
@@ -17,6 +17,21 @@ The pinned corpus is adversarial and small — these are regression counts over 
 | false negatives (pinned positives missed) | 0 |
 | false positives (synthetic negatives) | 0 |
 | detection accuracy on the pinned corpus | 100.0% |
+
+## Confusion-matrix metrics (pinned corpus)
+
+| metric | value |
+| --- | --- |
+| true positives | 11 |
+| false positives | 0 |
+| true negatives | 8 |
+| false negatives | 0 |
+| precision (TP / (TP + FP)) | 100.0% |
+| recall (TP / (TP + FN)) | 100.0% |
+| specificity (TN / (TN + FP)) | 100.0% |
+| F1 | 1.000 |
+
+These are regression counts over the documented corpus, not population estimates — see [docs/false-positives.md](../../../docs/false-positives.md).
 
 ## Pinned corpus
 

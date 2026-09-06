@@ -160,6 +160,12 @@ function main() {
     (positives + negatives) > 0
       ? (positives + negatives - fp - fn) / (positives + negatives)
       : null;
+  const tp = positives - fn;
+  const tn = negatives - fp;
+  const precision = tp + fp > 0 ? tp / (tp + fp) : null;
+  const recall = tp + fn > 0 ? tp / (tp + fn) : null;
+  const specificity = tn + fp > 0 ? tn / (tn + fp) : null;
+  const f1 = precision !== null && recall !== null && precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : null;
   const summary = {
     corpus: {
       pinnedPositives: positives,
@@ -172,6 +178,7 @@ function main() {
       falseNegatives: fn,
       syntheticFalsePositives: syntheticFp,
       detectionAccuracy: accuracy,
+      metrics: { truePositives: tp, falsePositives: fp, trueNegatives: tn, falseNegatives: fn, precision, recall, specificity, f1 },
     },
     generatedAt: new Date().toISOString(),
   };
@@ -199,6 +206,21 @@ function main() {
     `| false negatives (pinned positives missed) | ${fn} |`,
     `| false positives (synthetic negatives) | ${syntheticFp} |`,
     `| detection accuracy on the pinned corpus | ${accuracy === null ? 'n/a' : (accuracy * 100).toFixed(1) + '%'} |`,
+    '',
+    '## Confusion-matrix metrics (pinned corpus)',
+    '',
+    '| metric | value |',
+    '| --- | --- |',
+    `| true positives | ${tp} |`,
+    `| false positives | ${fp} |`,
+    `| true negatives | ${tn} |`,
+    `| false negatives | ${fn} |`,
+    `| precision (TP / (TP + FP)) | ${precision === null ? 'n/a' : (precision * 100).toFixed(1) + '%'} |`,
+    `| recall (TP / (TP + FN)) | ${recall === null ? 'n/a' : (recall * 100).toFixed(1) + '%'} |`,
+    `| specificity (TN / (TN + FP)) | ${specificity === null ? 'n/a' : (specificity * 100).toFixed(1) + '%'} |`,
+    `| F1 | ${f1 === null ? 'n/a' : f1.toFixed(3)} |`,
+    '',
+    'These are regression counts over the documented corpus, not population estimates — see [docs/false-positives.md](../../docs/false-positives.md).',
     '',
     '## Pinned corpus',
     '',

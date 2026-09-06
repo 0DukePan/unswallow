@@ -147,6 +147,12 @@ def main():
     synthetic_fp = sum(1 for s in synthetic if s["detected"])
     total = positives + negatives
     accuracy = (total - fp - fn) / total if total else None
+    tp = positives - fn
+    tn = negatives - fp
+    precision = (tp / (tp + fp)) if (tp + fp) else None
+    recall = (tp / (tp + fn)) if (tp + fn) else None
+    specificity = (tn / (tn + fp)) if (tn + fp) else None
+    f1 = (2 * precision * recall / (precision + recall)) if (precision and recall and precision + recall) else None
 
     summary = {
         "corpus": {
@@ -160,6 +166,16 @@ def main():
             "falseNegatives": fn,
             "syntheticFalsePositives": synthetic_fp,
             "detectionAccuracy": accuracy,
+            "metrics": {
+                "truePositives": tp,
+                "falsePositives": fp,
+                "trueNegatives": tn,
+                "falseNegatives": fn,
+                "precision": precision,
+                "recall": recall,
+                "specificity": specificity,
+                "f1": f1,
+            },
         },
         "generatedAt": __import__("time").strftime("%Y-%m-%dT%H:%M:%SZ", __import__("time").gmtime()),
     }
@@ -191,6 +207,21 @@ def main():
         "| detection accuracy on the pinned corpus | {} |".format(
             "n/a" if accuracy is None else "{:.1f}%".format(accuracy * 100)
         ),
+        "",
+        "## Confusion-matrix metrics (pinned corpus)",
+        "",
+        "| metric | value |",
+        "| --- | --- |",
+        "| true positives | {} |".format(tp),
+        "| false positives | {} |".format(fp),
+        "| true negatives | {} |".format(tn),
+        "| false negatives | {} |".format(fn),
+        "| precision (TP / (TP + FP)) | {} |".format("n/a" if precision is None else "{:.1f}%".format(precision * 100)),
+        "| recall (TP / (TP + FN)) | {} |".format("n/a" if recall is None else "{:.1f}%".format(recall * 100)),
+        "| specificity (TN / (TN + FP)) | {} |".format("n/a" if specificity is None else "{:.1f}%".format(specificity * 100)),
+        "| F1 | {} |".format("n/a" if f1 is None else "{:.3f}".format(f1)),
+        "",
+        "These are regression counts over the documented corpus, not population estimates — see [docs/false-positives.md](../../../docs/false-positives.md).",
         "",
         "## Pinned corpus",
         "",

@@ -10,9 +10,19 @@
       "falsePositives": 0,
       "falseNegatives": 0,
       "syntheticFalsePositives": 0,
-      "detectionAccuracy": 1.0
+      "detectionAccuracy": 1.0,
+      "metrics": {
+        "truePositives": 11,
+        "falsePositives": 0,
+        "trueNegatives": 8,
+        "falseNegatives": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": 1.0,
+        "f1": 1.0
+      }
     },
-    "generatedAt": "2026-09-05T23:34:08Z"
+    "generatedAt": "2026-09-06T00:42:08Z"
   },
   "rows": [
     {
