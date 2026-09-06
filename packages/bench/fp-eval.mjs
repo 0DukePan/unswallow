@@ -30,7 +30,6 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -112,13 +111,6 @@ function syntheticNegatives() {
   return out;
 }
 
-const WORDS = [
-  'the', 'user', 'asked', 'about', 'weather', 'tokyo', 'need', 'call', 'tool',
-  'reasoning', 'carefully', 'check', 'arguments', 'city', 'answer', 'would',
-  'maybe', 'perhaps', 'use', 'get_weather', 'function', 'could', 'then', 'final',
-  'consider', 'likely', 'summarize', 'directly', 'instead', 'schema', 'emit',
-];
-
 function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
@@ -128,13 +120,6 @@ function mulberry32(seed) {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
-}
-
-function sentence(rng) {
-  const n = 8 + Math.floor(rng() * 16);
-  const words = [];
-  for (let i = 0; i < n; i++) words.push(WORDS[Math.floor(rng() * WORDS.length)]);
-  return words.join(' ') + '.';
 }
 
 function main() {

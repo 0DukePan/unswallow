@@ -1,5 +1,4 @@
 import { splitThinkBlocks } from './scan';
-import type { RawMessage } from './types';
 
 export interface HistoryMessage {
   role?: string;

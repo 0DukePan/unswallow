@@ -121,8 +121,6 @@ export function createStreamAccumulator(
   let lastFinishReason: string | null = null;
   let responseId: string | undefined;
   let responseModel: string | undefined;
-  let messageToolCalls: ToolCallEntry[] | undefined;
-  let leaked = false;
 
   const channel = (name: string) => {
     if (!channels[name]) channels[name] = { text: '', tracker: new ChannelTracker() };
@@ -147,7 +145,6 @@ export function createStreamAccumulator(
         c.tracker.push(text);
         if (field === 'content') {
           if (c.tracker.closes > c.tracker.opens) {
-            leaked = true;
             opts.onLeak?.('think tag closed without opening in the content channel (mid-stream leak)');
           }
         }

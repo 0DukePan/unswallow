@@ -626,7 +626,6 @@ async function main() {
 
   const fmt = (r) =>
     `${(r.p50ms ?? r.p50).toFixed(2)} / ${(r.p95ms ?? r.p95).toFixed(2)} / ${(r.p99ms ?? r.p99).toFixed(2)} ms`;
-  const fmtMean = (r) => `${(r.meanMs ?? r.mean).toFixed(3)} ms`;
   const fmtSpread = (r) =>
     `${(r.meanMs ?? r.mean).toFixed(3)} ms (${(r.meanMin ?? r.mean).toFixed(3)}–${(r.meanMax ?? r.mean).toFixed(3)})`;
   const fmtOps = (r) => `${r.opsPerSec.toLocaleString('en-US', { maximumFractionDigits: 0 })} ops/s`;
