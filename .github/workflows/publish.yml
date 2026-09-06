@@ -82,15 +82,20 @@ jobs:
         # updated to published instead of failing on 422.
         run: |
           VER="${GITHUB_REF_NAME#v}"
+          export VER
+          # NOTE: the heredocs below are QUOTED ('PY'), so no shell
+          # interpolation happens inside — read the version from $VER via
+          # os.environ instead of embedding ${VER} in the python source.
           python - <<'PY'
-          import re, sys
-          ver = "${VER}"
+          import os, re
+          ver = os.environ["VER"]
           text = open("CHANGELOG.md", encoding="utf-8").read()
           m = re.search(r"^## \[{}].*?(?=^## \[|\Z)".format(re.escape(ver)), text, re.M | re.S)
           body = m.group(0).strip() if m else ""
           if not body:
               print("::warning title=Missing changelog::No CHANGELOG.md entry found for v{} — release will be empty.".format(ver))
           open("release-notes.md", "w", encoding="utf-8").write(body)
+          print("changelog body chars:", len(body))
           PY
           python - <<'PY'
           import json, os
@@ -102,6 +107,7 @@ jobs:
               "draft": False,
           })
           open("release-payload.json", "w", encoding="utf-8").write(payload)
+          print("payload body chars:", len(notes))
           PY
           TAG="${GITHUB_REF_NAME}"
           echo "Checking for an existing release on ${TAG}..."
