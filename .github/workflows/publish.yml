@@ -72,13 +72,14 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
 
-      - name: Open draft GitHub Release
+      - name: Open GitHub Release
         # Notes come from CHANGELOG.md, which keeps the changelog as the
         # single source of truth for release prose. The changelog must
         # therefore be updated in the same commit as the version bump.
-        # Uses the REST API directly (curl) rather than `gh release create` —
-        # `gh` is not guaranteed on the runner image. The API response is
-        # echoed, and the step verifies the release exists before passing.
+        # Creates a PUBLISHED release (not a draft): drafts are invisible to
+        # anonymous viewers and were repeatedly missed. Idempotent: if a
+        # release already exists for the tag (e.g. a leftover draft), it is
+        # updated to published instead of failing on 422.
         run: |
           VER="${GITHUB_REF_NAME#v}"
           python - <<'PY'
@@ -98,20 +99,36 @@ jobs:
               "tag_name": os.environ["GITHUB_REF_NAME"],
               "name": os.environ["GITHUB_REF_NAME"],
               "body": notes,
-              "draft": True,
+              "draft": False,
           })
           open("release-payload.json", "w", encoding="utf-8").write(payload)
           PY
-          echo "Creating draft release for ${GITHUB_REF_NAME}..."
-          RESPONSE="$(curl -sS -X POST \
+          TAG="${GITHUB_REF_NAME}"
+          echo "Checking for an existing release on ${TAG}..."
+          EXISTING="$(curl -sS \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" \
-            -d @release-payload.json)"
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}")"
+          RELEASE_ID="$(echo "${EXISTING}" | python -c "import json,sys; d=json.load(sys.stdin); print(d.get('id',''))" 2>/dev/null)"
+          if [ -n "${RELEASE_ID}" ]; then
+            echo "Release already exists (id=${RELEASE_ID}) — updating it to published..."
+            RESPONSE="$(curl -sS -X PATCH \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+              -d @release-payload.json)"
+          else
+            echo "Creating GitHub Release for ${TAG}..."
+            RESPONSE="$(curl -sS -X POST \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases" \
+              -d @release-payload.json)"
+          fi
           echo "API response: ${RESPONSE}" | head -c 2000
           echo ""
           # Fail loudly if the API did not return a release object with an id.
-          echo "${RESPONSE}" | python -c "import json,sys; d=json.load(sys.stdin); assert 'id' in d, 'no release id in API response: %s' % d; print('release created: id=%s html_url=%s' % (d['id'], d.get('html_url')))"
+          echo "${RESPONSE}" | python -c "import json,sys; d=json.load(sys.stdin); assert 'id' in d, 'no release id in API response: %s' % d; print('release ready: id=%s draft=%s html_url=%s' % (d['id'], d.get('draft'), d.get('html_url')))"
         env:
           GH_TOKEN: ${{ github.token }}
