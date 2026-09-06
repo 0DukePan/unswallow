@@ -430,7 +430,10 @@ interface SwallowCheckResult {
   provenance (see `.github/workflows/publish.yml`); PyPI builds publish
   through twine from the same workflow. Tag `vX.Y.Z` and the workflow
   publishes `unswallow-matrix` first (dependency order), then `unswallow`,
-  then PyPI.
+  then PyPI, then opens a **draft GitHub Release** — notes are pulled from
+  the `CHANGELOG.md` entry for that version, so the changelog update must
+  land in the same commit as the version bump (it becomes the release
+  prose). Review and publish the draft; releases are never auto-published.
 
 ## Roadmap
 

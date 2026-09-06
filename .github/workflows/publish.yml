@@ -2,7 +2,8 @@ name: Publish
 
 # Tag a release with `git tag vX.Y.Z && git push origin vX.Y.Z` and this
 # workflow publishes unswallow-matrix first (dependency order), then
-# unswallow (sigstore-provenanced), then the Python port to PyPI.
+# unswallow (sigstore-provenanced), then the Python port to PyPI, and
+# finally opens a draft GitHub Release with changelog notes.
 # Required repository secrets: NPM_TOKEN (publish-scoped), PYPI_TOKEN.
 
 on:
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: read
+      contents: write
       id-token: write # npm provenance (sigstore) requires OIDC
     steps:
       - uses: actions/checkout@v4
@@ -51,3 +52,23 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+      - name: Open draft GitHub Release
+        # Notes come from CHANGELOG.md, which keeps the changelog as the
+        # single source of truth for release prose. The changelog must
+        # therefore be updated in the same commit as the version bump.
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          python - <<'PY'
+          import re, sys
+          ver = "${VER}"
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(r"^## \[{}].*?(?=^## \[|\Z)".format(re.escape(ver)), text, re.M | re.S)
+          body = m.group(0).strip() if m else ""
+          open("release-notes.md", "w", encoding="utf-8").write(body)
+          if not body:
+              print("::warning title=Missing changelog::No CHANGELOG.md entry found for v{} — release will be empty.".format(ver))
+          PY
+          gh release create "${GITHUB_REF_NAME}" --draft --title "${GITHUB_REF_NAME}" --notes-file release-notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}
