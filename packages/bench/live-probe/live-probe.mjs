@@ -338,7 +338,7 @@ async function main() {
 
   const report = {
     generatedAt: new Date().toISOString(),
-    harness: { language: 'typescript', version: '0.1.3' },
+    harness: { language: 'typescript', version: '0.2.0' },
     provider: { endpoint: args.endpoint, engine: args.engine, engineVersion: args.version, model: args.model },
     summary: {
       passed: records.filter((r) => r.passed && !r.skipped).length,

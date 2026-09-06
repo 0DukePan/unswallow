@@ -5,6 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-09-06
+
+The reproduction + benchmark release (unswallow 0.2.0, unswallow-matrix
+0.2.0, Python unswallow 0.2.0). The headline: the first **verified live
+reproduction** of a swallowed tool call, closing the evidence gap between
+"reported upstream" and "reproduced and recovered here".
+
+### Added
+
+- **Verified live reproduction (Pattern A, llama.cpp b8461)**: drove the
+  exact bug-era build from [ggml-org/llama.cpp #20837](https://github.com/ggml-org/llama.cpp/issues/20837)
+  (b8461, cea560f) with unsloth Qwen3.5-9B-UD-Q4_K_XL and thinking
+  enabled through a multi-turn agent loop. After one successful tool call,
+  the model emitted the XML envelope
+  (`<tool_call><function=read_file>...`) inside `reasoning_content` and
+  stopped with `finish_reason: stop` and no `tool_calls` — in both
+  non-streaming and streaming modes. Raw responses were captured
+  pre-unswallow and are pinned as fixtures
+  `llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a` /
+  `-streaming-multiturn-pattern-a`; unswallow recovers
+  `read_file({"path": "package.json"})` at confidence 0.95. The engine
+  matrix llama.cpp row is now `verified: true` with the live evidence
+  recorded (matrix v1.3.0), and `docs/reproduction.md` documents the exact
+  repro commands. Also recorded as dated negative live runs: llama.cpp
+  b10819 + Qwen3-0.6B (healthy), Pattern B single-turn (9/9 healthy),
+  Pattern C mid-think truncation (clean channel split).
+- **Live-reproduction harness** (`packages/bench/live-probe`, TS +
+  Python): runs recorded synthetic cases or any OpenAI-compatible endpoint,
+  captures the raw provider response before unswallow processing, records
+  provider/engine/version/model/pattern/stream/detection/recovery/latency/
+  errors, and writes machine-readable JSON + human output. Live cases skip
+  cleanly when no endpoint is configured.
+- **Real agent integrations verified** (LangChain + LlamaIndex): installed
+  `langchain-openai` / `llama-index` / `openai` and drove real agents
+  through the unswallow proxy against a mock that serves the live-captured
+  b8461 swallow — both frameworks execute the recovered `read_file`
+  end-to-end (`packages/examples/integration_langchain.py`,
+  `integration_llama_index.py`, `run_framework_integrations.py`, plus the
+  manual-dispatch `framework-integrations` workflow).
+- **Formal fp-eval metrics**: TP/FP/TN/FN + precision/recall/specificity/F1
+  reported in both languages (pinned corpus now 12 positives + 8 negatives
+  + 200 synthetic negatives; 0 FP / 0 FN, precision/recall/F1 1.0), with
+  the evaluated engine-matrix version recorded in the results.
+- **Edge-case + regression sweep**: 14 new tests per language (parsing
+  escapes/unicode/whitespace/missing keys, streaming robustness against
+  empty and non-string deltas, history corruption survival). TS 99, Python
+  94.
+- **CI completeness**: ruff lint on Python, fp-eval gates (TS + Python),
+  `bench:smoke` aggregate on the test matrix, docs link checker over all
+  markdown, and a package artifact validation job (npm pack + wheel
+  install smoke). All green on GitHub Actions for `main`.
+
+### Changed
+
+- Engine matrix `matrixVersion` 1.2.0 → 1.3.0 (llama.cpp row verified).
+- `docs/reproduction.md`, `docs/compatibility.md`,
+  `docs/agent-integrations.md`: Verified row, live-run records, exact repro
+  commands, and real-install integration notes.
+
+### Migration notes
+
+- No API or behavior changes; confidence/recovery for the affected
+  llama.cpp + Qwen3.5 combination is unchanged (still 0.95 on a matrix
+  hit). The matrix `verified` flag and the new fixtures are additive.
+
 ## [0.1.3] - 2026-09-05
 
 The launch release: everything committed since 0.1.2, all three packages
@@ -113,6 +178,7 @@ Initial release.
   per turn.
 - Proxy client aborts now cancel the upstream request instead of draining it.
 
+[0.2.0]: https://github.com/0DukePan/unswallow/releases/tag/v0.2.0
 [0.1.3]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.3
 [0.1.2]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.2
 [0.1.1]: https://github.com/0DukePan/unswallow/releases/tag/v0.1.1

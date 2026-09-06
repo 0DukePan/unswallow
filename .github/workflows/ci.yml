@@ -109,7 +109,7 @@ jobs:
           python -m unswallow.cli matrix > /tmp/py-matrix.out
           grep -q "open-webui" /tmp/py-matrix.out
           grep -q "verified" /tmp/py-matrix.out
-          python -c "import unswallow; assert unswallow.__version__ == '0.1.3', unswallow.__version__"
+          python -c "import unswallow; assert unswallow.__version__ == '0.2.0', unswallow.__version__"
 
   coverage:
     runs-on: ubuntu-latest

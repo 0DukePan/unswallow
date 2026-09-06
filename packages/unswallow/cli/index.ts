@@ -5,7 +5,7 @@ import { demoFixture } from './demo';
 import { bar, fg, pad, table } from './format';
 import { probeEndpoint } from './probe';
 
-const VERSION = '0.1.3';
+const VERSION = '0.2.0';
 
 const PATTERN_LABELS: Record<string, string> = {
   A: 'trapped inside',

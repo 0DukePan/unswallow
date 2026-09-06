@@ -336,7 +336,7 @@ def main(argv=None):
     skipped = sum(1 for r in records if r.get("skipped"))
     report = {
         "generatedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "harness": {"language": "python", "version": "0.1.3"},
+        "harness": {"language": "python", "version": "0.2.0"},
         "provider": {"endpoint": args.endpoint, "engine": args.engine, "engineVersion": args.version, "model": args.model},
         "summary": {"passed": sum(1 for r in run if r["passed"]), "total": len(run), "skipped": skipped},
         "records": records,
