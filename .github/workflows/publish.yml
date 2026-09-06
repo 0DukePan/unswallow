@@ -30,12 +30,26 @@ jobs:
       - run: npm run build --workspace unswallow
 
       - name: Publish unswallow-matrix
-        run: npm publish --workspace unswallow-matrix --provenance
+        # Skip when the version is already on the registry, so re-running
+        # this workflow (or moving a tag) is safe and never double-publishes.
+        run: |
+          VER="$(node -p "require('./packages/matrix/package.json').version")"
+          if npm view "unswallow-matrix@${VER}" version > /dev/null 2>&1; then
+            echo "unswallow-matrix@${VER} already published — skipping"
+          else
+            npm publish --workspace unswallow-matrix --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish unswallow
-        run: npm publish --workspace unswallow --provenance
+        run: |
+          VER="$(node -p "require('./packages/unswallow/package.json').version")"
+          if npm view "unswallow@${VER}" version > /dev/null 2>&1; then
+            echo "unswallow@${VER} already published — skipping"
+          else
+            npm publish --workspace unswallow --provenance
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -46,9 +60,14 @@ jobs:
 
       - name: Build + publish to PyPI
         run: |
-          python -m pip install --quiet build twine
-          python -m build --sdist --wheel --outdir pypi-dist packages/python
-          python -m twine upload pypi-dist/*
+          VER="$(python -c "import tomllib; print(tomllib.load(open('packages/python/pyproject.toml','rb'))['project']['version'])")"
+          if curl -fsS "https://pypi.org/pypi/unswallow/${VER}/json" > /dev/null 2>&1; then
+            echo "unswallow@${VER} already on PyPI — skipping"
+          else
+            python -m pip install --quiet build twine
+            python -m build --sdist --wheel --outdir pypi-dist packages/python
+            python -m twine upload pypi-dist/*
+          fi
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
