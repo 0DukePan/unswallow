@@ -447,10 +447,16 @@ interface SwallowCheckResult {
 
 Known edges and honest limitations are spelled out in [`docs/limitations.md`](docs/limitations.md).
 
+## Documentation
+
+Full index with the developer journey (clone → install → test → bench →
+reproduce → integrate): [`docs/index.md`](docs/index.md).
+
 ## Contributing
 
 - **Add a fixture** — if your server swallowed a tool call, open an issue and paste the raw response. It becomes a pinned benchmark case. This is how the corpus grows.
 - **Update the matrix** — one row in `packages/matrix/data/engine-matrix.json`, one PR, no release required. The bench suite will tell you exactly which fixtures your row affects.
+- **Report a live reproduction** — ran an engine and saw the swallow (or provably didn't)? Run the [`live-probe`](docs/reproduction.md) harness, attach the report, and flip the [compatibility matrix](docs/compatibility.md) row.
 - See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
