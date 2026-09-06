@@ -15,16 +15,20 @@ CONTRIBUTING at the release/dev process).
 ## Reproducing and verifying
 
 - [reproduction.md](reproduction.md) — the live-reproduction protocol, the
-  `packages/bench/live-probe` harness, the evidence template, and the status
-  definitions.
+  `packages/bench/live-probe` harness, the evidence template, the status
+  definitions, and the **verified live reproduction** (llama.cpp b8461 +
+  Qwen3.5-9B, Pattern A, non-streaming + streaming) with exact repro
+  commands.
 - [compatibility.md](compatibility.md) — provider × engine version × model ×
-  pattern status table (Verified / Partially verified / Not reproduced /
-  Unsupported / Unknown).
+  pattern status table. First **Verified** row: llama.cpp b8461 (bug-era) +
+  Qwen3.5-9B-UD-Q4_K_XL, Pattern A, detected + recovered; remaining rows
+  honestly labeled Not reproduced / sourced.
 - [benchmarks.md](benchmarks.md) — how to run every benchmark layer and
   reproduce the numbers (correctness, perf, parity, fp-eval, Linux reference).
 - [agent-integrations.md](agent-integrations.md) — runnable OpenAI-compatible
-  examples + recipes for OpenAI SDK / LangChain / LlamaIndex / custom agents /
-  self-hosted engines.
+  examples + **verified real-install LangChain/LlamaIndex drivers** through
+  the proxy + recipes for the OpenAI SDK / custom agents / self-hosted
+  engines.
 
 ## Integration and operations
 
