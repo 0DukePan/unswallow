@@ -10,6 +10,7 @@ on:
   schedule:
     - cron: '0 6 * * 1'
   push:
+    branches: [main]
     paths:
       - 'packages/matrix/data/**'
       - 'packages/matrix/scripts/render-status.mjs'
