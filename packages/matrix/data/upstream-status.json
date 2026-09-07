@@ -5,8 +5,8 @@
     "key": 39056,
     "title": "vLLM 0.19 may lose tool calls for Qwen/Qwen3.5-35B-A3B-FP8 when XML tool_call is emitted inside <think>",
     "state": "open",
-    "comments": 24,
-    "updatedAt": "2026-08-31T23:45:10Z",
+    "comments": 25,
+    "updatedAt": "2026-09-07T01:19:04Z",
     "labels": [
       "tool-calling"
     ]
@@ -27,8 +27,8 @@
     "key": 20837,
     "title": "Eval bug: Qwen3.5 9B often prints tool calls in XML and stops when thinking is enabled - tool calls inside thinking block",
     "state": "open",
-    "comments": 59,
-    "updatedAt": "2026-08-10T13:57:13Z",
+    "comments": 60,
+    "updatedAt": "2026-09-07T01:13:29Z",
     "labels": [
       "bug",
       "chat parser"
@@ -53,8 +53,8 @@
     "key": 23339,
     "title": "feat: Add model-level toggle to disable reinjecting reasoning/thinking into prompts (prevents <think> tag imitation and rendering/parsing failures)",
     "state": "open",
-    "comments": 43,
-    "updatedAt": "2026-07-10T10:51:27Z",
+    "comments": 44,
+    "updatedAt": "2026-09-07T01:29:26Z",
     "labels": []
   },
   "lmstudio-827": {
