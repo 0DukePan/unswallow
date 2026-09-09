@@ -72,6 +72,13 @@ export interface ToolEnvelope {
   argumentsFromString?: boolean;
 }
 
+export interface ToolValidationResult {
+  structurallyValid: boolean;
+  nameKnown: 'yes' | 'no' | 'unknown';
+  schemaValid: 'yes' | 'no' | 'unknown';
+  errors: string[];
+}
+
 export interface SwallowCheckResult {
   detected: boolean;
   pattern: 'A' | 'B' | 'C' | null;
@@ -83,6 +90,7 @@ export interface SwallowCheckResult {
   matrixMatch: SwallowMatrixEntry | null;
   confidence: number;
   warnings: string[];
+  validation: ToolValidationResult | null;
   recoveredResponse: RawProviderResponse | null;
 }
 
@@ -92,4 +100,8 @@ export interface CheckOptions {
   toolSchemas?: ToolSchema[];
   matrix?: SwallowMatrixEntry[];
   additionalFields?: string[];
+  /** Require at least this confidence before recovering a structurally valid call. */
+  minConfidence?: number;
+  /** Recover only when supplied tool schemas validate the recovered arguments. */
+  strictSchema?: boolean;
 }

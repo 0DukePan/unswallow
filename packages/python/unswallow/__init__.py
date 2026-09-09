@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .history import sanitize_history, strip_reasoning_tags
+from .history import ensure_reasoning_echo, sanitize_history, strip_reasoning_tags
 from .matrix import (
     get_matrix_file,
     load_matrix,
@@ -21,8 +21,10 @@ from .integrations.litellm import check_message_dict
 from .integrations.otel import observe_check_result
 from .semver import matches_range, parse_range, parse_version
 from .stream import StreamAccumulator, check_and_rescue_stream
+from .validate import validate_envelope
 from .types import (
     SwallowCheckResult,
+    ToolValidationResult,
     SwallowMatrixEntry,
     ToolCall,
     ToolEnvelope,
@@ -37,6 +39,8 @@ __all__ = [
     "StreamAccumulator",
     "sanitize_history",
     "strip_reasoning_tags",
+    "ensure_reasoning_echo",
+    "validate_envelope",
     "load_matrix",
     "get_matrix_file",
     "match_matrix_entry",
@@ -55,6 +59,7 @@ __all__ = [
     "SwallowMatrixEntry",
     "ToolCall",
     "ToolEnvelope",
+    "ToolValidationResult",
     "__version__",
     "observe_check_result",
     "check_message_dict",

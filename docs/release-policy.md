@@ -75,6 +75,8 @@ confidence or recovery for an engine/version combination).
 - [ ] `npm run docs:check` (internal markdown links resolve)
 - [ ] `npm run coverage`, `python packages/scripts/coverage_python.py`
 - [ ] `npm run bench:smoke` (fixture pins + matrix consistency + fp-eval gates + parity)
+- [ ] Review each changed matrix row: source, version range, behavior, and matching fixture evidence
+- [ ] For a row marked `verified: true`, attach the raw capture, server version, model revision, launch flags, and reproduction command
 - [ ] `npm run examples`, `npm run examples:python`, `npm run integration`,
       `npm run integration:python`
 - [ ] package artifact validation (npm pack + wheel install smoke)

@@ -80,6 +80,27 @@ The harness:
 Exit codes: `0` all cases passed their expectation, `1` behavioral failures,
 `2` usage/IO error.
 
+## SGLang + Qwen3.6 capture target
+
+The SGLang + Qwen3.6 Pattern A matrix row is **sourced only** from
+[SGLang #26790](https://github.com/sgl-project/sglang/issues/26790); it must
+not be marked verified until this probe produces a raw response showing empty
+`tool_calls` with the complete XML envelope retained in a reasoning/content
+field.
+
+```bash
+npm run live-probe -- --case packages/bench/live-probe/cases/live-sglang-qwen3.6-pattern-a.json \
+  --endpoint http://localhost:30000/v1 --model <exact-qwen3.6-model-id> \
+  --engine sglang --version <exact-sglang-version> \
+  --out packages/bench/live-probe/results-sglang-qwen3.6.json
+```
+
+Review the raw response, redact secrets only, then freeze it with server
+version, model revision, launch flags, request, and expected recovery as
+`packages/bench/fixtures/real/sglang/qwen3.6-pattern-a.json`. Add its hash to
+the fixture manifest and update the row to `verified: true` only after that
+review.
+
 ## The recording template for a verified reproduction
 
 For every **verified** row in the compatibility matrix, attach evidence in
@@ -101,7 +122,9 @@ the linked issue or PR (redact secrets only). The status-page/matrix
 | probe command | the exact `live-probe` invocation + `--out` report path |
 
 The probe report (`results-*.json`) contains all of this except the server
-launch flags — put those in the PR description.
+launch flags — put those in the PR description. Real-engine Compose runs also
+require an immutable container image digest (`image@sha256:...`), not a mutable
+tag, so a future image update cannot silently change the reproduction.
 
 ## What each status in the compatibility matrix means
 

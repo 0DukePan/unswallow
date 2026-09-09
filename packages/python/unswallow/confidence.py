@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import math
 from typing import List, Optional
 
-from .types import SwallowMatrixEntry
+from .types import SwallowMatrixEntry, ToolValidationResult
 
 
 class ConfidenceInput:
@@ -14,8 +15,7 @@ class ConfidenceInput:
         "detection_only",
         "trailing_text",
         "arguments_from_string",
-        "tool_schemas",
-        "envelope_name",
+        "validation",
     )
 
     def __init__(
@@ -27,8 +27,7 @@ class ConfidenceInput:
         detection_only: bool,
         trailing_text: bool,
         arguments_from_string: bool,
-        tool_schemas=None,
-        envelope_name: Optional[str] = None,
+        validation: Optional[ToolValidationResult] = None,
     ) -> None:
         self.pattern = pattern
         self.matrix_match = matrix_match
@@ -37,8 +36,7 @@ class ConfidenceInput:
         self.detection_only = detection_only
         self.trailing_text = trailing_text
         self.arguments_from_string = arguments_from_string
-        self.tool_schemas = tool_schemas
-        self.envelope_name = envelope_name
+        self.validation = validation
 
 
 def score_confidence(inp: ConfidenceInput):
@@ -78,14 +76,13 @@ def score_confidence(inp: ConfidenceInput):
         )
     if inp.arguments_from_string:
         warnings.append("arguments arrived as a JSON string and were parsed into an object")
-    if inp.tool_schemas and inp.envelope_name:
-        names = []
-        for s in inp.tool_schemas:
-            fn = s.get("function") if isinstance(s, dict) else None
-            names.append((fn or s).get("name") if isinstance(fn or s, dict) else None)
-        names = [n for n in names if n]
-        if inp.envelope_name not in names:
-            c -= 0.1
-            warnings.append('recovered tool name "{}" not found in provided tool_schemas'.format(inp.envelope_name))
-    confidence = max(0.0, min(1.0, round(c, 2)))
+    if inp.validation and inp.validation.name_known == "no":
+        c *= 0.5
+        warnings.append("recovered tool name is not found in provided toolSchemas (confidence ×0.5)")
+    if inp.validation and inp.validation.schema_valid == "no":
+        c *= 0.5
+        warnings.append("recovered arguments do not satisfy the provided tool schema (confidence ×0.5)")
+    if inp.validation and inp.validation.errors:
+        warnings.extend(inp.validation.errors)
+    confidence = max(0.0, min(1.0, math.floor(c * 100 + 0.5) / 100))
     return confidence, warnings

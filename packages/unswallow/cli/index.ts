@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
-import { checkAndRescue, getMatrixFile, startProxy, type SwallowCheckResult } from '../src/index';
+import { checkAndRescue, getMatrixFile, matchMatrixEntry, normalizeEngine, startProxy, type SwallowCheckResult, type ToolSchema } from '../src/index';
 import { demoFixture } from './demo';
 import { bar, fg, pad, table } from './format';
 import { probeEndpoint } from './probe';
 
 const VERSION = '0.2.0';
+const CLI_JSON_SCHEMA_VERSION = '1';
 
 const PATTERN_LABELS: Record<string, string> = {
   A: 'trapped inside',
@@ -21,6 +22,8 @@ function usage(): string {
     '  unswallow check [--endpoint <url>] [--model <m>] [--api-key <k>]',
     '                 [--engine <e>] [--version <v>] [--fixture <file>]',
     '                 [--timeout <ms>] [--json]',
+    '  unswallow inspect <file> [--schema <tools.json>] [--engine <e>] [--version <v>] [--json]',
+    '  unswallow doctor --endpoint <url> --model <m> [--api-key <k>] [--engine <e>] [--version <v>] [--out <file>] [--json]',
     '  unswallow matrix [--engine <e>] [--json]',
     '  unswallow proxy --upstream <url> [--port <p>] [--host <h>] [--prefix <p>]',
     '                  [--engine <e>] [--version <v>]',
@@ -212,6 +215,78 @@ async function cmdCheck(args: Map<string, string>): Promise<number> {
   return 0;
 }
 
+function readToolSchemas(file: string | undefined): ToolSchema[] | undefined {
+  if (!file) return undefined;
+  const value = JSON.parse(fs.readFileSync(file, 'utf8')) as unknown;
+  if (Array.isArray(value)) return value as ToolSchema[];
+  if (value && typeof value === 'object' && Array.isArray((value as { tools?: unknown }).tools)) {
+    return (value as { tools: ToolSchema[] }).tools;
+  }
+  throw new Error('schema file must be a JSON array or an object with a tools array');
+}
+
+function cmdInspect(args: Map<string, string>, file: string): number {
+  try {
+    const fixture = readFixtureFile(file);
+    if (!fixture) throw new Error('file is not valid response JSON');
+    const schemas = readToolSchemas(args.get('schema'));
+    const engine = args.get('engine') ?? fixture.engineHint ?? '';
+    const version = args.get('version') ?? fixture.engineVersion ?? '';
+    const result = checkAndRescue(fixture.response as Parameters<typeof checkAndRescue>[0], {
+      engineHint: engine || undefined, engineVersion: version || undefined, toolSchemas: schemas,
+    });
+    if (args.has('json')) console.log(JSON.stringify({ schemaVersion: CLI_JSON_SCHEMA_VERSION, ...result }, null, 2));
+    else {
+      console.log(`unswallow inspect — ${file}`);
+      renderVerdict(result, engine, version);
+      if (result.validation) console.log(`validation    : name=${result.validation.nameKnown}, schema=${result.validation.schemaValid}, structural=${result.validation.structurallyValid}`);
+    }
+    return result.detected ? 1 : 0;
+  } catch (e) {
+    console.error(`error: cannot inspect file: ${e instanceof Error ? e.message : String(e)}`);
+    return 2;
+  }
+}
+
+async function cmdDoctor(args: Map<string, string>): Promise<number> {
+  const endpoint = args.get('endpoint');
+  const model = args.get('model');
+  if (!endpoint || !model) {
+    console.error('error: doctor requires --endpoint <url> and --model <m>');
+    return 3;
+  }
+  const probe = await probeEndpoint({ endpoint, model, apiKey: args.get('api-key') });
+  if (!probe.ok) {
+    console.error(`doctor probe failed: ${probe.error}`);
+    return 2;
+  }
+  const engine = args.get('engine') ?? '';
+  const version = args.get('version') ?? '';
+  const result = checkAndRescue(probe.response, { engineHint: engine || undefined, engineVersion: version || undefined });
+  const out = args.get('out');
+  if (out) {
+    try {
+      fs.writeFileSync(out, JSON.stringify({ engine, version, response: probe.response }, null, 2) + '\n');
+    } catch (e) {
+      console.error(`error: cannot write raw response: ${e instanceof Error ? e.message : String(e)}`);
+      return 2;
+    }
+  }
+  const matrix = engine && version && result.pattern
+    ? matchMatrixEntry(getMatrixFile().entries, normalizeEngine(engine) as never, version, result.pattern)
+    : null;
+  const status = result.detected ? (result.recovered ? 'recovery-supported' : 'affected') : 'healthy';
+  const report = { schemaVersion: CLI_JSON_SCHEMA_VERSION, status, probeStatus: probe.status, rawResponseFile: out ?? null, result, compatibility: matrix ?? null, recommendation: matrix?.fixHint ?? null };
+  if (args.has('json')) console.log(JSON.stringify(report, null, 2));
+  else {
+    console.log(`unswallow doctor: ${status}`);
+    renderVerdict(result, engine, version);
+    if (matrix?.fixHint) console.log(`recommendation : ${matrix.fixHint}`);
+    else if (!engine || !version) console.log('compatibility  : pass --engine and --version for matrix guidance');
+  }
+  return result.detected ? 1 : 0;
+}
+
 function cmdProxy(args: Map<string, string>): number {
   const upstream = args.get('upstream');
   if (!upstream) {
@@ -288,6 +363,7 @@ async function main(argv: string[]): Promise<number> {
     return 0;
   }
   const args = new Map<string, string>();
+  const positional: string[] = [];
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
     if (a.startsWith('--')) {
@@ -298,11 +374,21 @@ async function main(argv: string[]): Promise<number> {
       } else {
         args.set(key, '');
       }
+    } else {
+      positional.push(a);
     }
   }
   switch (cmd) {
     case 'check':
       return await cmdCheck(args);
+    case 'inspect':
+      if (!positional[0]) {
+        console.error('error: inspect requires <file>');
+        return 3;
+      }
+      return cmdInspect(args, positional[0]);
+    case 'doctor':
+      return await cmdDoctor(args);
     case 'matrix':
       return cmdMatrix(args);
     case 'proxy':

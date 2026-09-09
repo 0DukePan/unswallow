@@ -1,0 +1,50 @@
+name: Real engine reproduction
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_id:
+        description: Exact SGLang-compatible Qwen3.6 model id/revision
+        required: true
+        type: string
+      engine_version:
+        description: Exact SGLang version for the evidence report
+        required: true
+        type: string
+      sglang_image:
+        description: Immutable SGLang image reference (registry/image@sha256:...)
+        required: true
+        type: string
+
+jobs:
+  reproduce-sglang:
+    # Self-hosted GPU infrastructure only; never runs as part of normal CI.
+    runs-on: [self-hosted, linux, gpu]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Start SGLang
+        env:
+          MODEL_ID: ${{ inputs.model_id }}
+          SGLANG_IMAGE: ${{ inputs.sglang_image }}
+        run: docker compose -f packages/bench/real-engines/compose.yaml --profile sglang up -d
+      - name: Capture and evaluate raw response
+        run: >-
+          npm run live-probe -- --case packages/bench/live-probe/cases/live-sglang-qwen3.6-pattern-a.json
+          --endpoint http://localhost:30000/v1 --model ${{ inputs.model_id }}
+          --engine sglang --version ${{ inputs.engine_version }}
+          --out packages/bench/live-probe/results-sglang-qwen3.6.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sglang-qwen3.6-reproduction
+          path: packages/bench/live-probe/results-sglang-qwen3.6.json
+      - name: Stop SGLang
+        if: always()
+        env:
+          SGLANG_IMAGE: ${{ inputs.sglang_image }}
+        run: docker compose -f packages/bench/real-engines/compose.yaml --profile sglang down

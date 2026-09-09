@@ -1,4 +1,4 @@
-import type { SwallowMatrixEntry, ToolPattern, ToolSchema } from './types';
+import type { SwallowMatrixEntry, ToolPattern, ToolValidationResult } from './types';
 
 export interface ConfidenceInput {
   pattern: ToolPattern | null;
@@ -8,8 +8,7 @@ export interface ConfidenceInput {
   detectionOnly: boolean;
   trailingText: boolean;
   argumentsFromString: boolean;
-  toolSchemas?: ToolSchema[];
-  envelopeName?: string | null;
+  validation?: ToolValidationResult | null;
 }
 
 export interface ConfidenceResult {
@@ -57,12 +56,16 @@ export function scoreConfidence(input: ConfidenceInput): ConfidenceResult {
   if (input.argumentsFromString) {
     warnings.push('arguments arrived as a JSON string and were parsed into an object');
   }
-  if (input.toolSchemas && input.toolSchemas.length > 0 && input.envelopeName) {
-    const names = input.toolSchemas.map((s) => s.function?.name ?? s.name).filter(Boolean);
-    if (!names.includes(input.envelopeName)) {
-      c -= 0.1;
-      warnings.push(`recovered tool name "${input.envelopeName}" not found in provided toolSchemas`);
-    }
+  if (input.validation?.nameKnown === 'no') {
+    c *= 0.5;
+    warnings.push('recovered tool name is not found in provided toolSchemas (confidence ×0.5)');
+  }
+  if (input.validation?.schemaValid === 'no') {
+    c *= 0.5;
+    warnings.push('recovered arguments do not satisfy the provided tool schema (confidence ×0.5)');
+  }
+  if (input.validation && input.validation.errors.length > 0) {
+    warnings.push(...input.validation.errors);
   }
   const confidence = Math.max(0, Math.min(1, Math.round(c * 100) / 100));
   return { confidence, warnings };

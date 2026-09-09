@@ -53,8 +53,10 @@ import { checkAndRescueStream } from 'unswallow';
 const result = await checkAndRescueStream(sseChunkStream, { engineHint: 'vllm' });
 
 // History hygiene (Pattern D prevention)
-import { sanitizeHistory } from 'unswallow';
+import { ensureReasoningEcho, sanitizeHistory } from 'unswallow';
 const clean = sanitizeHistory(messages);
+// Thinking-mode tool APIs require this request-side field echo.
+const requestMessages = ensureReasoningEcho(messages);
 
 // OpenAI-compatible proxy that heals responses inline
 // npx unswallow proxy --upstream http://localhost:8000/v1 --port 8787
@@ -64,6 +66,8 @@ createProxyServer({ upstream: 'http://localhost:8000/v1' }).listen(8787);
 
 ```bash
 npx unswallow check --endpoint http://localhost:8000/v1 --model Qwen/Qwen3.5-35B-A3B-FP8 --engine vllm
+npx unswallow inspect saved-response.json --schema tools.json
+npx unswallow doctor --endpoint http://localhost:8000/v1 --model Qwen/Qwen3.5-35B-A3B-FP8
 npx unswallow matrix        # sourced engine/version behavior matrix
 ```
 
@@ -71,8 +75,8 @@ Python users: `pip install unswallow` — a 1:1 stdlib-only mirror with the same
 
 ## Confidence, benchmarks, docs
 
-Every detection carries a `confidence` score (matrix hit → 0.95, heuristic → 0.55, nothing → 0) plus a `warnings[]` array explaining exactly why. The engine/version behavior matrix ships as its own package (`unswallow-matrix`), every row sourced, refreshed weekly.
+Every detection carries a `confidence` score (matrix hit → 0.95, heuristic → 0.55, nothing → 0) plus a `warnings[]` array explaining exactly why. Pass `toolSchemas` to validate recovered names and arguments; unknown names or invalid arguments each apply a `×0.5` confidence penalty. `strictSchema` and `minConfidence` are opt-in recovery gates, while structural envelope validity is always required. The engine/version behavior matrix ships as its own package (`unswallow-matrix`), every row sourced, refreshed weekly.
 
-Full docs, benchmark reports (22 hash-pinned fixtures, measured latency tables, TS↔Python parity), and contributing guide: **[github.com/0DukePan/unswallow](https://github.com/0DukePan/unswallow)**.
+`inspect --json` and `doctor --json` have a versioned machine-readable contract; see [the CLI JSON contract](../../docs/cli-json-contract.md). Full docs, benchmark reports (22 hash-pinned fixtures, measured latency tables, TS↔Python parity), and contributing guide: **[github.com/0DukePan/unswallow](https://github.com/0DukePan/unswallow)**.
 
 MIT © 2026 unswallow contributors.

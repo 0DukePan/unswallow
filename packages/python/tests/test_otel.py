@@ -34,14 +34,28 @@ class FakeCounter:
         self.calls.append((delta, attrs))
 
 
+class FakeHistogram:
+    def __init__(self):
+        self.calls = []
+
+    def record(self, value, attrs=None):
+        self.calls.append((value, attrs))
+
+
 class FakeMeter:
     def __init__(self):
         self.counters = []
+        self.histograms = []
 
     def create_counter(self, name, description=None):
         counter = FakeCounter()
-        self.counters.append(counter)
+        self.counters.append((name, counter))
         return counter
+
+    def create_histogram(self, name, description=None, unit=None):
+        histogram = FakeHistogram()
+        self.histograms.append((name, histogram))
+        return histogram
 
 
 def detected_result(**kw):
@@ -67,6 +81,12 @@ class OTelTest(unittest.TestCase):
     def test_noop_without_tracer_meter(self):
         observe_check_result(not_detected("unknown"))
 
+    def test_audit_callback_receives_result(self):
+        result = detected_result()
+        events = []
+        observe_check_result(result, audit_log=events.append)
+        self.assertEqual(events, [{"type": "unswallow.check", "result": result}])
+
     def test_tracer_receives_detection_attributes(self):
         tracer = FakeTracer()
         observe_check_result(detected_result(), tracer=tracer)
@@ -77,17 +97,22 @@ class OTelTest(unittest.TestCase):
         self.assertEqual(attrs["confidence"], 0.95)
         self.assertTrue(tracer.spans[0].ended)
 
-    def test_meter_counts_detection(self):
+    def test_meter_records_recovery_metrics_and_latency(self):
         meter = FakeMeter()
-        observe_check_result(detected_result(), meter=meter)
-        self.assertEqual(len(meter.counters), 1)
-        delta, attrs = meter.counters[0].calls[0]
-        self.assertEqual(delta, 1)
-        self.assertEqual(attrs, {"pattern": "A"})
+        observe_check_result(detected_result(), meter=meter, recovery_latency_ms=12.5)
+        counters = dict(meter.counters)
+        self.assertEqual(counters["swallowed_tool_calls_total"].calls[0][0], 1)
+        self.assertEqual(counters["recovered_tool_calls_total"].calls[0][0], 0)
+        self.assertEqual(counters["false_positive_guard_total"].calls[0][0], 0)
+        self.assertEqual(counters["pattern_a_total"].calls[0][0], 1)
+        self.assertEqual(meter.histograms[0][0], "recovery_latency_ms")
+        self.assertEqual(meter.histograms[0][1].calls[0][0], 12.5)
 
-        clean = FakeMeter()
-        observe_check_result(not_detected("unknown"), meter=clean)
-        self.assertEqual(clean.counters[0].calls[0][0], 0)
+    def test_meter_records_guard_block(self):
+        meter = FakeMeter()
+        observe_check_result(detected_result(recovered=False), meter=meter)
+        counters = dict(meter.counters)
+        self.assertEqual(counters["false_positive_guard_total"].calls[0][0], 1)
 
 
 if __name__ == "__main__":

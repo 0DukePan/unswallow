@@ -12,6 +12,8 @@ from .matrix import get_matrix_file
 from .pipeline import check_and_rescue
 from .types import SwallowCheckResult
 
+CLI_JSON_SCHEMA_VERSION = "1"
+
 PROBE_PROMPT = (
     "You are being evaluated on tool use. First, use your reasoning channel to plan which tool to "
     "call and what arguments to pass. Then actually invoke the get_weather tool for Tokyo. You must "
@@ -63,11 +65,25 @@ def _bar(frac: float, width: int = 10) -> str:
 def _read_fixture(path: str) -> tuple[dict, Optional[str], Optional[str]]:
     with open(path, encoding="utf-8") as f:
         parsed = json.load(f)
-    if isinstance(parsed, dict) and "response" in parsed:
+    if not isinstance(parsed, dict):
+        raise ValueError("file is not valid response JSON")
+    if "response" in parsed:
         hint = parsed.get("engineHint") or parsed.get("engine")
         ver = parsed.get("engineVersion") or parsed.get("version")
         return parsed["response"], hint, str(ver) if ver is not None else None
     return parsed, None, None
+
+
+def _read_tool_schemas(path: Optional[str]) -> Optional[list[dict]]:
+    if not path:
+        return None
+    with open(path, encoding="utf-8") as f:
+        parsed = json.load(f)
+    if isinstance(parsed, list):
+        return parsed
+    if isinstance(parsed, dict) and isinstance(parsed.get("tools"), list):
+        return parsed["tools"]
+    raise ValueError("schema file must be a JSON array or an object with a tools array")
 
 
 def _probe(endpoint: str, model: str, api_key: Optional[str], timeout: int):
@@ -193,6 +209,8 @@ def _cmd_check(args: argparse.Namespace) -> int:
 
 
 def _to_dict(result: SwallowCheckResult) -> dict:
+    matrix = result.matrix_match
+    validation = result.validation
     return {
         "detected": result.detected,
         "pattern": result.pattern,
@@ -201,11 +219,107 @@ def _to_dict(result: SwallowCheckResult) -> dict:
         "recovered": result.recovered,
         "source": result.source,
         "engineHint": result.engine_hint,
-        "matrixMatch": result.matrix_match.__dict__ if result.matrix_match else None,
+        "matrixMatch": {
+            "engine": matrix.engine,
+            "harness": matrix.harness,
+            "versionRange": matrix.version_range,
+            "pattern": matrix.pattern,
+            "modelFamilies": matrix.model_families,
+            "behavior": matrix.behavior,
+            "verified": matrix.verified,
+            "knownBehavior": matrix.known_behavior,
+            "source": matrix.source,
+            "fixHint": matrix.fix_hint,
+        } if matrix else None,
         "confidence": result.confidence,
         "warnings": result.warnings,
+        "validation": {
+            "structurallyValid": validation.structurally_valid,
+            "nameKnown": validation.name_known,
+            "schemaValid": validation.schema_valid,
+            "errors": validation.errors,
+        } if validation else None,
         "recoveredResponse": result.recovered_response,
     }
+
+
+def _cmd_inspect(args: argparse.Namespace) -> int:
+    try:
+        source, fixture_engine, fixture_version = _read_fixture(args.file)
+        schemas = _read_tool_schemas(args.schema)
+        engine = args.engine or fixture_engine or ""
+        version = args.version or fixture_version or ""
+        result = check_and_rescue(
+            source,
+            engine_hint=engine or None,
+            engine_version=version or None,
+            tool_schemas=schemas,
+        )
+    except (OSError, ValueError, TypeError) as e:
+        print("error: cannot inspect file: {}".format(e), file=sys.stderr)
+        return 2
+
+    if args.json:
+        print(json.dumps({"schemaVersion": CLI_JSON_SCHEMA_VERSION, **_to_dict(result)}, indent=2))
+    else:
+        print("unswallow inspect — {}".format(args.file))
+        _render(result, engine, version)
+        if result.validation:
+            print(
+                "validation    : name={}, schema={}, structural={}".format(
+                    result.validation.name_known,
+                    result.validation.schema_valid,
+                    result.validation.structurally_valid,
+                )
+            )
+    return 1 if result.detected else 0
+
+
+def _cmd_doctor(args: argparse.Namespace) -> int:
+    if not args.endpoint or not args.model:
+        print("error: doctor requires --endpoint <url> and --model <m>", file=sys.stderr)
+        return 3
+    try:
+        status, response = _probe(args.endpoint, args.model, args.api_key, args.timeout)
+    except RuntimeError as e:
+        print("doctor probe failed: {}".format(e), file=sys.stderr)
+        return 2
+    if response is None:
+        print("doctor probe failed: endpoint returned HTTP {}".format(status), file=sys.stderr)
+        return 2
+
+    engine = args.engine or ""
+    version = args.version or ""
+    if args.out:
+        try:
+            with open(args.out, "w", encoding="utf-8") as f:
+                json.dump({"engine": engine, "version": version, "response": response}, f, indent=2)
+                f.write("\n")
+        except OSError as e:
+            print("error: cannot write raw response: {}".format(e), file=sys.stderr)
+            return 2
+    result = check_and_rescue(response, engine_hint=engine or None, engine_version=version or None)
+    matrix = result.matrix_match
+    doctor_status = "recovery-supported" if result.detected and result.recovered else "affected" if result.detected else "healthy"
+    report = {
+        "schemaVersion": CLI_JSON_SCHEMA_VERSION,
+        "status": doctor_status,
+        "probeStatus": status,
+        "rawResponseFile": args.out or None,
+        "result": _to_dict(result),
+        "compatibility": _to_dict(result)["matrixMatch"],
+        "recommendation": matrix.fix_hint if matrix else None,
+    }
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print("unswallow doctor: {}".format(doctor_status))
+        _render(result, engine, version)
+        if matrix and matrix.fix_hint:
+            print("recommendation : {}".format(matrix.fix_hint))
+        elif not engine or not version:
+            print("compatibility  : pass --engine and --version for matrix guidance")
+    return 1 if result.detected else 0
 
 
 def _cmd_matrix(args: argparse.Namespace) -> int:
@@ -243,6 +357,25 @@ def main(argv: Optional[list] = None) -> int:
     p_check.add_argument("--timeout", type=int, default=60, help="probe timeout in seconds")
     p_check.add_argument("--json", action="store_true", help="machine-readable output")
     p_check.set_defaults(func=_cmd_check)
+
+    p_inspect = sub.add_parser("inspect", help="inspect a captured response and optionally validate recovered calls")
+    p_inspect.add_argument("file", help="captured raw response JSON")
+    p_inspect.add_argument("--schema", help="tool schemas JSON array or object with a tools array")
+    p_inspect.add_argument("--engine", help="vllm | sglang | llama.cpp")
+    p_inspect.add_argument("--version", help="server version")
+    p_inspect.add_argument("--json", action="store_true", help="machine-readable output")
+    p_inspect.set_defaults(func=_cmd_inspect)
+
+    p_doctor = sub.add_parser("doctor", help="probe a live endpoint and report swallow compatibility")
+    p_doctor.add_argument("--endpoint", help="OpenAI-compatible base URL to probe")
+    p_doctor.add_argument("--model", help="model name for the probe")
+    p_doctor.add_argument("--api-key", help="API key for the probe")
+    p_doctor.add_argument("--engine", help="vllm | sglang | llama.cpp")
+    p_doctor.add_argument("--version", help="server version")
+    p_doctor.add_argument("--timeout", type=int, default=60, help="probe timeout in seconds")
+    p_doctor.add_argument("--out", help="write the raw provider response for a follow-up inspect")
+    p_doctor.add_argument("--json", action="store_true", help="machine-readable output")
+    p_doctor.set_defaults(func=_cmd_doctor)
 
     p_matrix = sub.add_parser("matrix", help="print the engine/version behavior matrix")
     p_matrix.add_argument("--engine", help="filter by engine or harness")

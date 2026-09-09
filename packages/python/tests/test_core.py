@@ -211,8 +211,10 @@ class CoreTest(unittest.TestCase):
                 }
             ],
         )
-        self.assertEqual(result.confidence, 0.85)
-        self.assertTrue(any("not found in provided tool_schemas" in w for w in result.warnings))
+        self.assertEqual(result.confidence, 0.48)
+        self.assertIsNotNone(result.validation)
+        self.assertEqual(result.validation.name_known, "no")
+        self.assertTrue(any("not found in provided toolSchemas" in w for w in result.warnings))
 
     def test_missing_choices(self):
         result = check_and_rescue({"choices": []})

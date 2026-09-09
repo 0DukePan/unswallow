@@ -1,0 +1,19 @@
+# Opt-in local reproduction services. Nothing in normal CI invokes this file.
+# Supply immutable image digests and an exact model revision before starting.
+services:
+  vllm:
+    image: ${VLLM_IMAGE:?set VLLM_IMAGE to an immutable vLLM image digest}
+    profiles: [vllm]
+    gpus: all
+    environment:
+      MODEL_ID: ${MODEL_ID:?set MODEL_ID to a compatible model id}
+    command: ["--model", "${MODEL_ID}", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["8000:8000"]
+  sglang:
+    image: ${SGLANG_IMAGE:?set SGLANG_IMAGE to an immutable SGLang image digest}
+    profiles: [sglang]
+    gpus: all
+    environment:
+      MODEL_ID: ${MODEL_ID:?set MODEL_ID to a compatible model id}
+    command: ["python3", "-m", "sglang.launch_server", "--model-path", "${MODEL_ID}", "--host", "0.0.0.0", "--port", "30000"]
+    ports: ["30000:30000"]

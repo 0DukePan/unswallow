@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sanitizeHistory, stripReasoningTags } from '../dist/src/index';
+import { ensureReasoningEcho, sanitizeHistory, stripReasoningTags } from '../dist/src/index';
 
 test('stripReasoningTags removes complete think blocks', () => {
   const text =
@@ -69,6 +69,21 @@ test('sanitizeHistory can skip tag stripping via options', () => {
   ];
   const clean = sanitizeHistory(history, { stripReasoningTags: false });
   assert.equal(clean[0].content, '< thinking>\nplan\n< response>\nanswer');
+});
+
+test('ensureReasoningEcho fills missing assistant reasoning_content for tool-call history without mutating input', () => {
+  const history = [
+    { role: 'assistant', content: '', tool_calls: [{ id: 'kimi', function: { name: 'search', arguments: '{}' } }] },
+    { role: 'assistant', content: '', reasoning_content: 'plan', tool_calls: [{ id: 'deepseek', function: { name: 'search', arguments: '{}' } }] },
+    { role: 'assistant', content: '', tool_calls: [] },
+    { role: 'tool', content: 'result' },
+  ];
+  const echoed = ensureReasoningEcho(history, { defaultValue: 'echo' });
+  assert.equal(history[0].reasoning_content, undefined);
+  assert.equal(echoed[0].reasoning_content, 'echo');
+  assert.equal(echoed[1].reasoning_content, 'plan');
+  assert.equal('reasoning_content' in echoed[2], false);
+  assert.equal('reasoning_content' in echoed[3], false);
 });
 
 test('sanitizeHistory with both options disabled is a plain copy', () => {

@@ -55,6 +55,14 @@ class SwallowMatrixEntry:
 
 
 @dataclass
+class ToolValidationResult:
+    structurally_valid: bool
+    name_known: Literal["yes", "no", "unknown"]
+    schema_valid: Literal["yes", "no", "unknown"]
+    errors: List[str]
+
+
+@dataclass
 class SwallowCheckResult:
     detected: bool
     pattern: Optional[str]
@@ -66,6 +74,7 @@ class SwallowCheckResult:
     matrix_match: Optional[SwallowMatrixEntry]
     confidence: float
     warnings: List[str] = field(default_factory=list)
+    validation: Optional[ToolValidationResult] = None
     recovered_response: Optional[Dict[str, Any]] = None
 
 
@@ -81,5 +90,6 @@ def not_detected(engine_hint: str) -> SwallowCheckResult:
         matrix_match=None,
         confidence=0.0,
         warnings=[],
+        validation=None,
         recovered_response=None,
     )

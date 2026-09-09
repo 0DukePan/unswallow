@@ -1,0 +1,5 @@
+{
+  "source": "https://github.com/NousResearch/hermes-agent/issues/16844",
+  "modelFamily": "deepseek-v4",
+  "messages": [{"role":"assistant","content":"","tool_calls":[{"id":"call_deepseek","type":"function","function":{"name":"search","arguments":"{}"}}]}]
+}

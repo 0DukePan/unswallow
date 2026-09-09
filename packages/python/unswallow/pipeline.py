@@ -6,6 +6,7 @@ from .classify import classify
 from .confidence import score_confidence
 from .matrix import load_matrix, match_matrix_entry, normalize_engine
 from .types import SwallowCheckResult, ToolCall, not_detected
+from .validate import validate_envelope
 
 
 def check_message(message: Dict[str, Any], **opts) -> SwallowCheckResult:
@@ -32,10 +33,26 @@ def check_message(message: Dict[str, Any], **opts) -> SwallowCheckResult:
     if cls.envelope:
         tool_call = ToolCall(name=cls.envelope.name, arguments=cls.envelope.arguments)
     tool_calls = [ToolCall(name=e.name, arguments=e.arguments) for e in cls.envelopes]
-    recovered = cls.pattern != "C" and len(tool_calls) > 0
+    validation = validate_envelope(cls.envelope, opts.get("tool_schemas"))
+    all_validations = [
+        validate_envelope(envelope, opts.get("tool_schemas")) for envelope in cls.envelopes
+    ]
+    all_structurally_valid = all(result.structurally_valid for result in all_validations)
+    all_schemas_valid = all(result.schema_valid == "yes" for result in all_validations)
 
     confidence, warnings = score_confidence(
-        confidence_input(cls, matrix_match, engine, version, opts)
+        confidence_input(cls, matrix_match, engine, version, validation)
+    )
+    min_confidence = opts.get("min_confidence", 0)
+    if not isinstance(min_confidence, (int, float)) or isinstance(min_confidence, bool):
+        min_confidence = 0
+    min_confidence = max(0.0, min(1.0, min_confidence))
+    recovered = (
+        cls.pattern != "C"
+        and len(tool_calls) > 0
+        and all_structurally_valid
+        and confidence >= min_confidence
+        and (not opts.get("strict_schema") or all_schemas_valid)
     )
 
     return SwallowCheckResult(
@@ -48,12 +65,19 @@ def check_message(message: Dict[str, Any], **opts) -> SwallowCheckResult:
         engine_hint=engine,
         matrix_match=matrix_match,
         confidence=confidence,
-        warnings=cls.reasons + warnings,
+        warnings=(
+            cls.reasons
+            + warnings
+            + ([] if all_structurally_valid else ["recovery blocked: recovered envelope is not structurally valid"])
+            + ([] if confidence >= min_confidence else ["recovery blocked: confidence {:.2f} is below minConfidence {:.2f}".format(confidence, min_confidence)])
+            + ([] if not opts.get("strict_schema") or all_schemas_valid else ["recovery blocked: strictSchema requires valid supplied tool schema for every recovered call"])
+        ),
+        validation=validation,
         recovered_response=None,
     )
 
 
-def confidence_input(cls, matrix_match, engine: str, version, opts: Dict[str, Any]):
+def confidence_input(cls, matrix_match, engine: str, version, validation):
     from .confidence import ConfidenceInput
 
     return ConfidenceInput(
@@ -64,8 +88,7 @@ def confidence_input(cls, matrix_match, engine: str, version, opts: Dict[str, An
         detection_only=cls.pattern == "C",
         trailing_text=any(r.startswith("trailing text") for r in cls.reasons),
         arguments_from_string=bool(cls.envelope and cls.envelope.arguments_from_string),
-        tool_schemas=opts.get("tool_schemas"),
-        envelope_name=cls.envelope.name if cls.envelope else None,
+        validation=validation,
     )
 
 

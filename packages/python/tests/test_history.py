@@ -1,6 +1,6 @@
 import unittest
 
-from unswallow import sanitize_history, strip_reasoning_tags
+from unswallow import ensure_reasoning_echo, sanitize_history, strip_reasoning_tags
 
 
 class HistoryTest(unittest.TestCase):
@@ -44,6 +44,20 @@ class HistoryTest(unittest.TestCase):
         self.assertNotIn("reasoning", clean[1])
         self.assertNotIn("reasoning_content", clean[1])
         self.assertEqual(clean[2]["content"], "24C")
+
+    def test_ensure_reasoning_echo(self):
+        history = [
+            {"role": "assistant", "content": "", "tool_calls": [{"function": {"name": "search", "arguments": "{}"}}]},
+            {"role": "assistant", "content": "", "reasoning_content": "plan", "tool_calls": [{"function": {"name": "search", "arguments": "{}"}}]},
+            {"role": "assistant", "content": "", "tool_calls": []},
+            {"role": "tool", "content": "result"},
+        ]
+        echoed = ensure_reasoning_echo(history, default_value="echo")
+        self.assertNotIn("reasoning_content", history[0])
+        self.assertEqual(echoed[0]["reasoning_content"], "echo")
+        self.assertEqual(echoed[1]["reasoning_content"], "plan")
+        self.assertNotIn("reasoning_content", echoed[2])
+        self.assertNotIn("reasoning_content", echoed[3])
 
     def test_options(self):
         history = [{"role": "assistant", "content": "answer", "thinking": "< thinking>\nplan\n< response>\n"}]

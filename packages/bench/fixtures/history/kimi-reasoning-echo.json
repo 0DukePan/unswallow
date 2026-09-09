@@ -1,0 +1,5 @@
+{
+  "source": "https://github.com/MoonshotAI/kimi-cli/issues/520",
+  "modelFamily": "kimi",
+  "messages": [{"role":"assistant","content":"","tool_calls":[{"id":"call_kimi","type":"function","function":{"name":"search","arguments":"{}"}}]}]
+}

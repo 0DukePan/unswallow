@@ -191,7 +191,7 @@ test('toolSchemas mismatch lowers confidence and warns', () => {
       },
     ],
   });
-  assert.equal(result.confidence, 0.85);
+  assert.equal(result.confidence, 0.48);
   assert.ok(result.warnings.some((w) => w.includes('not found in provided toolSchemas')));
 });
 

@@ -26,11 +26,12 @@ export {
 export type { LocatedEnvelope, ExtractionResult } from './recover';
 export { extractRegions, splitThinkBlocks, REASONING_FIELDS } from './scan';
 export { checkMessage } from './pipeline';
+export { validateEnvelope } from './validate';
 export { createStreamAccumulator, checkAndRescueStream } from './stream';
 export { observeCheckResult } from './integrations/otel';
 export type { StreamChunk, StreamDelta, StreamAccumulatorOptions } from './stream';
-export { sanitizeHistory, stripReasoningTags } from './history';
-export type { HistoryMessage, SanitizeHistoryOptions } from './history';
+export { ensureReasoningEcho, sanitizeHistory, stripReasoningTags } from './history';
+export type { HistoryMessage, EnsureReasoningEchoOptions, SanitizeHistoryOptions } from './history';
 export { createProxyServer, startProxy } from './proxy';
 export type { ProxyOptions, ProxyServer } from './proxy';
 export type {
@@ -41,6 +42,7 @@ export type {
   RawMessage,
   RawProviderResponse,
   ToolSchema,
+  ToolValidationResult,
   SwallowMatrixEntry,
   ToolEnvelope,
   SwallowCheckResult,
@@ -68,6 +70,7 @@ export function checkAndRescue(
       matrixMatch: null,
       confidence: 0,
       warnings: ['response has no choices[0].message'],
+      validation: null,
       recoveredResponse: null,
     };
   }

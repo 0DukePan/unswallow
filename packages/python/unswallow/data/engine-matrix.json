@@ -58,6 +58,17 @@
       "source": "https://github.com/sgl-project/sglang/issues/30744"
     },
     {
+      "engine": "sglang",
+      "versionRange": "*",
+      "pattern": "A",
+      "modelFamilies": ["qwen3.6"],
+      "behavior": "swallow",
+      "verified": false,
+      "knownBehavior": "qwen25/qwen3_coder tool-call parser returns empty tool_calls for Qwen3.6, leaving the XML tool-call markup in content.",
+      "source": "https://github.com/sgl-project/sglang/issues/26790",
+      "fixHint": "No confirmed fix yet; track upstream issue."
+    },
+    {
       "engine": "llama.cpp",
       "versionRange": "*",
       "pattern": "A",

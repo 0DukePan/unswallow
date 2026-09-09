@@ -30,12 +30,25 @@ class FakeCounter implements CounterLike {
   }
 }
 
+class FakeHistogram {
+  calls: Array<{ value: number; attrs?: Record<string, unknown> }> = [];
+  record(value: number, attrs?: Record<string, unknown>): void {
+    this.calls.push({ value, attrs });
+  }
+}
+
 class FakeMeter {
-  counters: FakeCounter[] = [];
-  createCounter(): FakeCounter {
-    const c = new FakeCounter();
-    this.counters.push(c);
-    return c;
+  counters: Array<{ name: string; counter: FakeCounter }> = [];
+  histograms: Array<{ name: string; histogram: FakeHistogram }> = [];
+  createCounter(name: string): FakeCounter {
+    const counter = new FakeCounter();
+    this.counters.push({ name, counter });
+    return counter;
+  }
+  createHistogram(name: string): FakeHistogram {
+    const histogram = new FakeHistogram();
+    this.histograms.push({ name, histogram });
+    return histogram;
   }
 }
 
@@ -53,11 +66,19 @@ function result(partial: Partial<SwallowCheckResult>): SwallowCheckResult {
     warnings: [],
     recoveredResponse: null,
     ...partial,
+    validation: partial.validation ?? null,
   };
 }
 
 test('observeCheckResult is a no-op without tracer/meter', () => {
   assert.doesNotThrow(() => observeCheckResult(result({})));
+});
+
+test('audit callback receives the unmodified check result', () => {
+  const check = result({ detected: true, pattern: 'A' });
+  let event: unknown;
+  observeCheckResult(check, { onAuditLog: (value) => { event = value; } });
+  assert.deepEqual(event, { type: 'unswallow.check', result: check });
 });
 
 test('tracer receives a span with detection attributes', () => {
@@ -86,14 +107,23 @@ test('matrix match engine flows into span attributes', () => {
   assert.equal(tracer.spans[0].attrs.engine, 'sglang');
 });
 
-test('meter records one detection counter increment', () => {
+test('meter records recovery counters, pattern totals, and optional latency', () => {
   const meter = new FakeMeter();
-  observeCheckResult(result({ detected: true, pattern: 'B' }), { meter });
-  assert.equal(meter.counters.length, 1);
-  assert.equal(meter.counters[0].calls[0].delta, 1);
-  assert.deepEqual(meter.counters[0].calls[0].attrs, { pattern: 'B' });
+  observeCheckResult(result({ detected: true, recovered: true, pattern: 'B', toolCalls: [{ name: 'search', arguments: {} }] }), {
+    meter, recoveryLatencyMs: 12.5,
+  });
+  const counter = (name: string) => meter.counters.find((entry) => entry.name === name)!.counter;
+  assert.equal(counter('swallowed_tool_calls_total').calls[0].delta, 1);
+  assert.equal(counter('recovered_tool_calls_total').calls[0].delta, 1);
+  assert.equal(counter('false_positive_guard_total').calls[0].delta, 0);
+  assert.equal(counter('pattern_b_total').calls[0].delta, 1);
+  assert.equal(meter.histograms[0].name, 'recovery_latency_ms');
+  assert.equal(meter.histograms[0].histogram.calls[0].value, 12.5);
+});
 
-  const clean = new FakeMeter();
-  observeCheckResult(result({}), { meter: clean });
-  assert.equal(clean.counters[0].calls[0].delta, 0);
+test('meter records the false-positive guard when a non-C detection is blocked', () => {
+  const meter = new FakeMeter();
+  observeCheckResult(result({ detected: true, recovered: false, pattern: 'A' }), { meter });
+  const guard = meter.counters.find((entry) => entry.name === 'false_positive_guard_total')!.counter;
+  assert.equal(guard.calls[0].delta, 1);
 });

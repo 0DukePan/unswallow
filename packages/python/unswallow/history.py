@@ -25,6 +25,23 @@ def strip_reasoning_tags(text: str) -> str:
     return DEEPSEEK_OPENER.sub("", result).strip()
 
 
+def ensure_reasoning_echo(messages: List[Dict], default_value: str = "") -> List[Dict]:
+    """Add the reasoning-content echo required by thinking-mode tool APIs."""
+    result = []
+    for message in messages:
+        out = dict(message)
+        calls = out.get("tool_calls")
+        if (
+            out.get("role") == "assistant"
+            and isinstance(calls, list)
+            and calls
+            and out.get("reasoning_content") is None
+        ):
+            out["reasoning_content"] = default_value
+        result.append(out)
+    return result
+
+
 def sanitize_history(messages: List[Dict], strip_reasoning_fields: bool = True, strip_reasoning_tags_opt: bool = True) -> List[Dict]:
     result = []
     for msg in messages:

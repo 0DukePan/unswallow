@@ -33,7 +33,7 @@ the pydantic response in place — for in-place recovery use the proxy mode
 
 ## OpenTelemetry (TS + Python)
 
-Spans + a detection counter, wired into the tracer/meter you already have:
+Spans plus low-cardinality recovery metrics, wired into the tracer/meter you already have:
 
 ```ts
 import { trace, metrics } from '@opentelemetry/api';
@@ -55,13 +55,18 @@ observe_check_result(result, tracer=trace.get_tracer("app"), meter=metrics.get_m
 ```
 
 Emits a `unswallow.check` span (attributes: `detected`, `pattern`,
-`recovered`, `confidence`, `engine`) and a `unswallow.detections` counter.
-That turns the library from "a debugging tool you run once" into something
-that stays in the request path as your swallow-rate monitor.
+`recovered`, `confidence`, `engine`, `name_known`, `schema_valid`) plus:
 
-The counter surfaces as `unswallow_detections_total` on whatever Prometheus
-exporter you already run — the standard OTel→Prometheus bridge is enough, no
-unswallow-specific infrastructure:
+- `swallowed_tool_calls_total`
+- `recovered_tool_calls_total`
+- `false_positive_guard_total`
+- `pattern_a_total`, `pattern_b_total`, and `pattern_c_total`
+- `recovery_latency_ms` when passed as `recoveryLatencyMs` (TS) or
+  `recovery_latency_ms` (Python)
+
+Metrics use only engine/pattern/validation attributes. The standard
+OTel-to-Prometheus bridge exports these metrics; unswallow deliberately does
+not bundle a Prometheus server or a JSON logging framework:
 
 ```python
 from opentelemetry import metrics
@@ -71,9 +76,11 @@ from opentelemetry.sdk.metrics import MeterProvider
 metrics.set_meter_provider(MeterProvider(metric_readers=[PrometheusMetricReader()]))
 ```
 
-The Node equivalent wires the same counter through your `OTLPMetricExporter`
-or Prometheus reader; with that in place you get a fleet-wide swallow rate
-(detections / total checks) as a standard metric.
+The Node equivalent wires the same metrics through your `OTLPMetricExporter`
+or Prometheus reader. For structured JSON logs, provide the optional
+`onAuditLog` callback (TypeScript) or `audit_log` callback (Python) and send
+its `{ type, result }` event to your application logger; unswallow does not
+prescribe a logging stack.
 
 ## OpenAI SDK (Python + Node)
 

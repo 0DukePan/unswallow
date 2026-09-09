@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Schema-aware tool-call validation with opt-in `strictSchema` /
+  `strict_schema` and `minConfidence` / `min_confidence` recovery gates in
+  TypeScript and Python. Structural envelope validity remains mandatory.
+- `ensureReasoningEcho` / `ensure_reasoning_echo` to add the empty
+  `reasoning_content` echo required by thinking-mode tool APIs to historical
+  assistant tool-call messages.
+- `inspect` and `doctor` CLI commands for offline response analysis and live
+  compatibility probes.
+- Sourced SGLang + Qwen3.6 Pattern A matrix row and Pattern E candidate
+  documentation; Pattern E remains explicitly detection-only and unrecovered.
+- OTel recovery counters, per-pattern counters, false-positive guard counter,
+  and optional recovery latency histogram.
+
+### Changed
+
+- Unknown tool names and invalid supplied schemas now each multiply recovery
+  confidence by 0.5 instead of applying the previous flat name mismatch
+  penalty.
+
 ## [0.2.0] - 2026-09-06
 
 The reproduction + benchmark release (unswallow 0.2.0, unswallow-matrix
