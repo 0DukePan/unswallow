@@ -7,6 +7,8 @@
 
 **Detect and recover tool calls trapped inside a model's reasoning channel.**
 
+![unswallow](https://raw.githubusercontent.com/0DukePan/unswallow/main/docs/social-preview.png)
+
 ![unswallow demo](https://raw.githubusercontent.com/0DukePan/unswallow/main/docs/demo.gif)
 
 **35/35 pinned fixtures · 100% detection recall · 0 unsafe recoveries · 0 runtime dependencies** — measured on a 35-fixture adversarial corpus, rerunnable on your hardware. Full reports: [correctness](https://github.com/0DukePan/unswallow/blob/main/packages/bench/results/results.md) · [safety](https://github.com/0DukePan/unswallow/blob/main/packages/bench/results/fp-results.md) · [performance](https://github.com/0DukePan/unswallow/blob/main/packages/bench/perf/results.md).

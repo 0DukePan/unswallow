@@ -44,8 +44,8 @@ Matrix changes don't require a package release. `npm run matrix:update` polls th
 ```bash
 npm install
 npm run build     # tsc -> packages/unswallow/dist/
-npm test          # 85 tests (semver, core, false-positive guard, streaming, history hygiene, proxy)
-npm run test:python   # 80 tests, stdlib-only (mirrors the TS suite)
+npm test          # 136 tests (semver, core, guards, intent gate, streaming, history hygiene, proxy, CLI, OTel)
+npm run test:python   # 131 tests, stdlib-only (mirrors the TS suite)
 npm run lint      # eslint (TS) — python: python -m ruff check packages/python
 npm run typecheck # tsc --noEmit + mypy
 npm run coverage  # TS coverage report
@@ -56,6 +56,7 @@ npm run bench     # verify hash pins + run the 35-fixture corpus + matrix consis
 npm run bench:perf     # TS latencies/throughput/memory + proxy overhead, write packages/bench/perf/
 npm run bench:python   # Python parity (35 fixtures vs TS, exact confidence + category) + Python perf, write packages/python/bench/
 npm run matrix:update  # poll tracked upstream issue threads (advisory + snapshot) + sync matrix into the Python package
+python docs/social-preview.py  # regenerate the README illustration / GitHub social preview after headline numbers change
 ```
 
 Repo layout (npm workspaces):

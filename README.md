@@ -9,6 +9,7 @@
   <img src="https://img.shields.io/pypi/v/unswallow?style=flat-square&color=111111&label=pypi" alt="PyPI">
   <a href="https://github.com/0DukePan/unswallow/actions/workflows/ci.yml"><img src="https://github.com/0DukePan/unswallow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/runtime%20deps-0-111111?style=flat-square" alt="zero runtime dependencies">
+  <img src="https://img.shields.io/badge/works%20with-vLLM%20%C2%B7%20SGLang%20%C2%B7%20llama.cpp-111111?style=flat-square" alt="Works with vLLM, SGLang and llama.cpp">
   <img src="https://img.shields.io/badge/types-TypeScript%20%2B%20Python-111111?style=flat-square" alt="TypeScript and Python">
   <img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license">
 </p>
@@ -19,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/demo.gif" width="760" alt="unswallow CLI recovering a swallowed tool call">
+  <img src="docs/social-preview.png" width="880" alt="unswallow — detect and recover tool calls trapped in reasoning channels (before: empty tool_calls; after: recovered; gated: quoted or rehearsal calls withheld)">
 </p>
 
 ---
@@ -59,6 +60,10 @@ if (result.recovered && result.recoveredResponse) {
 ```
 
 One call in your response path. The original object is never mutated (recovery returns a deep copy); clean responses pass through untouched with `confidence: 0`.
+
+<p align="center">
+  <img src="docs/demo.gif" width="760" alt="unswallow CLI recovering a swallowed tool call">
+</p>
 
 ## The bug class
 
