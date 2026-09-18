@@ -86,16 +86,20 @@ class ValidateTest(unittest.TestCase):
         self.assertFalse(result.recovered)
 
     def test_invalid_name_and_schema_penalties_are_multiplicative(self):
-        result = check_and_rescue(
-            response({"city": 42, "extra": True}),
+        opts = dict(
             engine_hint="vllm",
             engine_version="0.19.0",
             tool_schemas=[{"function": {"name": "other", "parameters": {"type": "object"}}}],
         )
+        result = check_and_rescue(response({"city": 42, "extra": True}), **opts)
         self.assertIsNotNone(result.validation)
         self.assertEqual(result.validation.name_known, "no")
         self.assertEqual(result.confidence, 0.48)
-        self.assertTrue(result.recovered)
+        self.assertFalse(result.recovered)
+
+        legacy = check_and_rescue(response({"city": 42, "extra": True}), intent_gate="off", **opts)
+        self.assertEqual(legacy.confidence, 0.48)
+        self.assertTrue(legacy.recovered)
 
     def test_strict_schema_blocks_invalid_arguments(self):
         result = check_and_rescue(response({"units": "kelvin"}), tool_schemas=TOOLS, strict_schema=True)

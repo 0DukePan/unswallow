@@ -7,7 +7,13 @@
   "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
   "sourced": true,
   "note": "In this shape the entire thinking block (with the tool call) lands in the content field — recovered via think-block region extraction.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Sourced llama.cpp #20837 shape: think block with a complete call lands in content and tool_calls stays empty.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Berlin" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-llamacpp-20837",
     "object": "chat.completion",

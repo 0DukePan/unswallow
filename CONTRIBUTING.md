@@ -16,9 +16,11 @@ Rules that keep the corpus honest:
 - **Fixtures must match reality.** Think tags are byte-verified against engine sources: vLLM's Qwen3 parser uses ` thinking` / ` response` and `<tool_call>…</tool_call>` with `<function=NAME>` / `<parameter=KEY>VALUE</parameter>`. When in doubt, check the serving engine's parser source, not a blog post. Documented second mechanisms are welcome as their own fixtures (e.g. the vLLM 0.19 `tool_choice: "required"` silent-empty bug from #39056, PR #35936).
 - **Perf changes need perf evidence.** If a PR changes scan/recovery internals, run `npm run bench:perf` before and after and include the numbers (or at least confirm no order-of-magnitude regression) in the description.
 - **Every fixture carries its source.** `sourced: true` means it's reconstructed from a real report; `false` means self-authored/adversarial. Sample size and sourcing are disclosed in every published result.
+- **Every fixture carries ground truth.** `groundTruth: { classification, recoverable, reason, expectedCalls? }` labels what the case really is (`swallowed_tool_call`, `tool_discussion`, `tool_rehearsal`, `quoted_tool_call`, `malformed_envelope`, `unrelated_json`, `context_loss`, or `null` outside the taxonomy) and whether exposing it as executable would be faithful to intent. Detector expectations (`expect.*`) are a separate layer — the runner lints their coherence, and `bench:fp` derives the safety metrics (unsafe recovery rate, recovery precision) from ground truth, never from `expect`.
+- **The intent gate is part of the contract.** Fixtures whose ground truth is `recoverable: false` must set `recovered: false` in `expect`; the gate semantics (position, cues, mixed-set recovery) live in [docs/intent-guard.md](docs/intent-guard.md). When adding adversarial cases, add the cue/phrasing you used to the documented non-exhaustive lists in the same PR if it's a genuinely new pattern.
 - **Fixtures are cross-checked against the engine matrix.** `bench/run.mjs --check` fails if a fixture's expectations contradict its matrix row's behavior — flipping a matrix row to `resolved` forces the matching fixtures to flip too.
-- **Adversarial fixtures are welcome.** Especially attempts to make the false-positive guard misfire (model *discussing* a tool call without invoking one). Those are the most important fixtures in the corpus.
-- **Multi-envelope invariant.** A swallowed turn may carry several parallel calls: every structurally complete envelope must be recovered in document order (`toolCalls`), exact duplicates collapse to one with a warning, and the scan caps at 32. Fixtures with several calls set `toolCallCount` in `expect` — the runner enforces it in both languages.
+- **Adversarial fixtures are welcome.** Especially attempts to make the false-positive guard or the intent gate misfire (model *discussing*, *rehearsing*, *quoting*, or *retracting* a tool call). Those are the most important fixtures in the corpus.
+- **Multi-envelope invariant.** A swallowed turn may carry several parallel calls: every structurally complete envelope must be recovered in document order (`toolCalls`), exact duplicates collapse to one with a warning, and the scan caps at 32. Fixtures with several calls set `toolCallCount` in `expect`; fixtures where the gate recovers a subset (rehearsed + genuine mix) set `recoveredCallCount` — the runner enforces both in both languages.
 
 ## How to update the engine matrix
 
@@ -50,9 +52,9 @@ npm run coverage  # TS coverage report
 python packages/scripts/coverage_python.py   # Python coverage report
 npm run examples  # TS runnable broken→recovered walkthrough
 npm run examples:python   # Python walkthrough
-npm run bench     # verify hash pins + run the 22-fixture corpus + matrix consistency, write packages/bench/results/
+npm run bench     # verify hash pins + run the 35-fixture corpus + matrix consistency, write packages/bench/results/
 npm run bench:perf     # TS latencies/throughput/memory + proxy overhead, write packages/bench/perf/
-npm run bench:python   # Python parity (22 fixtures vs TS, exact confidence) + Python perf, write packages/python/bench/
+npm run bench:python   # Python parity (35 fixtures vs TS, exact confidence + category) + Python perf, write packages/python/bench/
 npm run matrix:update  # poll tracked upstream issue threads (advisory + snapshot) + sync matrix into the Python package
 ```
 
@@ -75,7 +77,7 @@ Requirements for merged code:
 
 - Zero runtime dependencies (`unswallow` depends only on `unswallow-matrix`; the Python package is pure stdlib).
 - No test regressions; a new fixture for any new detection/recovery behavior; streaming behavior needs streaming fixtures; proxy behavior needs proxy tests with a fake upstream.
-- TS and Python must stay behaviorally identical — the Python test suite mirrors the TS suite, and the 22-fixture bench corpus runs against the TS core. If you change detection semantics, port the change to both.
+- TS and Python must stay behaviorally identical — the Python test suite mirrors the TS suite, and the 35-fixture bench corpus runs against the TS core. If you change detection or intent-gate semantics, port the change to both.
 - CLI output must stay dependency-free (plain ANSI, no chalk-style deps).
 - Comments in code are avoided by convention; the README is the documentation.
 

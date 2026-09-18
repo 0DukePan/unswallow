@@ -7,7 +7,12 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056",
   "sourced": true,
   "note": "Regression guard: a fixed server must never be flagged.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": null,
+    "recoverable": false,
+    "reason": "Healthy passthrough on a resolved server: the call arrived parsed in tool_calls; no swallow case applies."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-vllm-024",
     "object": "chat.completion",

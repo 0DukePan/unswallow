@@ -1,0 +1,33 @@
+{
+  "id": "adv-discussion-incomplete",
+  "description": "Adversarial: the model describes a call it would use, in prose, without a structurally complete envelope. Nothing may be detected.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Covers the roadmap's discussion case: 'I would use search with…' narration must never fire.",
+  "groundTruth": {
+    "classification": "tool_discussion",
+    "recoverable": false,
+    "reason": "The model narrates a hypothetical call while deciding against it; there is no envelope to recover."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
+  "response": {
+    "id": "chatcmpl-adv-discussion",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nI would use search with query \"weather in Lisbon\" to check current conditions, but the user only asked for a general overview and no live data is needed.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

@@ -45,7 +45,7 @@ engine — carry a prompt in `request` instead and need `--endpoint`.
 
 A synthetic case *is* a live capture that was frozen into the corpus — the
 `rawResponse` was recorded from a real provider before any unswallow
-processing. The 22 pinned fixtures in `packages/bench/fixtures/` are exactly
+processing. The 35 pinned fixtures in `packages/bench/fixtures/` are exactly
 that, sourced from the linked upstream reports.
 
 ## Running a live probe
@@ -125,6 +125,46 @@ The probe report (`results-*.json`) contains all of this except the server
 launch flags — put those in the PR description. Real-engine Compose runs also
 require an immutable container image digest (`image@sha256:...`), not a mutable
 tag, so a future image update cannot silently change the reproduction.
+
+## Adding a fixture
+
+Any captured response can become a pinned corpus case — this is the intake path
+behind Phase 0 of the roadmap ("real evidence first"):
+
+1. **Preserve the raw response exactly.** Never normalize, re-wrap, trim, or
+   prettify the provider bytes before storing them; the untouched raw response
+   is the most important artifact. Redact secrets only.
+2. **Wrap it in the fixture shape**: `{ id, description, engine, version,
+   pattern, source, sourced, note, groundTruth, expect, response | chunks }`.
+   Keep `sourced` / `live` as the provenance markers (`live: true` only for a
+   capture made by the harness against a real engine).
+3. **Write the ground truth** — `groundTruth: { classification, recoverable,
+   reason, expectedCalls? }`:
+   - `classification` is one of the semantic labels: `swallowed_tool_call`,
+     `tool_discussion`, `tool_rehearsal`, `quoted_tool_call`,
+     `malformed_envelope`, `unrelated_json`, `context_loss` — or `null` for
+     cases outside the tool-call taxonomy (healthy passthrough, Pattern C/D).
+   - `recoverable` answers "would exposing this as executable be faithful to
+     the model's intent?" — **not** "did the detector fire".
+   - `expectedCalls` (when recoverable) enables the reconstruction check.
+4. **Record the detector contract** in `expect` — `detected`, `pattern`,
+   `recovered`, `minConfidence`, optional `category`, `toolCallCount`,
+   `recoveredCallCount`. Ground truth and detector expectations are separate
+   by design; `npm run bench:check` lints their coherence.
+5. **Add tool schemas if the case is schema-relevant** (`toolSchemas`) —
+   schema/name gates are part of the intent guard.
+6. **Pin it**: `npm run bench:update` regenerates `fixtures.sha256`, then
+   `npm run bench:check` must pass. Pinned fixtures never change silently —
+   any later edit requires a reviewed re-pin.
+7. A verified engineering reproduction should ship a **reproducibility config**
+   (engine, version, template, request file, expected classification) next to
+   the raw response, so another developer can regenerate the exact case — the
+   `live-probe` case files under `packages/bench/live-probe/cases/` are the
+   pattern.
+
+Ollama captures are welcome the moment they exist: the corpus is deliberately
+lopsided toward the engines that have been captured, and a single real Ollama
+raw response outweighs any number of community anecdotes.
 
 ## What each status in the compatibility matrix means
 

@@ -1,0 +1,46 @@
+{
+  "id": "adv-malformed-args-vs-schema",
+  "description": "Adversarial: a structurally valid envelope whose arguments violate the declared tool schema (wrong type). With schemas supplied, recovery must be withheld by default.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Covers the roadmap's 'malformed arguments (wrong types, missing required fields)' case; declared-and-violated is a hard gate.",
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "city must be a string per the declared schema; dispatching the call as emitted would execute with wrong-typed arguments."
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": false, "minConfidence": 0.4, "category": "swallowed_tool_call" },
+  "toolSchemas": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "parameters": {
+          "type": "object",
+          "properties": { "city": { "type": "string" } },
+          "required": ["city"]
+        }
+      }
+    }
+  ],
+  "response": {
+    "id": "chatcmpl-adv-malformed-args",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nI should check the weather in the requested city.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": 42}}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

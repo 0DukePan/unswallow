@@ -1,0 +1,42 @@
+{
+  "id": "adv-unknown-tool-name-vs-schema",
+  "description": "Adversarial: a structurally valid envelope whose tool name is absent from the declared tool set. With schemas supplied, recovery must be withheld by default.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Covers the roadmap's 'tool name that does not exist in the declared schema' case. Callers passing a partial schema list can pass intentGate \"off\".",
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "get_weather is not among the declared tools, so the call cannot be routed or authorized; exposing it as executable would be a privileged path."
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": false, "minConfidence": 0.4, "category": "swallowed_tool_call" },
+  "toolSchemas": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_news",
+        "parameters": { "type": "object", "properties": { "topic": { "type": "string" } } }
+      }
+    }
+  ],
+  "response": {
+    "id": "chatcmpl-adv-unknown-name",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nI should check the weather.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Tokyo\"}}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

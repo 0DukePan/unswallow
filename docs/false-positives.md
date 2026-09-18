@@ -1,49 +1,90 @@
 # False-positive methodology
 
-A wrong recovery is worse than the silent failure it replaces. The false-positive guard is the most-tested behavior in the corpus — and this document states exactly what counts as a false positive, how the guard earns its keep, and how the methodology is verified.
+A wrong recovery is worse than the silent failure it replaces. This document states exactly what counts as a false positive, how the guards earn their keep, and how the methodology is verified.
 
-## What counts as a false positive
+## Three levels, kept strictly separate
 
-unswallow "recovers" only when a response meets **all** of these:
+| level | question | artifacts |
+| --- | --- | --- |
+| **ground truth** | what is this case, really? | `groundTruth.classification` + `groundTruth.recoverable` in every fixture |
+| **detection** | is there evidence of a misplaced call? | `detected` + `confidence` + `category` |
+| **recovery** | may it be exposed as executable? | `recovered` + `recoveredCalls` (+ `recoveredResponse`) |
+
+Mixing the three makes benchmark numbers unreadable, so the metrics below name them explicitly:
+
+- **False negative** — a genuine swallow (`classification: swallowed_tool_call`) that is not detected.
+- **Detection false positive** — a non-executable case flagged as a tool-call *candidate* (pattern A/B). Annoying, low-stakes on its own; quoted/rehearsal candidates legitimately land here because the structure really is there. Pattern C field-leak detections are a separate detection class and are not counted.
+- **Unsafe recovery** — a non-executable case actually *recovered*. This is the dangerous failure mode, reported and gated separately — never averaged into a single false-positive number.
+
+`confidence` is a detector output, not part of a fixture's ground truth; it is evaluated through the metrics, not asserted in labels.
+
+## What counts as a recovery
+
+unswallow "recovers" a structurally valid envelope **and** passes the intent gate. Structure alone requires:
 
 1. `tool_calls` is empty (or absent) — an already-parsed call is left untouched.
-2. A **structurally complete** tool-call envelope exists somewhere in a reasoning channel (Pattern A), in `content` with trailing text (Pattern B), or as a balanced JSON object with `name` + `arguments`.
+2. A structurally complete tool-call envelope exists in a reasoning channel (Pattern A), in `content` with trailing text (Pattern B), or as a balanced JSON object with `name` + `arguments`.
 3. The envelope shape validates: `function.name` is a non-empty string, `function.arguments` is an object (or a JSON string that parses to an object), and the whole raw envelope is within size limits.
 
-Anything else is not recovered. In particular, these are **not** recoveries:
-
-- A model *discussing* a call: `"I could call get_weather for Tokyo, but I don't need it"`.
-- A partial envelope: `{"name": "get_weather"}` without `arguments`.
-- An unbalanced envelope: `{"name": "get_weather", "arguments": {"city": "Tokyo"}`.
-- `arguments` as a JSON array or scalar.
-- Tag-like text inside a JSON string value.
-- Envelopes past the 32-per-response cap or the 20 KB length cap.
-- Envelopes found in `content` with **no** trailing text (Pattern B requires the strict-parser failure mode).
-
-A false positive is therefore: **a recovery that fires when no real tool call was intended** — most plausibly when a model narrates or quotes a call in its reasoning. The structural requirement is what excludes narration: narration rarely produces a byte-balanced, schema-valid envelope with arguments.
+The intent gate then withholds recovery on deterministic evidence against execution — negation/quotation language, retraction, mid-reasoning drafts, schema violations, unknown tool names, `expectToolCall: false`, side-effect policy — and in `strict` mode additionally requires positive corroboration. Full signal list: [intent-guard.md](intent-guard.md).
 
 ## The guard fixtures
 
-Seven pinned fixtures in `packages/bench/fixtures/` exist to make the guard regress *loudly* (`fp-guard-*`):
+At least one pinned fixture per way the guard can fire, plus the adversarial corpus meant to break it:
 
-| fixture | shape | why it must stay silent |
+### Structural guards (`fp-guard-*`) — detection must stay silent
+
+| fixture | shape | ground truth |
 | --- | --- | --- |
-| `fp-guard-discussion-only` | marker-free prose | the classic narration case |
-| `fp-guard-partial-json` | `name` without `arguments` | structurally incomplete |
-| `fp-guard-json-array-args` | `arguments` is an array | wrong shape |
-| `fp-guard-json-string-args` | `arguments` is an unparseable string | wrong shape |
-| `fp-guard-multiple-partial` | several partial envelopes | each one individually invalid |
-| `fp-guard-user-content-mention` | user message merely quotes a call | guard must scope to assistant reasoning |
-| `fp-guard-xml-empty-name` | XML envelope with an empty name | invalid target |
+| `fp-guard-discussion-only` | marker-free prose narrating a call | `tool_discussion` |
+| `fp-guard-partial-json` | `name` without `arguments` | `malformed_envelope` |
+| `fp-guard-json-array-args` | `arguments` is an array | `malformed_envelope` |
+| `fp-guard-json-string-args` | `arguments` is an unparseable string | `malformed_envelope` |
+| `fp-guard-multiple-partial` | several partial envelopes | `malformed_envelope` |
+| `fp-guard-user-content-mention` | user text merely mentions `<tool_call>` | `tool_discussion` |
+| `fp-guard-xml-empty-name` | XML envelope with an empty name | `malformed_envelope` |
 
-All seven expect `detected: false, confidence: 0` in both languages, are hash-pinned against `fixtures.sha256`, and run in CI read-only (`npm run bench:check`) plus in the 200-synthetic-negative FP evaluator (`npm run bench:fp`, `npm run bench:fp:python`) which asserts **zero** false recoveries on 200 word-salad reasoning samples.
+### Adversarial corpus (`adv-*`) — detection may surface candidates, recovery must be right
+
+| fixture | shape | ground truth | expected |
+| --- | --- | --- | --- |
+| `adv-quoted-complete-negated` | complete envelope + "Do not execute this" | `quoted_tool_call` | detected, **not recovered** |
+| `adv-quoted-report-context` | "the model would output: …" fenced block | `quoted_tool_call` | detected, **not recovered** |
+| `adv-rehearsal-mid-reasoning` | envelope mid-thought, planning prose after | `tool_rehearsal` | detected, **not recovered** |
+| `adv-retraction-after-call` | envelope + "Actually, no — scratch that" | `tool_rehearsal` | detected, **not recovered** |
+| `adv-narration-content` | Pattern B envelope + retraction in content | `tool_rehearsal` | detected, **not recovered** |
+| `adv-mixed-genuine-rehearsed` | rehearsed draft + terminal genuine call | `tool_rehearsal` (recoverable) | recovered **subset only** (1 of 2) |
+| `adv-malformed-args-vs-schema` | valid shape, wrong-typed arguments | `malformed_envelope` | detected, **not recovered** |
+| `adv-unknown-tool-name-vs-schema` | name absent from declared tools | `malformed_envelope` | detected, **not recovered** |
+| `adv-multiple-json-objects` | several non-envelope JSON objects | `unrelated_json` | nothing detected |
+| `adv-discussion-incomplete` | "I would use search with…" | `tool_discussion` | nothing detected |
+| `adv-context-loss` | empty channels, no envelope anywhere | `context_loss` | nothing detected |
+
+All fixtures are hash-pinned against `fixtures.sha256` and run read-only in CI (`npm run bench:check`), which also lints ground-truth coherence and checks that recovered calls deep-equal the fixture's `expectedCalls`.
+
+## Metrics
+
+`npm run bench:fp` / `npm run bench:fp:python` write `packages/bench/results/fp-results.*` and `packages/python/bench/results_python_fp.*`:
+
+| metric | definition |
+| --- | --- |
+| detection recall | genuine swallows detected ÷ genuine fixtures |
+| **unsafe recovery rate** | non-executable recovered ÷ non-executable fixtures — **the gate: any nonzero value fails CI** |
+| recovery precision | recovered calls on intended fixtures ÷ all recovered calls |
+| detection false-positive rate | non-executable flagged as candidates ÷ non-executable fixtures (informational) |
+| reconstruction correctness | recovered calls deep-equal `expectedCalls` where declared |
+| synthetic false positives | 200 seeded discussion-only negatives that must stay silent |
+
+`--check` fails on any unsafe recovery, any false negative, or any synthetic false positive. Per-fixture expectations (`expect.*`, including `category`) are enforced by the correctness runner (`npm run bench:check`).
 
 ## The naive-baseline comparison
 
-`packages/bench/perf.mjs` also measures a naive implementation — one marker regex plus a single `JSON.parse`, no envelope validation. On small inputs it is 15–75× faster. It fires on **6 of the 7** guard fixtures. That gap is the price of the guard, and the guard fixtures exist to make sure nobody "optimizes" the naive path back in.
+`packages/bench/perf.mjs` measures a naive implementation — one marker regex plus a single `JSON.parse`, no envelope validation, no intent gate. It fires on most of the structural guard fixtures. That gap is the price of the guard, and the guard fixtures exist to make sure nobody "optimizes" the naive path back in.
 
 ## What the guard does not promise
 
-- It cannot distinguish "model quoted a hypothetical complete call in narration" from a real call if the narration is byte-identical to a valid envelope. The conservative choice (recover) is deliberate: a server-side swallow is the common, high-cost failure; a quoted complete call in reasoning is rare and low-cost.
-- Pattern C (reasoning-tag leak) is detection-only, never recovered, by design.
-- Confidence is a tiered heuristic (see README §Confidence), not a calibrated probability.
+- **Cue lists are non-exhaustive.** A paraphrase outside the language lists falls back to position/termination evidence; a content-channel narration with no cues at all can still be recovered in `block` mode (see [intent-guard.md](intent-guard.md) for `strict` and `sideEffectingTools`).
+- **A genuine call followed by substantial reasoning prose in the reasoning channel is withheld by default.** Real swallows end with the envelope; `intentGate: 'off'` restores the permissive behaviour.
+- **Pattern C (reasoning-tag leak) is detection-only, never recovered, by design.**
+- **Confidence is a tiered heuristic** (see README §Confidence), not a calibrated probability.
+- **The corpus is adversarial and small.** Metrics are regression counts over documented examples, never population estimates, and are not a claim about your traffic.

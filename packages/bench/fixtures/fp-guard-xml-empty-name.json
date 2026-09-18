@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "Structural completeness includes a non-empty name; tags alone are not enough.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "Empty function name; a nameless envelope cannot be dispatched."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-empty-name",
     "object": "chat.completion",

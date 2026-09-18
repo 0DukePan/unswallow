@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import assert from 'node:assert';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -67,6 +68,7 @@ if (drifted.length > 0 && !isUpdatePins) {
 }
 
 const results = [];
+const gtIssues = [];
 let passed = 0;
 let failed = 0;
 
@@ -74,11 +76,32 @@ for (const file of fixtureFiles) {
   const fixture = JSON.parse(fs.readFileSync(file, 'utf8'));
   const id = fixture.id ?? path.basename(file, '.json');
   const expect = fixture.expect ?? {};
+  const gt = fixture.groundTruth;
+  if (!gt || typeof gt !== 'object') {
+    gtIssues.push(`${id}: missing groundTruth block`);
+  } else {
+    if (!('classification' in gt)) gtIssues.push(`${id}: groundTruth.classification is required (may be null)`);
+    if (typeof gt.recoverable !== 'boolean') gtIssues.push(`${id}: groundTruth.recoverable must be a boolean`);
+    if (typeof gt.reason !== 'string' || gt.reason.trim() === '') gtIssues.push(`${id}: groundTruth.reason is required`);
+    if (gt.recoverable === false && (expect.recovered ?? false) !== false) {
+      gtIssues.push(`${id}: groundTruth.recoverable is false but expect.recovered is not false`);
+    }
+    if (gt.recoverable === true && expect.detected !== true) {
+      gtIssues.push(`${id}: groundTruth.recoverable is true but expect.detected is not true`);
+    }
+    if (Array.isArray(gt.expectedCalls)) {
+      const declared = expect.recoveredCallCount ?? expect.toolCallCount;
+      if (typeof declared === 'number' && declared !== gt.expectedCalls.length) {
+        gtIssues.push(`${id}: groundTruth.expectedCalls has ${gt.expectedCalls.length} entries but expect declares ${declared}`);
+      }
+    }
+  }
   let outcome;
   try {
     const opts = {
       engineHint: fixture.engine || undefined,
       engineVersion: fixture.version || undefined,
+      toolSchemas: Array.isArray(fixture.toolSchemas) ? fixture.toolSchemas : undefined,
     };
     const result = fixture.stream
       ? await checkAndRescueStream(fixture.chunks ?? [], opts)
@@ -91,6 +114,20 @@ for (const file of fixtureFiles) {
     ];
     if (expect.toolCallCount !== undefined) {
       checks.push(['toolCallCount', result.toolCalls?.length ?? 0, expect.toolCallCount]);
+    }
+    if (expect.recoveredCallCount !== undefined) {
+      checks.push(['recoveredCallCount', result.recoveredCalls?.length ?? 0, expect.recoveredCallCount]);
+    }
+    if ('category' in expect) {
+      checks.push(['category', result.detected ? result.category : null, expect.category]);
+    }
+    if (Array.isArray(gt?.expectedCalls) && expect.recovered) {
+      const actual = (result.recoveredCalls ?? []).map((c) => ({ name: c.name, arguments: c.arguments }));
+      try {
+        assert.deepStrictEqual(actual, gt.expectedCalls);
+      } catch (e) {
+        checks.push(['reconstruction', `mismatch: ${e.message.split('\n')[0]}`, gt.expectedCalls]);
+      }
     }
     const failures = checks
       .filter(([, actual, wanted, op]) =>
@@ -119,15 +156,20 @@ for (const file of fixtureFiles) {
       recovered: expect.recovered ?? false,
       minConfidence: expect.minConfidence ?? 0,
       ...(expect.toolCallCount !== undefined ? { toolCallCount: expect.toolCallCount } : {}),
+      ...(expect.recoveredCallCount !== undefined ? { recoveredCallCount: expect.recoveredCallCount } : {}),
+      ...('category' in expect ? { category: expect.category } : {}),
     },
+    groundTruth: gt ?? null,
     actual: outcome.result
       ? {
           detected: outcome.result.detected,
           pattern: outcome.result.pattern,
           recovered: outcome.result.recovered,
           confidence: outcome.result.confidence,
+          category: outcome.result.category,
           toolCall: outcome.result.toolCall,
           toolCallCount: outcome.result.toolCalls?.length ?? 0,
+          recoveredCallCount: outcome.result.recoveredCalls?.length ?? 0,
         }
       : null,
     failures: outcome.failures,
@@ -167,6 +209,10 @@ const summary = {
     checked: consistency.length,
     failed: consistencyFails.length,
   },
+  groundTruthLint: {
+    checked: results.length,
+    issues: gtIssues.length,
+  },
   generatedAt: new Date().toISOString(),
 };
 
@@ -176,6 +222,9 @@ for (const r of results) {
   console.log(`  ${mark} ${r.id}  ${r.actual ? `pattern=${r.actual.pattern ?? '-'} recovered=${r.actual.recovered} conf=${r.actual.confidence.toFixed(2)}` : ''}`);
   for (const f of r.failures) console.log(`      ${f}`);
 }
+
+console.log(`groundTruth lint: ${gtIssues.length === 0 ? 'ok' : `${gtIssues.length} issue(s)`}`);
+for (const issue of gtIssues) console.log(`  ${issue}`);
 
 console.log(`matrix consistency: ${consistency.length - consistencyFails.length}/${consistency.length} fixtures align with matrix rows`);
 for (const c of consistency) {
@@ -187,7 +236,7 @@ if (consistencyFails.length > 0) {
 }
 
 if (isCheck) {
-  process.exit(failed === 0 && consistencyFails.length === 0 ? 0 : 1);
+  process.exit(failed === 0 && consistencyFails.length === 0 && gtIssues.length === 0 ? 0 : 1);
 }
 
 fs.mkdirSync(RESULTS_DIR, { recursive: true });

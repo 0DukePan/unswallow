@@ -8,7 +8,13 @@
   "sourced": true,
   "note": "Streaming variant: JSON envelope split across two deltas, reasoning text trailing in a third.",
   "stream": true,
-  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Streaming pi #952 shape; the assembled content channel carries the intended call plus trailing reasoning.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Shanghai" } }]
+  },
+  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5, "category": "swallowed_tool_call" },
   "chunks": [
     { "id": "chatcmpl-pi-952-s", "model": "moonshotai/Kimi-K2-Thinking", "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Sha" } }] },
     { "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "nghai\"}}" } }] },

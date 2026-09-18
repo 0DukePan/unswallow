@@ -8,7 +8,13 @@
   "sourced": true,
   "note": "Streaming variant of the #39056 reproduction: the same swallow, chunked adversarially.",
   "stream": true,
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Streaming variant of the #39056 swallow; the intended Finish call is present in the assembled reasoning channel.",
+    "expectedCalls": [{ "name": "Finish", "arguments": { "answer": 204 } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "category": "swallowed_tool_call" },
   "chunks": [
     { "id": "chatcmpl-vllm-39056-s", "model": "Qwen/Qwen3.5-35B-A3B-FP8", "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "< thin" } }] },
     { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning": "king>\nI need to answer the user's que" } }] },

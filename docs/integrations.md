@@ -60,11 +60,13 @@ Emits a `unswallow.check` span (attributes: `detected`, `pattern`,
 - `swallowed_tool_calls_total`
 - `recovered_tool_calls_total`
 - `false_positive_guard_total`
+- `recovery_blocked_total` (candidates the intent gate withheld, per response)
 - `pattern_a_total`, `pattern_b_total`, and `pattern_c_total`
 - `recovery_latency_ms` when passed as `recoveryLatencyMs` (TS) or
   `recovery_latency_ms` (Python)
 
-Metrics use only engine/pattern/validation attributes. The standard
+Metrics use only low-cardinality engine/pattern/category/validation
+attributes. The standard
 OTel-to-Prometheus bridge exports these metrics; unswallow deliberately does
 not bundle a Prometheus server or a JSON logging framework:
 

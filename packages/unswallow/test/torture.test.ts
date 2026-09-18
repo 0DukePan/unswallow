@@ -238,11 +238,33 @@ test('long reasoning output containing a swallow is still recovered', () => {
   }
   reasoning += '< response>\n';
   const r = response({ role: 'assistant', content: '', reasoning, tool_calls: [] });
-  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0', intentGate: 'off' });
   assert.equal(result.detected, true);
   assert.equal(result.pattern, 'A');
   assert.equal(result.recovered, true);
   assert.deepEqual(result.toolCall, { name: 'get_weather', arguments: { city: 'Tokyo' } });
+});
+
+test('a mid-reasoning envelope followed by long prose is classified as a rehearsal and not recovered', () => {
+  const chunk = 'The weather discussion continues with relevant analysis and numerical estimates for the forecast. ';
+  let reasoning = '< thinking>\n';
+  for (let i = 0; i < 300; i++) {
+    reasoning += chunk + i + '\n';
+  }
+  reasoning += `${ENVELOPE}\n`;
+  for (let i = 0; i < 300; i++) {
+    reasoning += chunk + i + '\n';
+  }
+  reasoning += '< response>\n';
+  const r = response({ role: 'assistant', content: '', reasoning, tool_calls: [] });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.pattern, 'A');
+  assert.equal(result.recovered, false);
+  assert.equal(result.recoveredResponse, null);
+  assert.equal(result.category, 'tool_rehearsal');
+  assert.equal(result.intent.boundary, 'mid');
+  assert.ok(result.warnings.some((w) => w.includes('may be a rehearsal')));
 });
 
 test('multiple reasoning/tool-call boundaries in one response recover each envelope', () => {

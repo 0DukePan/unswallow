@@ -9,24 +9,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Schema-aware tool-call validation with opt-in `strictSchema` /
-  `strict_schema` and `minConfidence` / `min_confidence` recovery gates in
-  TypeScript and Python. Structural envelope validity remains mandatory.
-- `ensureReasoningEcho` / `ensure_reasoning_echo` to add the empty
-  `reasoning_content` echo required by thinking-mode tool APIs to historical
-  assistant tool-call messages.
-- `inspect` and `doctor` CLI commands for offline response analysis and live
-  compatibility probes.
-- Sourced SGLang + Qwen3.6 Pattern A matrix row and Pattern E candidate
-  documentation; Pattern E remains explicitly detection-only and unrecovered.
-- OTel recovery counters, per-pattern counters, false-positive guard counter,
-  and optional recovery latency histogram.
+- **Intent guard (recovery gate).** Deterministic evidence — envelope
+  position relative to the reasoning-channel boundary, trailing-reasoning
+  prose, negation/quotation/retraction cues near the envelope, quotation
+  wrapping — now decides whether a detected candidate may be exposed as
+  executable. New options `intentGate` (`block` default / `strict` / `off`),
+  `expectToolCall`, `sideEffectingTools`, and `recoverSideEffecting` in
+  TypeScript and Python. Language cues may only *suppress* recovery, never
+  justify it; all cue lists are exported constants.
+- **Detection categories and evidence.** `SwallowCheckResult` gains
+  `category` (`swallowed_tool_call` / `tool_rehearsal` / `quoted_tool_call`),
+  `intent` (boundary, trailing-prose count, cues, blocked reasons), and
+  `recoveredCalls` (the gate-passing subset; `toolCalls` keeps every
+  candidate). CLI `inspect` renders the category and withheld recovery;
+  the JSON contract gains the fields additively.
+- **Ground-truth fixture layer.** Every pinned fixture now carries
+  `groundTruth: { classification, recoverable, reason, expectedCalls? }`
+  from the semantic taxonomy (swallowed_tool_call, tool_discussion,
+  tool_rehearsal, quoted_tool_call, malformed_envelope, unrelated_json,
+  context_loss), kept separate from detector expectations.
+- **Adversarial corpus (11 new fixtures).** Quoted/negated complete
+  envelopes, report context, mid-reasoning rehearsal, retraction,
+  mixed genuine + rehearsed (subset recovery), malformed arguments vs a
+  declared schema, unknown tool name, multiple non-envelope JSON objects,
+  prose discussion, content-channel narration, and a context-loss case. The
+  corpus is now 35 hash-pinned fixtures (11 genuine + 19 non-executable in
+  the fp evaluation).
+- **Safety-first metrics.** `bench:fp` (TS + Python) now reports detection
+  recall, **unsafe recovery rate** (the CI gate: any nonzero value fails),
+  recovery precision, per-category detection false positives, and
+  reconstruction correctness against `expectedCalls`; `bench:check` lints
+  ground-truth coherence and verifies recovered calls deep-equal
+  `expectedCalls`. The intent-gate latency tripwire runs in `bench:smoke`
+  (`bench:probe` / `bench:probe:python`, p95 ceiling with ≈10× headroom), and
+  the bench-linux workflow now runs the full perf suites with `--check`.
+- **OTel:** `recovery_blocked_total` counter (per response, with a `category`
+  attribute on all recovery metrics) alongside the existing counters.
+- **Quoted/reported text:** fenced envelopes whose framing reads as reported
+  output ("outputs:", "would be", "sample output") are treated as
+  `quoted_tool_call`; a bare code fence is deliberately not a veto.
+- **Docs:** new [`docs/intent-guard.md`](docs/intent-guard.md); rewritten
+  [`docs/false-positives.md`](docs/false-positives.md) (three-level model,
+  adversarial corpus, metrics); READMEs restructured around the headline
+  metrics with the deep reports behind collapsible sections, an FAQ, and the
+  fixture-intake protocol in
+  [`docs/reproduction.md`](docs/reproduction.md#adding-a-fixture);
+  "Ollama remains unconfirmed" stated plainly in
+  [`docs/compatibility.md`](docs/compatibility.md).
 
 ### Changed
 
-- Unknown tool names and invalid supplied schemas now each multiply recovery
-  confidence by 0.5 instead of applying the previous flat name mismatch
-  penalty.
+- **Recovery is stricter by default.** A structurally valid envelope is no
+  longer recovered when there is deterministic evidence against execution:
+  negated/illustrative language or quotation context near the envelope,
+  retraction after it, a mid-reasoning position followed by substantial
+  prose, arguments that violate a supplied tool schema, a tool name absent
+  from supplied `toolSchemas`, `expectToolCall: false`, or a name listed in
+  `sideEffectingTools`. Mixed responses recover only the gate-passing
+  subset. Detection, `pattern`, and `confidence` are unchanged in the
+  default mode; recovery only ever gets stricter. The pre-gate behavior is
+  available via `intentGate: "off"`.
+- Unknown tool names and invalid supplied schemas still multiply recovery
+  confidence by 0.5, and both now also block recovery by default when
+  schemas are supplied.
+- The false-positive corpus counts in docs/reports refreshed (35 fixtures,
+  31 non-streaming, evaluated in both languages).
 
 ## [0.2.0] - 2026-09-06
 

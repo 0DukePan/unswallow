@@ -7,7 +7,13 @@
   "source": "https://github.com/earendil-works/pi/issues/952",
   "sourced": true,
   "note": "pi patched this inside its own extractFirstJsonObject; this fixture is the raw non-streaming equivalent: envelope + trailing reasoning text in content.",
-  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Sourced pi #952 shape: the envelope plus trailing reasoning text in content broke strict JSON.parse and the call was lost.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Shanghai" } }]
+  },
+  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-pi-952",
     "object": "chat.completion",

@@ -7,7 +7,13 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056",
   "sourced": false,
   "note": "Dedupe guard: identical (name + arguments) envelopes collapse, with a warning.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "toolCallCount": 1 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "The same call re-emitted twice inside one reasoning block; one intended call, duplicated by decoding.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Tokyo" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "toolCallCount": 1, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-vllm-39056-dupe",
     "object": "chat.completion",

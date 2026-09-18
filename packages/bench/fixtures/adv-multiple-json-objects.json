@@ -1,0 +1,33 @@
+{
+  "id": "adv-multiple-json-objects",
+  "description": "Adversarial: several distinct JSON objects inside one reasoning block — none is a tool-call envelope. Nothing may be detected or recovered.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": null,
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Covers the roadmap's 'multiple distinct JSON objects inside one reasoning block' case; unrelated JSON must stay unrelated.",
+  "groundTruth": {
+    "classification": "unrelated_json",
+    "recoverable": false,
+    "reason": "Neither object has both a tool name and object arguments; they are data the model happens to be reasoning about."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
+  "response": {
+    "id": "chatcmpl-adv-multi-json",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nThe user profile looks like {\"name\": \"Ada\", \"role\": \"admin\"} and the settings are {\"theme\": \"dark\", \"locale\": \"en-GB\"}. Neither is a tool call, so I will answer directly.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

@@ -6,14 +6,20 @@ export interface ClassifiedHit {
   envelope: LocatedEnvelope;
   channel: ChannelSource;
   thinkBlock: boolean;
+  regionId: number;
+  regionText: string;
 }
 
 export interface Classification {
   pattern: ToolPattern | null;
   envelope: ToolEnvelope | null;
   envelopes: ToolEnvelope[];
+  hits: ClassifiedHit[];
+  /** Every located envelope in the winning channel, including duplicates dropped from hits. */
+  allHits: ClassifiedHit[];
   source: ChannelSource;
   reasons: string[];
+  capped: boolean;
 }
 
 function dedupe(hits: ClassifiedHit[]): { kept: ClassifiedHit[]; duplicates: number } {
@@ -48,6 +54,8 @@ function scanChannel(regions: Region[]): {
         envelope,
         channel: region.channel,
         thinkBlock: region.source === 'think-block',
+        regionId: region.id,
+        regionText: region.text,
       });
       const tail = region.text.slice(envelope.end).trim();
       if (tail.length > 0) trailingChars += tail.length;
@@ -69,8 +77,11 @@ export function classify(
       pattern: null,
       envelope: null,
       envelopes: [],
+      hits: [],
+      allHits: [],
       source: 'content',
       reasons: ['response already carries tool_calls'],
+      capped: false,
     };
   }
 
@@ -105,8 +116,11 @@ export function classify(
       pattern: 'A',
       envelope: kept[0].envelope,
       envelopes: kept.map((h) => h.envelope),
+      hits: kept,
+      allHits: reasoning.hits,
       source: kept[0].channel,
       reasons,
+      capped: reasoning.capped,
     };
   }
 
@@ -135,8 +149,11 @@ export function classify(
       pattern: 'B',
       envelope: kept[0].envelope,
       envelopes: kept.map((h) => h.envelope),
+      hits: kept,
+      allHits: content.hits,
       source: 'content',
       reasons,
+      capped: content.capped,
     };
   }
 
@@ -145,10 +162,13 @@ export function classify(
       pattern: 'C',
       envelope: null,
       envelopes: [],
+      hits: [],
+      allHits: [],
       source: 'thinking',
       reasons: ['reasoning tags leaked into the content field (unclosed think block)'],
+      capped: false,
     };
   }
 
-  return { pattern: null, envelope: null, envelopes: [], source: 'content', reasons: [] };
+  return { pattern: null, envelope: null, envelopes: [], hits: [], allHits: [], source: 'content', reasons: [], capped: false };
 }

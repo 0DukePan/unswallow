@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "Multiple near-misses must not combine into a recovery: each candidate is validated on its own.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "Two incomplete fragments; neither validates on its own and near-misses must not combine."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-multi-partial",
     "object": "chat.completion",

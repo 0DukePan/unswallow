@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "Keyword presence alone must never trigger recovery: there is no closing tag and no envelope here.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "tool_discussion",
+    "recoverable": false,
+    "reason": "Meta-question about tool-call syntax, not a model invocation; keyword presence alone must never trigger recovery."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-user-mention",
     "object": "chat.completion",

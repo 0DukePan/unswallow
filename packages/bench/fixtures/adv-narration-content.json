@@ -1,0 +1,32 @@
+{
+  "id": "adv-narration-content",
+  "description": "Adversarial: a complete envelope in the content channel followed by an explicit retraction. Pattern B detection must keep the candidate; recovery must be withheld.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "B",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Content-channel narration/retraction case: Pattern B's trailing text is legitimate, so the retraction cue is what withholds recovery here.",
+  "groundTruth": {
+    "classification": "tool_rehearsal",
+    "recoverable": false,
+    "reason": "The call is written in content and immediately retracted; the model concludes by answering without the tool."
+  },
+  "expect": { "detected": true, "pattern": "B", "recovered": false, "minConfidence": 0.5, "category": "tool_rehearsal" },
+  "response": {
+    "id": "chatcmpl-adv-narration",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Porto\"}}\n\nActually no — let me just answer the question directly instead.\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

@@ -7,7 +7,12 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056 (pattern C documented in unswallow plan; MiniMax M3 <mm:think> streaming leak)",
   "sourced": false,
   "note": "Detection-only fixture: no recovery is possible without a structural envelope, and none should be attempted.",
-  "expect": { "detected": true, "pattern": "C", "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": null,
+    "recoverable": false,
+    "reason": "Pattern C field leak: reasoning tags leaked into content and no tool call exists anywhere; detection-only."
+  },
+  "expect": { "detected": true, "pattern": "C", "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-minimax-m3",
     "object": "chat.completion",

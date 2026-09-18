@@ -9,7 +9,13 @@
   "live": true,
   "note": "Streaming variant of the b8461 live reproduction. The chunk-level case lives in packages/bench/live-probe/cases/.",
   "stream": true,
-  "expect": { "detected": true, "pattern": "A", "recovered": true },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Live streaming capture of the same b8461 swallow: envelope streamed through reasoning_content, finish stop, no tool_calls.",
+    "expectedCalls": [{ "name": "read_file", "arguments": { "path": "package.json" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "category": "swallowed_tool_call" },
   "chunks": [
     { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": "\nI" } }] },
     { "choices": [{ "index": 0, "finish_reason": null, "delta": { "reasoning_content": " need" } }] },

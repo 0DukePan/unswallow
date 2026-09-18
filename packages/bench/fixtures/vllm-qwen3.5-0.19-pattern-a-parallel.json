@@ -7,7 +7,16 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056",
   "sourced": false,
   "note": "Adversarial multi-call case: same envelope shape as the #39056 reproduction, doubled.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "toolCallCount": 2 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Two parallel calls emitted in one reasoning block and swallowed; both are the model's intended calls.",
+    "expectedCalls": [
+      { "name": "search", "arguments": { "query": "first" } },
+      { "name": "search", "arguments": { "query": "second" } }
+    ]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "toolCallCount": 2, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-vllm-39056-parallel",
     "object": "chat.completion",

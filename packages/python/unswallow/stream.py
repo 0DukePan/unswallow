@@ -161,9 +161,14 @@ async def check_and_rescue_stream(
     async for chunk in stream:
         acc.push(chunk)
     response = acc.end()
-    result = check_message(response["choices"][0]["message"], **opts)
-    if result.recovered and result.tool_calls:
+    finish_reason = response["choices"][0].get("finish_reason")
+    result = check_message(
+        response["choices"][0]["message"],
+        finish_reason if isinstance(finish_reason, str) else None,
+        **opts
+    )
+    if result.recovered and result.recovered_calls:
         result.recovered_response = apply_recovery_many(
-            response, [{"name": t.name, "arguments": t.arguments} for t in result.tool_calls]
+            response, [{"name": t.name, "arguments": t.arguments} for t in result.recovered_calls]
         )
     return result

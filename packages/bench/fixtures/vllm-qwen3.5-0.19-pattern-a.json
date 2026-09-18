@@ -7,7 +7,13 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056",
   "sourced": true,
   "note": "Reconstructed from the issue body's reproduction output.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Sourced vLLM #39056 function-XML shape: the reasoning parser routes the call into reasoning and tool_calls stays empty.",
+    "expectedCalls": [{ "name": "Finish", "arguments": { "answer": 204 } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-vllm-39056",
     "object": "chat.completion",

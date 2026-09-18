@@ -16,11 +16,18 @@ The honest edges of unswallow, stated plainly.
 - **It does not strip reasoning from live responses.** Recovery keeps the
   reasoning channel intact; it only populates `tool_calls`. History hygiene
   (`sanitizeHistory`) is a separate, opt-in pass for the *next* request.
-- **It does not guarantee against quoted-envelope narration.** A model that
-  writes a byte-complete, balanced envelope with arguments while *narrating*
-  (not invoking) a tool is indistinguishable from a swallow by structure
-  alone. Recovery is the deliberate conservative choice. See
-  [false-positives.md](false-positives.md).
+- **It does not guarantee against every quoted-envelope narration.** The
+  intent guard withholds recovery for quoted/reported/retracted/negated
+  candidates and for mid-thought drafts (see
+  [intent-guard.md](intent-guard.md)), but the cue lists are non-exhaustive: a
+  content-channel narration with none of the cues can still look like Pattern
+  B, whose trailing text is legitimate. `intentGate: 'strict'`,
+  `sideEffectingTools`, or a human review step are the knobs for high-stakes
+  deployments.
+- **It does not authorize anything.** A recovered call is data. Route it
+  through the same validation/authorization path as a normal tool call —
+  there is no privileged execution path, and the proxy does not bypass your
+  dispatcher.
 
 ## Detection limits
 
@@ -52,8 +59,13 @@ The honest edges of unswallow, stated plainly.
 
 **Q: Is a "recovered" call guaranteed to be what the model intended?**
 A: The envelope was emitted by the model with a valid `name` + `arguments`
-shape; recovery is faithful to that emission. Whether the model *should* have
-called the tool is not something a response-level check can know.
+shape, and since the intent gate it must also carry no deterministic evidence
+against execution (negation/quotation/retraction language, mid-thought draft
+position, schema violations, unknown tool names, side-effecting tools unless
+allowed). Whether the model *should* have called the tool is still not
+something a response-level check can know — see
+[intent-guard.md](intent-guard.md) for the exact signals and the `strict` /
+`off` modes.
 
 **Q: Can this run on my OpenAI-compatible server without code changes?**
 A: Yes — `npx unswallow proxy --upstream <base>/v1 ...` is a passthrough that

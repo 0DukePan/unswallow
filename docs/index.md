@@ -10,7 +10,10 @@ CONTRIBUTING at the release/dev process).
   library/streaming/CLI/proxy usage, confidence, engine matrix, benchmarks.
 - [limitations.md](limitations.md) — honest edges, detection caps, FAQ.
 - [false-positives.md](false-positives.md) — what counts as a false positive,
-  the guard fixtures, what the guard does not promise.
+  the structural guards and the adversarial corpus, and the safety metrics.
+- [intent-guard.md](intent-guard.md) — valid JSON is not intent: the
+  deterministic signals, gate modes, and per-envelope recovery semantics that
+  decide what may be exposed as executable.
 
 ## Reproducing and verifying
 
@@ -55,8 +58,8 @@ npm run lint && npm run typecheck   # 4. lint + types (eslint/tsc + ruff/mypy)
 npm run coverage                # 5. coverage (TS)
 python packages/scripts/coverage_python.py   #    coverage (Python)
 npm run bench:check             # 6. hash pins + fixture expectations + matrix consistency
-npm run bench:fp                # 7. fp-eval (0 FP / 0 FN, precision/recall)
-python packages/python/bench/parity.py   # 8. 22/22 exact-confidence parity
+npm run bench:fp                # 7. fp-eval (unsafe recoveries 0, recall 100%, precision 100%)
+python packages/python/bench/parity.py   # 8. 35/35 exact-confidence parity
 npm run live-probe              # 9. reproduction harness (synthetic cases, no engine)
 npm run examples && npm run integration   # 10. walkthroughs (TS)
 npm run examples:python && npm run integration:python  #    walkthroughs (Python)

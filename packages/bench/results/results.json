@@ -1,16 +1,433 @@
 {
   "runner": "unswallow bench runner v1",
-  "fixtures": 22,
-  "passed": 22,
+  "fixtures": 35,
+  "passed": 35,
   "failed": 0,
   "manifest": "fixtures.sha256",
   "manifestVerified": true,
   "matrixConsistency": {
-    "checked": 11,
+    "checked": 21,
     "failed": 0
   },
-  "generatedAt": "2026-09-04T17:45:50.135Z",
+  "groundTruthLint": {
+    "checked": 35,
+    "issues": 0
+  },
+  "generatedAt": "2026-09-18T12:31:53.667Z",
   "results": [
+    {
+      "id": "adv-context-loss",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "cce848a3adc11aeb3688be19076c3ac0f9bc6b87454583896ae5150290e61668",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "context_loss",
+        "recoverable": false,
+        "reason": "The model produced no tool-call envelope in any channel; the missing call is a context/harness problem, not a misplaced envelope."
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "category": null,
+        "toolCall": null,
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-discussion-incomplete",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "7e2cd1bd9982f76c277b15a04e902bdefe515c819adb5a0ea0b6c7ba84630cfe",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "tool_discussion",
+        "recoverable": false,
+        "reason": "The model narrates a hypothetical call while deciding against it; there is no envelope to recover."
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "category": null,
+        "toolCall": null,
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-malformed-args-vs-schema",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "ef160ae15d7458553bd7211808e0227724ac9a5e42410026a4627d5a6ec63b3c",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "minConfidence": 0.4,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "city must be a string per the declared schema; dispatching the call as emitted would execute with wrong-typed arguments."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "confidence": 0.48,
+        "category": "swallowed_tool_call",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": 42
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-mixed-genuine-rehearsed",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "af60327fbbd0a24e685697f20a7544c2b5e641235ddb792c0b40069fefa5903f",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0.9,
+        "toolCallCount": 2,
+        "recoveredCallCount": 1,
+        "category": "tool_rehearsal"
+      },
+      "groundTruth": {
+        "classification": "tool_rehearsal",
+        "recoverable": true,
+        "reason": "The final terminal call (Kyoto) is the model's intended invocation; the earlier mid-thought draft (Oslo) is a rehearsal and must not be recovered.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Kyoto"
+            }
+          }
+        ]
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "category": "tool_rehearsal",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Oslo"
+          }
+        },
+        "toolCallCount": 2,
+        "recoveredCallCount": 1
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-multiple-json-objects",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": null,
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "8174574dad86b9beacf0348b9b32b0256d4407b13f21a77196c24198d32ca750",
+      "expect": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "unrelated_json",
+        "recoverable": false,
+        "reason": "Neither object has both a tool name and object arguments; they are data the model happens to be reasoning about."
+      },
+      "actual": {
+        "detected": false,
+        "pattern": null,
+        "recovered": false,
+        "confidence": 0,
+        "category": null,
+        "toolCall": null,
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-narration-content",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "B",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "a71a0651981c8905ffd2a05f3b58305a77f2e83c9d55fa357db495d0bb2a9570",
+      "expect": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": false,
+        "minConfidence": 0.5,
+        "category": "tool_rehearsal"
+      },
+      "groundTruth": {
+        "classification": "tool_rehearsal",
+        "recoverable": false,
+        "reason": "The call is written in content and immediately retracted; the model concludes by answering without the tool."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "B",
+        "recovered": false,
+        "confidence": 0.55,
+        "category": "tool_rehearsal",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Porto"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-quoted-complete-negated",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "d9ea2b87ea823e995e203a232a9182cb41db44377059a1a9e3016fccd6a91c0e",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "minConfidence": 0.9,
+        "category": "quoted_tool_call"
+      },
+      "groundTruth": {
+        "classification": "quoted_tool_call",
+        "recoverable": false,
+        "reason": "The model illustrates the call format and explicitly says not to execute it; exposing this as executable would be wrong."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "confidence": 0.95,
+        "category": "quoted_tool_call",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Tokyo"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-quoted-report-context",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "99afb0f8344efa52c449b54af116abd770f485a303cde7f9633d535c3d2823a5",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "minConfidence": 0.9,
+        "category": "quoted_tool_call"
+      },
+      "groundTruth": {
+        "classification": "quoted_tool_call",
+        "recoverable": false,
+        "reason": "The envelope is quoted as a historical/illustrative output, not emitted as a decision."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "confidence": 0.95,
+        "category": "quoted_tool_call",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Oslo"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-rehearsal-mid-reasoning",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "091686395a8bdc3fae05532fdcadcc11a1c70dd49505f0f7a5e2a01ebbf421fd",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "minConfidence": 0.9,
+        "category": "tool_rehearsal"
+      },
+      "groundTruth": {
+        "classification": "tool_rehearsal",
+        "recoverable": false,
+        "reason": "The model drafts a possible call while planning and then answers without it; the envelope never ends the reasoning channel."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "confidence": 0.95,
+        "category": "tool_rehearsal",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Lisbon"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-retraction-after-call",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "35764409b53d2c62650e77ff769601a8691547a0c17e336390570ca368c33bfb",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "minConfidence": 0.9,
+        "category": "tool_rehearsal"
+      },
+      "groundTruth": {
+        "classification": "tool_rehearsal",
+        "recoverable": false,
+        "reason": "The call is written and then explicitly retracted in the same turn; executing it would contradict the model's conclusion."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "confidence": 0.95,
+        "category": "tool_rehearsal",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Cairo"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "adv-unknown-tool-name-vs-schema",
+      "engine": "vllm",
+      "version": "0.19.0",
+      "pattern": "A",
+      "source": "self-authored",
+      "sourced": false,
+      "stream": false,
+      "sha256": "c4c2abb8354515133299357b0c8a98511d833cb1e4acc837ec2631811912e97b",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "minConfidence": 0.4,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "get_weather is not among the declared tools, so the call cannot be routed or authorized; exposing it as executable would be a privileged path."
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": false,
+        "confidence": 0.48,
+        "category": "swallowed_tool_call",
+        "toolCall": {
+          "name": "get_weather",
+          "arguments": {
+            "city": "Tokyo"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
     {
       "id": "deepseek-reasoning-content-pattern-a",
       "engine": "sglang",
@@ -19,25 +436,41 @@
       "source": "https://api-docs.deepseek.com/guides/function_calling",
       "sourced": false,
       "stream": false,
-      "sha256": "a60d68371b2e7ecad0b48cc4765e73b2ea87f1bf23698507e0d4054c81aa0281",
+      "sha256": "c0a6941d0f0cbbff4d404d6f023cc0cd30e1c843e7796210e47a202c37df768e",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.9
+        "minConfidence": 0.9,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "JSON envelope in reasoning_content between DeepSeek separator tokens; the model decided to call and stopped.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Hangzhou"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Hangzhou"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -49,20 +482,28 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "2f4e46bf57c943502ce4ba2a992e1f6e65008f68b049e82d42bfbea9dc48176d",
+      "sha256": "61191b73833a507faba5991b5bf92192a4fa46f18b39e845200f67d32c9ad124",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "tool_discussion",
+        "recoverable": false,
+        "reason": "The model weighs calling a tool in prose and then answers directly; no structural envelope exists."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -74,20 +515,28 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "4f9327237c0d9d2e6de0125be994c6eb38f50d14eef7a27cc007c94bda2ad1d2",
+      "sha256": "e4c279f5ebd896b6f67eaadb5ecf9cebebd48b0592b744b607c29d7aea227b35",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "Arguments are an array, not a keyed object; the call is not dispatchable as emitted."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -99,20 +548,28 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "e633875a0e5ad7fbf7580bc324d82f9763cabc3a549483036d15c3dc281048da",
+      "sha256": "4c4cb9f12b8221337d4cad671e8388a79b6bbc12a6da2863c4e861609f727e72",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "Arguments are a bare scalar string that does not parse to an object; nothing dispatchable exists."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -124,20 +581,28 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "76bb359654b79dbbb273c9e306eab35ba893171dc4ad6f56a26ba2b2e66174e3",
+      "sha256": "a82e030965639b532b25d2d6289c05dddc3bc210eea29546949393fa14e6de85",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "Two incomplete fragments; neither validates on its own and near-misses must not combine."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -149,20 +614,28 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "993d697e833ebd2d7711e6d57c277578d256ab0a0caa03c3d02280e019aa5928",
+      "sha256": "7a42e4b216588340016dd689d48fd4a8ad64f30dbbb38a4d6262df93e685374a",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "Unbalanced JSON fragment; no dispatchable call exists."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -174,20 +647,28 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "cecbd19d2cbc48d18e92ee8a645aefdb5e7b0d6f27c49460846cc32e953d2caf",
+      "sha256": "f8224ccc938e21fea1df2a248086ece5a59fc5021c2cde912f5f2f59ab4f20f9",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "tool_discussion",
+        "recoverable": false,
+        "reason": "Meta-question about tool-call syntax, not a model invocation; keyword presence alone must never trigger recovery."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -199,20 +680,120 @@
       "source": "self-authored",
       "sourced": false,
       "stream": false,
-      "sha256": "67569f2ec1793f7c81cc44a50199087f8e7d35702afd85701d255bb325f1bb8b",
+      "sha256": "13b622f6a2695e34fce5ebd1ed641c375ba27a1321ae9d581d853b751632f204",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": "malformed_envelope",
+        "recoverable": false,
+        "reason": "Empty function name; a nameless envelope cannot be dispatched."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
+      },
+      "failures": []
+    },
+    {
+      "id": "llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a",
+      "engine": "llama.cpp",
+      "version": "b8461",
+      "pattern": "A",
+      "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
+      "sourced": true,
+      "stream": false,
+      "sha256": "945df1e8b072ce13b6ec7eaeb33c6a44d3a40aa2cca3f27075c0fbe8924b941e",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Live capture: after a prior successful call the model emitted read_file and stopped; the server dropped the call from tool_calls.",
+        "expectedCalls": [
+          {
+            "name": "read_file",
+            "arguments": {
+              "path": "package.json"
+            }
+          }
+        ]
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "category": "swallowed_tool_call",
+        "toolCall": {
+          "name": "read_file",
+          "arguments": {
+            "path": "package.json"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
+      },
+      "failures": []
+    },
+    {
+      "id": "llamacpp-b8461-qwen3.5-9b-streaming-multiturn-pattern-a",
+      "engine": "llama.cpp",
+      "version": "b8461",
+      "pattern": "A",
+      "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
+      "sourced": true,
+      "stream": true,
+      "sha256": "4aa4295d2f2e2b6e6ae0c36c16318e8e7f3f28309e0276ef853994c3ca0d4466",
+      "expect": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "minConfidence": 0,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Live streaming capture of the same b8461 swallow: envelope streamed through reasoning_content, finish stop, no tool_calls.",
+        "expectedCalls": [
+          {
+            "name": "read_file",
+            "arguments": {
+              "path": "package.json"
+            }
+          }
+        ]
+      },
+      "actual": {
+        "detected": true,
+        "pattern": "A",
+        "recovered": true,
+        "confidence": 0.95,
+        "category": "swallowed_tool_call",
+        "toolCall": {
+          "name": "read_file",
+          "arguments": {
+            "path": "package.json"
+          }
+        },
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -224,25 +805,41 @@
       "source": "https://github.com/ggml-org/llama.cpp/issues/20837",
       "sourced": true,
       "stream": false,
-      "sha256": "a9f2a25baa1d547d29c79b1555186cd5da677855a266c5a144eaaacb8a92d0da",
+      "sha256": "96ae5a4f060689353f7c2789a04103045f106a8402a302bbb4b3ffe93c80945d",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.9
+        "minConfidence": 0.9,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Sourced llama.cpp #20837 shape: think block with a complete call lands in content and tool_calls stays empty.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Berlin"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Berlin"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -254,20 +851,28 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056 (pattern C documented in unswallow plan; MiniMax M3 <mm:think> streaming leak)",
       "sourced": false,
       "stream": false,
-      "sha256": "2014ae58050f9f5e6b3d42b788495a64bcc4b2fa944da8b98dc245a958741ca0",
+      "sha256": "a7e7031bd014f65eb1effad99dcf806820ab27caa41324798600a5c991a00efc",
       "expect": {
         "detected": true,
         "pattern": "C",
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": null,
+        "recoverable": false,
+        "reason": "Pattern C field leak: reasoning tags leaked into content and no tool call exists anywhere; detection-only."
       },
       "actual": {
         "detected": true,
         "pattern": "C",
         "recovered": false,
         "confidence": 0.5,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -279,20 +884,28 @@
       "source": "MiniMax M3 <mm:think> streaming leak (pattern C documented in the unswallow plan)",
       "sourced": false,
       "stream": true,
-      "sha256": "bbd0d5e45f4068082569271ad8e66edba723e092e4e1c600b60631f94725dd1e",
+      "sha256": "5d16dd80dcc3ffd0d9fbb43d36c40b54bb7c9607d0c03f7c9e1bef8e3c8a52f9",
       "expect": {
         "detected": true,
         "pattern": "C",
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": null,
+        "recoverable": false,
+        "reason": "Streaming Pattern C leak: an unclosed thinking tag in the content channel; detection-only."
       },
       "actual": {
         "detected": true,
         "pattern": "C",
         "recovered": false,
         "confidence": 0.5,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -304,25 +917,41 @@
       "source": "https://github.com/earendil-works/pi/issues/952",
       "sourced": true,
       "stream": false,
-      "sha256": "330771d32e60de8a6bf7319c1e9601cd3c42b0ff072285d7ede6906382766199",
+      "sha256": "24e38c99120201c1ae0b49f4dfa4b53fab5f00525be19130c78e49232cdc66e7",
       "expect": {
         "detected": true,
         "pattern": "B",
         "recovered": true,
-        "minConfidence": 0.5
+        "minConfidence": 0.5,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Sourced pi #952 shape: the envelope plus trailing reasoning text in content broke strict JSON.parse and the call was lost.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Shanghai"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "B",
         "recovered": true,
         "confidence": 0.55,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Shanghai"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -334,25 +963,41 @@
       "source": "https://github.com/earendil-works/pi/issues/952",
       "sourced": true,
       "stream": true,
-      "sha256": "4ac9c3f78aac202499c5d80c992e6cc78d0282c0619c95decec0b5d50dbf8542",
+      "sha256": "c1f70f609fa06bbe0f993ac3af94e880ccf7f51986a5464b931a9da6cc184c51",
       "expect": {
         "detected": true,
         "pattern": "B",
         "recovered": true,
-        "minConfidence": 0.5
+        "minConfidence": 0.5,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Streaming pi #952 shape; the assembled content channel carries the intended call plus trailing reasoning.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Shanghai"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "B",
         "recovered": true,
         "confidence": 0.55,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Shanghai"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -364,25 +1009,41 @@
       "source": "https://github.com/sgl-project/sglang/issues/30744",
       "sourced": true,
       "stream": false,
-      "sha256": "a628f4c1cacd1f8c4bb604964aa028d5dd37288572b5d489873e3610e99f3848",
+      "sha256": "19084db7bff85e47ad139ffadf1e60fc0498142d5c68987c3921cf342b51274e",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.9
+        "minConfidence": 0.9,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Sourced SGLang #30744 shape: the runtime LoRA swallow strands the call in reasoning_content.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Beijing"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Beijing"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -394,25 +1055,41 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": true,
       "stream": false,
-      "sha256": "0bada98eff8ed611818c997cf1a085c28a35801158f86d518ca21d452165e276",
+      "sha256": "a3e9a5d890c4ae55715aa2f2495d3bcc19cf0e2db5ae8e0f8fe45c975a498c96",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.9
+        "minConfidence": 0.9,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Sourced JSON-envelope variant of the #39056 swallow reported in the thread.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Tokyo"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Tokyo"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -424,25 +1101,41 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056 (comment: Bug 2, PR #35936)",
       "sourced": true,
       "stream": false,
-      "sha256": "25c286c452be371947318715e99cb0838f0f35f7e615eb74e3e67f5e53168181",
+      "sha256": "e27ed87bc1bf94a4d5841b0689a04bb448d5682f56d466662ecf12591653281d",
       "expect": {
         "detected": true,
         "pattern": "B",
         "recovered": true,
-        "minConfidence": 0.5
+        "minConfidence": 0.5,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Server-side validation drops the model's valid XML envelope because the JSON-only branch rejects it; the call was intended.",
+        "expectedCalls": [
+          {
+            "name": "get_capital",
+            "arguments": {
+              "country": "France"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "B",
         "recovered": true,
         "confidence": 0.55,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_capital",
           "arguments": {
             "country": "France"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -454,25 +1147,41 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": true,
       "stream": false,
-      "sha256": "e67c506ac9be1a973bc7bab9cc8675fc62fcd5a5cec821623ce1a24834bd3d6f",
+      "sha256": "8ac8c76cd716aafefb2ab883876668e55b273dee50941f3190fde31ced0a9cf7",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.7
+        "minConfidence": 0.7,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Sourced paired tool_call-block case still missed by the partially patched 0.20–0.24 range.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Tokyo"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.8,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Tokyo"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -484,20 +1193,28 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": true,
       "stream": false,
-      "sha256": "000521f0917b7e167108b18c4505e573c6feab2d4a579194cb9c22845ea10789",
+      "sha256": "9fdbb67dad3ed983b6aa8bc24a1075cf7e22ee094eb98e7c1ad67fb97ee83a4a",
       "expect": {
         "detected": false,
         "pattern": null,
         "recovered": false,
-        "minConfidence": 0
+        "minConfidence": 0,
+        "category": null
+      },
+      "groundTruth": {
+        "classification": null,
+        "recoverable": false,
+        "reason": "Healthy passthrough on a resolved server: the call arrived parsed in tool_calls; no swallow case applies."
       },
       "actual": {
         "detected": false,
         "pattern": null,
         "recovered": false,
         "confidence": 0,
+        "category": null,
         "toolCall": null,
-        "toolCallCount": 0
+        "toolCallCount": 0,
+        "recoveredCallCount": 0
       },
       "failures": []
     },
@@ -509,26 +1226,42 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": false,
       "stream": false,
-      "sha256": "2a9b0db262149298129f2dbdf143f2f0b6895f4a515941669af83b3ff77851f9",
+      "sha256": "5e67a75d45113c3605a3bedd4721ef3fa46e5e6b8c7e3c6e3b5775af99920054",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "minConfidence": 0.9,
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "The same call re-emitted twice inside one reasoning block; one intended call, duplicated by decoding.",
+        "expectedCalls": [
+          {
+            "name": "get_weather",
+            "arguments": {
+              "city": "Tokyo"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "get_weather",
           "arguments": {
             "city": "Tokyo"
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -540,26 +1273,48 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": false,
       "stream": false,
-      "sha256": "5cd5e11b57e9f04dc374b51006fd96f8597159bbfb9c2394574f413e0c3c0bc5",
+      "sha256": "fd6312a7649c3884a306e96d3cac7b3e063cd54d1f04224ba6efb887e35e87d4",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "minConfidence": 0.9,
-        "toolCallCount": 2
+        "toolCallCount": 2,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Two parallel calls emitted in one reasoning block and swallowed; both are the model's intended calls.",
+        "expectedCalls": [
+          {
+            "name": "search",
+            "arguments": {
+              "query": "first"
+            }
+          },
+          {
+            "name": "search",
+            "arguments": {
+              "query": "second"
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "search",
           "arguments": {
             "query": "first"
           }
         },
-        "toolCallCount": 2
+        "toolCallCount": 2,
+        "recoveredCallCount": 2
       },
       "failures": []
     },
@@ -571,25 +1326,41 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": true,
       "stream": false,
-      "sha256": "248375fbde01d474f6eec4bf534aa7ecf6b7a9a394e6111aafce3961dc4375da",
+      "sha256": "d9aeef76a49b551c220f5ef3c8a38079d979a4452aca43e0ff95c2eac17b53ff",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.9
+        "minConfidence": 0.9,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Sourced vLLM #39056 function-XML shape: the reasoning parser routes the call into reasoning and tool_calls stays empty.",
+        "expectedCalls": [
+          {
+            "name": "Finish",
+            "arguments": {
+              "answer": 204
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "Finish",
           "arguments": {
             "answer": 204
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     },
@@ -601,34 +1372,100 @@
       "source": "https://github.com/vllm-project/vllm/issues/39056",
       "sourced": true,
       "stream": true,
-      "sha256": "5a1a408f27aa2a78344f7edc5e88c0fa67bf8e30daa401d8d122631e9b2b0a00",
+      "sha256": "86550b54032f8d56fdc949b6ec55615e4876ec302d4fc8177266e8ff1ddb344e",
       "expect": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
-        "minConfidence": 0.9
+        "minConfidence": 0.9,
+        "category": "swallowed_tool_call"
+      },
+      "groundTruth": {
+        "classification": "swallowed_tool_call",
+        "recoverable": true,
+        "reason": "Streaming variant of the #39056 swallow; the intended Finish call is present in the assembled reasoning channel.",
+        "expectedCalls": [
+          {
+            "name": "Finish",
+            "arguments": {
+              "answer": 204
+            }
+          }
+        ]
       },
       "actual": {
         "detected": true,
         "pattern": "A",
         "recovered": true,
         "confidence": 0.95,
+        "category": "swallowed_tool_call",
         "toolCall": {
           "name": "Finish",
           "arguments": {
             "answer": 204
           }
         },
-        "toolCallCount": 1
+        "toolCallCount": 1,
+        "recoveredCallCount": 1
       },
       "failures": []
     }
   ],
   "consistency": [
     {
+      "id": "adv-malformed-args-vs-schema",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "adv-mixed-genuine-rehearsed",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "adv-narration-content",
+      "ok": true,
+      "note": "no matrix row for vllm 0.19.0 pattern B — novel combination, keep an eye on it"
+    },
+    {
+      "id": "adv-quoted-complete-negated",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "adv-quoted-report-context",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "adv-rehearsal-mid-reasoning",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "adv-retraction-after-call",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
+      "id": "adv-unknown-tool-name-vs-schema",
+      "ok": true,
+      "note": "matrix vllm <=0.19.0 → swallow; fixture expects detection"
+    },
+    {
       "id": "deepseek-reasoning-content-pattern-a",
       "ok": true,
       "note": "matrix sglang * → swallow; fixture expects detection"
+    },
+    {
+      "id": "llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a",
+      "ok": true,
+      "note": "matrix llama.cpp * → swallow; fixture expects detection"
+    },
+    {
+      "id": "llamacpp-b8461-qwen3.5-9b-streaming-multiturn-pattern-a",
+      "ok": true,
+      "note": "matrix llama.cpp * → swallow; fixture expects detection"
     },
     {
       "id": "llamacpp-qwen3.5-thinking-pattern-a",

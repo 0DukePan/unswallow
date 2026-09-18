@@ -81,13 +81,19 @@ test('strictSchema blocks an entire parallel recovery when one call is invalid',
 });
 
 test('invalid tool name and arguments receive multiplicative confidence penalties', () => {
-  const result = checkAndRescue(response({ city: 42, extra: true }), {
-    engineHint: 'vllm', engineVersion: '0.19.0',
+  const opts = {
+    engineHint: 'vllm',
+    engineVersion: '0.19.0',
     toolSchemas: [{ function: { name: 'other', parameters: { type: 'object' } } }],
-  });
+  };
+  const result = checkAndRescue(response({ city: 42, extra: true }), opts);
   assert.equal(result.validation!.nameKnown, 'no');
   assert.equal(result.confidence, 0.48);
-  assert.equal(result.recovered, true);
+  assert.equal(result.recovered, false);
+
+  const legacy = checkAndRescue(response({ city: 42, extra: true }), { ...opts, intentGate: 'off' });
+  assert.equal(legacy.confidence, 0.48);
+  assert.equal(legacy.recovered, true);
 });
 
 test('strictSchema blocks recovery for invalid arguments while retaining detection', () => {

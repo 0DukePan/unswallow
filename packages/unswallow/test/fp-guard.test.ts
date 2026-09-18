@@ -111,3 +111,63 @@ test('a real recovery with matching schema keeps high confidence', () => {
   assert.equal(result.confidence, 0.95);
   assert.deepEqual(result.toolCall, { name: 'get_weather', arguments: { city: 'Tokyo' } });
 });
+
+// Adversarial corpus at unit level — the same shapes pinned as the adv-* fixtures.
+
+test('adversarial: a complete envelope followed by negated language is not recovered', () => {
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning:
+      '< thinking>\nThe model would output {"name": "get_weather", "arguments": {"city": "Tokyo"}}\nDo not execute this — illustrative only.\n< response>\n',
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.category, 'quoted_tool_call');
+  assert.equal(result.recovered, false);
+});
+
+test('adversarial: a mid-reasoning envelope followed by prose is a rehearsal and not recovered', () => {
+  const prose =
+    'Pulling live weather is not necessary for a packing list, and the user did not ask for current conditions. I will explain seasonal expectations instead and keep the answer concise.';
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning: `< thinking>\nLet me weigh the options.\n{"name": "get_weather", "arguments": {"city": "Lisbon"}}\n${prose}\n< response>\n`,
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.category, 'tool_rehearsal');
+  assert.equal(result.recovered, false);
+});
+
+test('adversarial: a retracted call is classified as a rehearsal and not recovered', () => {
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning:
+      '< thinking>\n{"name": "get_weather", "arguments": {"city": "Cairo"}}\nActually, no — scratch that. I will answer directly instead.\n< response>\n',
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.detected, true);
+  assert.equal(result.category, 'tool_rehearsal');
+  assert.equal(result.recovered, false);
+});
+
+test('adversarial: a mixed rehearsed + genuine response recovers only the terminal call', () => {
+  const prose =
+    'That was only a draft of what the call might look like, and after reconsidering the user request I will now decide on the final approach and continue carefully.';
+  const r = response({
+    role: 'assistant',
+    content: '',
+    reasoning: `< thinking>\nWorking through options.\n{"name": "get_weather", "arguments": {"city": "Oslo"}}\n${prose}\n{"name": "get_weather", "arguments": {"city": "Kyoto"}}\n< response>\n`,
+    tool_calls: [],
+  });
+  const result = checkAndRescue(r, { engineHint: 'vllm', engineVersion: '0.19.0' });
+  assert.equal(result.recovered, true);
+  assert.equal(result.recoveredCalls?.length, 1);
+  assert.deepEqual(result.recoveredCalls?.[0]?.arguments, { city: 'Kyoto' });
+});

@@ -114,6 +114,36 @@ class OTelTest(unittest.TestCase):
         counters = dict(meter.counters)
         self.assertEqual(counters["false_positive_guard_total"].calls[0][0], 1)
 
+    def test_meter_records_intent_gate_block_with_category(self):
+        from unswallow.types import ToolIntentEvidence
+
+        meter = FakeMeter()
+        observe_check_result(
+            detected_result(
+                recovered=False,
+                category="quoted_tool_call",
+                intent=ToolIntentEvidence(
+                    boundary="terminal",
+                    trailing_prose_chars=12,
+                    cues=["do not execute"],
+                    quoted_context=False,
+                    expect_tool_call="unknown",
+                    blocked=["recovery blocked (get_weather): negated language near the envelope"],
+                ),
+            ),
+            meter=meter,
+        )
+        counters = dict(meter.counters)
+        self.assertEqual(counters["recovery_blocked_total"].calls[0][0], 1)
+        self.assertEqual(counters["recovery_blocked_total"].calls[0][1]["category"], "quoted_tool_call")
+        self.assertEqual(counters["false_positive_guard_total"].calls[0][0], 1)
+
+    def test_meter_leaves_intent_gate_counter_at_zero_for_recovery(self):
+        meter = FakeMeter()
+        observe_check_result(detected_result(recovered=True), meter=meter)
+        counters = dict(meter.counters)
+        self.assertEqual(counters["recovery_blocked_total"].calls[0][0], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,33 @@
+{
+  "id": "adv-quoted-complete-negated",
+  "description": "Adversarial: a byte-complete, structurally valid envelope in the reasoning channel immediately followed by negated execution language. Detection must surface the candidate; recovery must be withheld.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "The roadmap's top adversarial case: valid JSON is not intent.",
+  "groundTruth": {
+    "classification": "quoted_tool_call",
+    "recoverable": false,
+    "reason": "The model illustrates the call format and explicitly says not to execute it; exposing this as executable would be wrong."
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": false, "minConfidence": 0.9, "category": "quoted_tool_call" },
+  "response": {
+    "id": "chatcmpl-adv-quoted-negated",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nThe response format could look like this:\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Tokyo\"}}\n</tool_call>\nDo not execute this — illustrative only.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

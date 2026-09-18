@@ -1,5 +1,6 @@
 import { classify } from './classify';
 import { scoreConfidence } from './confidence';
+import { evaluateIntent } from './intent';
 import { validateEnvelope } from './validate';
 import { loadMatrix, matchMatrixEntry, normalizeEngine } from './matrix';
 import type {
@@ -21,11 +22,22 @@ export const NOT_DETECTED = (engine: SwallowCheckResult['engineHint']): SwallowC
   warnings: [],
   validation: null,
   recoveredResponse: null,
+  category: null,
+  intent: {
+    boundary: 'unknown',
+    trailingProseChars: 0,
+    cues: [],
+    quotedContext: false,
+    expectToolCall: 'unknown',
+    blocked: [],
+  },
+  recoveredCalls: null,
 });
 
 export function checkMessage(
   message: RawMessage,
-  opts: CheckOptions = {}
+  opts: CheckOptions = {},
+  finishReason?: string | null
 ): SwallowCheckResult {
   const matrix = loadMatrix(opts.matrix);
   const engine = normalizeEngine(opts.engineHint);
@@ -49,10 +61,10 @@ export function checkMessage(
     ? { name: cls.envelope.name, arguments: cls.envelope.arguments }
     : null;
   const toolCalls = cls.envelopes.map((e) => ({ name: e.name, arguments: e.arguments }));
-  const validation = validateEnvelope(cls.envelope, opts.toolSchemas);
-  const allValidations = cls.envelopes.map((envelope) => validateEnvelope(envelope, opts.toolSchemas));
-  const allStructurallyValid = allValidations.every((result) => result.structurallyValid);
-  const allSchemasValid = allValidations.every((result) => result.schemaValid === 'yes');
+  const validations = cls.envelopes.map((envelope) => validateEnvelope(envelope, opts.toolSchemas));
+  const validation = validations[0] ?? validateEnvelope(cls.envelope, opts.toolSchemas);
+  const allStructurallyValid = validations.every((result) => result.structurallyValid);
+  const allSchemasValid = validations.every((result) => result.schemaValid === 'yes');
 
   const conf = scoreConfidence({
     pattern: cls.pattern,
@@ -64,18 +76,44 @@ export function checkMessage(
     argumentsFromString: cls.envelope?.argumentsFromString ?? false,
     validation,
   });
+
+  const intent = evaluateIntent(cls.hits, cls.allHits, validations, opts, finishReason ?? null, cls.capped);
+  const gateMode =
+    opts.intentGate === 'strict' || opts.intentGate === 'off' ? opts.intentGate : 'block';
+
   const minConfidence = typeof opts.minConfidence === 'number'
     ? Math.max(0, Math.min(1, opts.minConfidence))
     : 0;
+  const recoveryEnvelopes = cls.envelopes.filter(
+    (_, i) => validations[i].structurallyValid && intent.perEnvelope[i].blocked.length === 0
+  );
+  const recoveredCalls = recoveryEnvelopes.map((envelope) => ({
+    name: envelope.name,
+    arguments: envelope.arguments,
+  }));
   const recovered =
     cls.pattern !== 'C' &&
-    toolCalls.length > 0 &&
-    allStructurallyValid &&
+    recoveredCalls.length > 0 &&
     conf.confidence >= minConfidence &&
     (!opts.strictSchema || allSchemasValid);
 
   const pattern: 'A' | 'B' | 'C' | null =
     cls.pattern === 'A' || cls.pattern === 'B' || cls.pattern === 'C' ? cls.pattern : null;
+
+  const partialRecovery =
+    recovered && recoveredCalls.length > 0 && recoveredCalls.length < cls.envelopes.length
+      ? [`recovered ${recoveredCalls.length} of ${cls.envelopes.length} candidate envelopes (blocked ones are listed above)`]
+      : [];
+  const planningWarning =
+    gateMode === 'block' && intent.planningCues.length > 0
+      ? [
+          `planning language detected near the envelope ("${intent.planningCues[0]}") — not blocking in the default gate; see docs/intent-guard.md`,
+        ]
+      : [];
+  const finishWarning =
+    gateMode !== 'off' && finishReason === 'length'
+      ? ['finish_reason "length": the response may have been truncated — verify the recovered envelope is complete']
+      : [];
 
   return {
     detected: true,
@@ -93,8 +131,15 @@ export function checkMessage(
       ...(allStructurallyValid ? [] : ['recovery blocked: recovered envelope is not structurally valid']),
       ...(conf.confidence < minConfidence ? [`recovery blocked: confidence ${conf.confidence.toFixed(2)} is below minConfidence ${minConfidence.toFixed(2)}`] : []),
       ...(opts.strictSchema && !allSchemasValid ? ['recovery blocked: strictSchema requires valid supplied tool schema for every recovered call'] : []),
+      ...intent.evidence.blocked,
+      ...partialRecovery,
+      ...planningWarning,
+      ...finishWarning,
     ],
     validation,
     recoveredResponse: null,
+    category: intent.category,
+    intent: intent.evidence,
+    recoveredCalls: recovered ? recoveredCalls : null,
   };
 }

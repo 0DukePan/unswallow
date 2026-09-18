@@ -7,7 +7,13 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056",
   "sourced": true,
   "note": "Variant reproduction reported by multiple commenters in the thread.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Sourced JSON-envelope variant of the #39056 swallow reported in the thread.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Tokyo" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-vllm-39056-v2",
     "object": "chat.completion",

@@ -8,6 +8,7 @@ export const REASONING_FIELDS: ChannelSource[] = [
 ];
 
 export interface Region {
+  id: number;
   channel: ChannelSource;
   source: 'field' | 'think-block' | 'leak';
   text: string;
@@ -15,8 +16,9 @@ export interface Region {
 
 const THINK_TAG = /<\s*(\/?)\s*([a-zA-Z0-9_.:-]*?\s*(?:think|response))[^>]*>/gi;
 
-export function splitThinkBlocks(text: string): Region[] {
+export function splitThinkBlocks(text: string, startId = 0): Region[] {
   const out: Region[] = [];
+  let nextId = startId;
   THINK_TAG.lastIndex = 0;
   let depth = 0;
   let last = 0;
@@ -30,7 +32,7 @@ export function splitThinkBlocks(text: string): Region[] {
     if (isOpenThink) {
       if (depth === 0) {
         if (m.index > last) {
-          out.push({ channel: 'content', source: 'field', text: text.slice(last, m.index) });
+          out.push({ id: nextId++, channel: 'content', source: 'field', text: text.slice(last, m.index) });
         }
         blockStart = m.index;
       }
@@ -40,6 +42,7 @@ export function splitThinkBlocks(text: string): Region[] {
         depth--;
         if (depth === 0) {
           out.push({
+            id: nextId++,
             channel: 'thinking',
             source: 'think-block',
             text: text.slice(blockStart, m.index + m[0].length),
@@ -50,14 +53,14 @@ export function splitThinkBlocks(text: string): Region[] {
     }
   }
   if (depth > 0) {
-    out.push({ channel: 'thinking', source: 'leak', text: text.slice(blockStart) });
+    out.push({ id: nextId++, channel: 'thinking', source: 'leak', text: text.slice(blockStart) });
     last = text.length;
   }
   if (last < text.length) {
-    out.push({ channel: 'content', source: 'field', text: text.slice(last) });
+    out.push({ id: nextId++, channel: 'content', source: 'field', text: text.slice(last) });
   }
   if (out.length === 0 && text.length > 0) {
-    out.push({ channel: 'content', source: 'field', text });
+    out.push({ id: nextId++, channel: 'content', source: 'field', text });
   }
   return out;
 }
@@ -68,12 +71,12 @@ export function extractRegions(message: RawMessage, additionalFields?: string[])
   for (const f of fields) {
     const v = (message as Record<string, unknown>)[f];
     if (typeof v === 'string' && v.length > 0) {
-      regions.push({ channel: f as ChannelSource, source: 'field', text: v });
+      regions.push({ id: regions.length, channel: f as ChannelSource, source: 'field', text: v });
     }
   }
   const content = typeof message.content === 'string' ? message.content : '';
   if (content.length > 0) {
-    regions.push(...splitThinkBlocks(content));
+    regions.push(...splitThinkBlocks(content, regions.length));
   }
   return regions;
 }

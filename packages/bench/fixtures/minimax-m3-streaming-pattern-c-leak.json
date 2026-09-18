@@ -8,7 +8,12 @@
   "sourced": false,
   "note": "Also asserts the live leak event path via the stream accumulator.",
   "stream": true,
-  "expect": { "detected": true, "pattern": "C", "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": null,
+    "recoverable": false,
+    "reason": "Streaming Pattern C leak: an unclosed thinking tag in the content channel; detection-only."
+  },
+  "expect": { "detected": true, "pattern": "C", "recovered": false, "minConfidence": 0, "category": null },
   "chunks": [
     { "id": "chatcmpl-minimax-s", "model": "MiniMax-M3", "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "Here is the summary you asked for. <mm:thi" } }] },
     { "choices": [{ "index": 0, "finish_reason": null, "delta": { "content": "nk>I should verify the weather data before finalizing this answer" } }] },

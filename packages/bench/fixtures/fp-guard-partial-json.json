@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "Recovery requires a structurally well-formed envelope (name + arguments), never a keyword or fragment match.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "Unbalanced JSON fragment; no dispatchable call exists."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-partial",
     "object": "chat.completion",

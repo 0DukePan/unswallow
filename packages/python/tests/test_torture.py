@@ -284,11 +284,30 @@ class TortureTest(unittest.TestCase):
             reasoning += chunk_text + str(i) + "\n"
         reasoning += "< response>\n"
         r = response({"role": "assistant", "content": "", "reasoning": reasoning, "tool_calls": []})
-        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0", intent_gate="off")
         self.assertTrue(result.detected)
         self.assertEqual(result.pattern, "A")
         self.assertTrue(result.recovered)
         self.assertEqual(result.tool_call.arguments, {"city": "Tokyo"})
+
+    def test_mid_reasoning_envelope_is_a_rehearsal_and_not_recovered(self):
+        chunk_text = "The weather discussion continues with relevant analysis and numerical estimates for the forecast. "
+        reasoning = "< thinking>\n"
+        for i in range(300):
+            reasoning += chunk_text + str(i) + "\n"
+        reasoning += ENVELOPE + "\n"
+        for i in range(300):
+            reasoning += chunk_text + str(i) + "\n"
+        reasoning += "< response>\n"
+        r = response({"role": "assistant", "content": "", "reasoning": reasoning, "tool_calls": []})
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertEqual(result.pattern, "A")
+        self.assertFalse(result.recovered)
+        self.assertIsNone(result.recovered_response)
+        self.assertEqual(result.category, "tool_rehearsal")
+        self.assertEqual(result.intent.boundary, "mid")
+        self.assertTrue(any("may be a rehearsal" in w for w in result.warnings))
 
     def test_multiple_boundaries_each_envelope_recovered(self):
         r = response(

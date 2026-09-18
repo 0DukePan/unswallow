@@ -32,6 +32,8 @@ def run_fixture(fixture):
         "engine_hint": fixture.get("engine"),
         "engine_version": fixture.get("version"),
     }
+    if isinstance(fixture.get("toolSchemas"), list):
+        opts["tool_schemas"] = fixture["toolSchemas"]
     if fixture.get("stream"):
         chunks = fixture.get("chunks") or []
 
@@ -73,12 +75,22 @@ def main():
             py_count = len(result.tool_calls) if result.tool_calls else 0
             if py_count != expect["toolCallCount"]:
                 issues.append("toolCallCount: py={} expected={}".format(py_count, expect["toolCallCount"]))
+        if "recoveredCallCount" in expect:
+            py_recovered = len(result.recovered_calls) if result.recovered_calls else 0
+            if py_recovered != expect["recoveredCallCount"]:
+                issues.append("recoveredCallCount: py={} expected={}".format(py_recovered, expect["recoveredCallCount"]))
+        if "category" in expect:
+            py_category = result.category if result.detected else None
+            if py_category != expect["category"]:
+                issues.append("category: py={} expected={}".format(py_category, expect["category"]))
         conf_match = "?"
         if ts is not None and ts.get("confidence") is not None:
             ts_conf = ts["confidence"]
             conf_match = "yes" if abs(ts_conf - result.confidence) < 1e-9 else "no"
             if conf_match == "no":
                 issues.append("TS/Python confidence differ: ts={} py={}".format(ts_conf, result.confidence))
+        if ts is not None and ts.get("category") != (result.category if result.detected else None):
+            issues.append("TS/Python category differ: ts={} py={}".format(ts.get("category"), result.category))
         if issues:
             failures.append((fid, issues))
         rows.append((fid, ts["confidence"] if ts else None, result.confidence, conf_match, "FAIL" if issues else "PASS"))

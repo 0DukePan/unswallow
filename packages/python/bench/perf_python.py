@@ -19,9 +19,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from unswallow import check_and_rescue, check_and_rescue_stream, extract_all_envelopes, sanitize_history
+from unswallow import check_and_rescue, check_and_rescue_stream, evaluate_intent, extract_all_envelopes, sanitize_history
 from unswallow.matrix import load_matrix, match_matrix_entry
 from unswallow.stream import StreamAccumulator
+
+# Generous guard (≈10x headroom over a desktop measurement) for `--check` / `--probe-only`.
+INTENT_P95_CEILING_MS = 20
+IS_CHECK = "--check" in sys.argv
+IS_PROBE_ONLY = "--probe-only" in sys.argv
 
 WORDS = [
     "the", "user", "asked", "about", "weather", "tokyo", "berlin", "need", "call", "tool",
@@ -337,6 +342,34 @@ def probe_tracker_loop(chunks):
     return acc
 
 
+class _ProbeHit:
+    """Minimal stand-in for classify.ClassifiedHit used by the intent probe."""
+
+    __slots__ = ("envelope", "channel", "think_block", "region_id", "region_text")
+
+    def __init__(self, envelope, channel, think_block, region_id, region_text):
+        self.envelope = envelope
+        self.channel = channel
+        self.think_block = think_block
+        self.region_id = region_id
+        self.region_text = region_text
+
+
+class _ProbeValidation:
+    structurally_valid = True
+    name_known = "unknown"
+    schema_valid = "unknown"
+    errors = []
+
+
+def probe_intent(reasoning_text):
+    """The intent-gate mechanism: cue windows + envelope position on the text."""
+    envelopes, _capped = extract_all_envelopes(reasoning_text)
+    hits = [_ProbeHit(envelope, "reasoning", False, 0, reasoning_text) for envelope in envelopes]
+    validations = [_ProbeValidation() for _ in hits]
+    return evaluate_intent(hits, hits, validations, {}, "stop", False)
+
+
 async def main_async():
     rng = mulberry32(0x756E7377)
     payloads = {}
@@ -495,11 +528,14 @@ async def main_async():
     huge_reasoning = huge["choices"][0]["message"]["reasoning"]
     clone_res = measure(lambda: probe_clone(huge), 200, warmup=50, runs=3)
     scan_res = measure(lambda: probe_scan(huge_reasoning), 300, warmup=50, runs=3)
+    intent_res = measure(lambda: probe_intent(huge_reasoning), 200, warmup=50, runs=3)
     tracker_loop_res = measure(lambda: probe_tracker_loop(stream_chunks), 200, warmup=50, runs=3)
-    probes = {"clone": clone_res, "scan": scan_res, "trackerLoop": tracker_loop_res}
+    probes = {"clone": clone_res, "scan": scan_res, "intent": intent_res, "trackerLoop": tracker_loop_res}
     probes_ctx = {
         "clonePayloadBytes": len(json.dumps(huge).encode("utf-8")),
         "scanBytes": len(huge_reasoning.encode("utf-8")),
+        "intentBytes": len(huge_reasoning.encode("utf-8")),
+        "intentP95CeilingMs": INTENT_P95_CEILING_MS,
         "trackerChunks": len(stream_chunks) - 1,
         "streamTotalMs": stream_res["mean"],
     }
@@ -513,6 +549,25 @@ async def _iter(chunks):
 
 
 def main():
+    if IS_PROBE_ONLY:
+        rng = mulberry32(0x756E7377)
+        payload = make_payload(rng, "a-huge")
+        reasoning = payload["choices"][0]["message"]["reasoning"]
+        res = measure(lambda: probe_intent(reasoning), 150, warmup=50, runs=3)
+        if res["p95"] > INTENT_P95_CEILING_MS:
+            print(
+                "perf probe FAILED: intent-gate p95 {:.2f} ms exceeds the {} ms ceiling on the 1 MB payload".format(
+                    res["p95"], INTENT_P95_CEILING_MS
+                ),
+                file=sys.stderr,
+            )
+            return 1
+        print(
+            "perf probe: intent-gate p95 {:.2f} ms is within the {} ms ceiling (1 MB payload)".format(
+                res["p95"], INTENT_P95_CEILING_MS
+            )
+        )
+        return 0
     (
         check_rows,
         stream_chunks,
@@ -577,13 +632,16 @@ def main():
         "",
         "## Component probes (why TS and Python diverge)",
         "",
-        "The mechanisms cited in the README divergence note, measured in isolation on the same payloads: the recovery deep copy, the envelope scan over the reasoning text, and the streaming per-chunk leak-tracker loop (accumulator `push` only, no final check).",
+        "The mechanisms cited in the README divergence note, measured in isolation on the same payloads: the recovery deep copy, the envelope scan over the reasoning text, the intent-gate evaluation (cue windows + envelope position), and the streaming per-chunk leak-tracker loop (accumulator `push` only, no final check).",
         "",
-        "| probe | payload | n | mean (min–max) |",
-        "| --- | --- | --- | --- |",
-        "| deep copy of 1 MB payload (copy.deepcopy) | {:.1f} KB | {} | {} |".format(probes_ctx["clonePayloadBytes"] / 1024, probes["clone"]["n"], fmt_spread(probes["clone"])),
-        "| envelope scan of 1 MB reasoning (extract_all_envelopes) | {:.1f} KB | {} | {} |".format(probes_ctx["scanBytes"] / 1024, probes["scan"]["n"], fmt_spread(probes["scan"])),
-        "| leak-tracker loop, {} chunk pushes (19.7 KB) | — | {} | {} |".format(probes_ctx["trackerChunks"], probes["trackerLoop"]["n"], fmt_spread(probes["trackerLoop"])),
+        "| probe | payload | n | mean (min–max) | p95 |",
+        "| --- | --- | --- | --- | --- |",
+        "| deep copy of 1 MB payload (copy.deepcopy) | {:.1f} KB | {} | {} | {:.3f} ms |".format(probes_ctx["clonePayloadBytes"] / 1024, probes["clone"]["n"], fmt_spread(probes["clone"]), probes["clone"]["p95"]),
+        "| envelope scan of 1 MB reasoning (extract_all_envelopes) | {:.1f} KB | {} | {} | {:.3f} ms |".format(probes_ctx["scanBytes"] / 1024, probes["scan"]["n"], fmt_spread(probes["scan"]), probes["scan"]["p95"]),
+        "| intent gate on 1 MB reasoning (evaluate_intent) | {:.1f} KB | {} | {} | {:.3f} ms |".format(probes_ctx["intentBytes"] / 1024, probes["intent"]["n"], fmt_spread(probes["intent"]), probes["intent"]["p95"]),
+        "| leak-tracker loop, {} chunk pushes (19.7 KB) | — | {} | {} | {:.3f} ms |".format(probes_ctx["trackerChunks"], probes["trackerLoop"]["n"], fmt_spread(probes["trackerLoop"]), probes["trackerLoop"]["p95"]),
+        "",
+        "`python packages/python/bench/perf_python.py --check` fails when the intent-gate p95 exceeds {} ms on the 1 MB payload (≈10× headroom over desktop numbers — a coarse regression tripwire, not a benchmark claim).".format(INTENT_P95_CEILING_MS),
         "",
         "## Pattern D — sanitizeHistory",
         "",
@@ -653,6 +711,20 @@ def main():
 
     print(report)
     print("report written to packages/python/bench/results_python.md")
+    if IS_CHECK and probes["intent"]["p95"] > INTENT_P95_CEILING_MS:
+        print(
+            "perf check FAILED: intent-gate p95 {:.2f} ms exceeds the {} ms ceiling on the 1 MB payload".format(
+                probes["intent"]["p95"], INTENT_P95_CEILING_MS
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    if IS_CHECK:
+        print(
+            "perf check: intent-gate p95 {:.2f} ms is within the {} ms ceiling".format(
+                probes["intent"]["p95"], INTENT_P95_CEILING_MS
+            )
+        )
     return 0
 
 

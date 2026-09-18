@@ -7,7 +7,13 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056 (comment: Bug 2, PR #35936)",
   "sourced": true,
   "note": "A distinct silent-empty mechanism: the envelope is in content (not reasoning), and the failure is the server's JSON-only validation branch, not the reasoning parser. Same recovery: envelope in content, tool_calls empty.",
-  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Server-side validation drops the model's valid XML envelope because the JSON-only branch rejects it; the call was intended.",
+    "expectedCalls": [{ "name": "get_capital", "arguments": { "country": "France" } }]
+  },
+  "expect": { "detected": true, "pattern": "B", "recovered": true, "minConfidence": 0.5, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-vllm-39056-bug2",
     "object": "chat.completion",

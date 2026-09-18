@@ -56,9 +56,19 @@ function result(partial: Partial<SwallowCheckResult>): SwallowCheckResult {
   return {
     detected: false,
     pattern: null,
+    category: null,
     toolCall: null,
     toolCalls: null,
     recovered: false,
+    recoveredCalls: null,
+    intent: {
+      boundary: 'unknown',
+      trailingProseChars: 0,
+      cues: [],
+      quotedContext: false,
+      expectToolCall: 'unknown',
+      blocked: [],
+    },
     source: 'content',
     engineHint: 'unknown',
     matrixMatch: null,
@@ -126,4 +136,39 @@ test('meter records the false-positive guard when a non-C detection is blocked',
   observeCheckResult(result({ detected: true, recovered: false, pattern: 'A' }), { meter });
   const guard = meter.counters.find((entry) => entry.name === 'false_positive_guard_total')!.counter;
   assert.equal(guard.calls[0].delta, 1);
+});
+
+test('meter records the intent-gate block counter with the category attribute', () => {
+  const meter = new FakeMeter();
+  observeCheckResult(
+    result({
+      detected: true,
+      recovered: false,
+      pattern: 'A',
+      category: 'quoted_tool_call',
+      intent: {
+        boundary: 'terminal',
+        trailingProseChars: 12,
+        cues: ['do not execute'],
+        quotedContext: false,
+        expectToolCall: 'unknown',
+        blocked: ['recovery blocked (get_weather): negated or illustrative language near the envelope'],
+      },
+    }),
+    { meter }
+  );
+  const counter = (name: string) => meter.counters.find((entry) => entry.name === name)!.counter;
+  assert.equal(counter('recovery_blocked_total').calls[0].delta, 1);
+  assert.equal(counter('recovery_blocked_total').calls[0].attrs?.category, 'quoted_tool_call');
+  assert.equal(counter('false_positive_guard_total').calls[0].delta, 1);
+});
+
+test('meter leaves the intent-gate block counter at zero when recovery proceeded', () => {
+  const meter = new FakeMeter();
+  observeCheckResult(
+    result({ detected: true, recovered: true, pattern: 'A', toolCalls: [{ name: 'get_weather', arguments: {} }] }),
+    { meter }
+  );
+  const counter = (name: string) => meter.counters.find((entry) => entry.name === name)!.counter;
+  assert.equal(counter('recovery_blocked_total').calls[0].delta, 0);
 });

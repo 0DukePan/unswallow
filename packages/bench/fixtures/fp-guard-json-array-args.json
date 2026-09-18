@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "Shape validation requires arguments to be an object; arrays and scalars are rejected.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "Arguments are an array, not a keyed object; the call is not dispatchable as emitted."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-array-args",
     "object": "chat.completion",

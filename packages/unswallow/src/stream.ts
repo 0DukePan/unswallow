@@ -195,11 +195,11 @@ export async function checkAndRescueStream(
     acc.push(chunk);
   }
   const response = acc.end();
-  const result = checkMessage(response.choices[0].message, opts);
-  if (result.recovered && result.toolCalls && result.toolCalls.length > 0) {
+  const result = checkMessage(response.choices[0].message, opts, response.choices[0].finish_reason ?? null);
+  if (result.recovered && result.recoveredCalls && result.recoveredCalls.length > 0) {
     result.recoveredResponse = applyRecoveryMany(
       response,
-      result.toolCalls
+      result.recoveredCalls
     );
   }
   return result;

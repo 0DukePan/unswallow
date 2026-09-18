@@ -7,7 +7,13 @@
   "source": "https://github.com/vllm-project/vllm/issues/39056",
   "sourced": true,
   "note": "Matrix row >=0.20.0 <0.24.0 is behavior 'partial', so a recovered detection is expected at 0.8 confidence.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.7 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Sourced paired tool_call-block case still missed by the partially patched 0.20–0.24 range.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Tokyo" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.7, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-vllm-023",
     "object": "chat.completion",

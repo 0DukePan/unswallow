@@ -66,7 +66,7 @@ function renderVerdict(r: SwallowCheckResult, engine: string, version: string): 
   }
   console.log();
   if (r.recovered && r.recoveredResponse) {
-    const calls = r.toolCalls ?? [];
+    const calls = r.recoveredCalls ?? [];
     const before = 'tool_calls: []';
     const after = `tool_calls: [${calls.map((c) => `${c.name}(…)`).join(', ') || '?'}]`;
     const w = Math.max(before.length, after.length) + 2;
@@ -83,9 +83,12 @@ function renderVerdict(r: SwallowCheckResult, engine: string, version: string): 
     }
   } else if (r.pattern === 'C') {
     console.log(`  ${fg.yellow('detection-only — no recovery performed (pattern C, see docs)')}`);
+  } else if (r.detected) {
+    console.log(`  ${fg.yellow('recovery withheld by the intent gate — see warnings below')}`);
   }
   console.log();
   console.log(`confidence    : ${bar(r.confidence)} ${fg.bold(String(r.confidence.toFixed(2)))}`);
+  console.log(`category      : ${r.category ? fg.bold(r.category) : fg.dim('—')}`);
   const matchDesc = r.matrixMatch
     ? `${r.matrixMatch.engine} ${r.matrixMatch.versionRange} → ${r.matrixMatch.behavior}`
     : `none${engine !== 'unknown' ? '' : ' (pass --engine)'}${version ? '' : ' (pass --version)'}`;

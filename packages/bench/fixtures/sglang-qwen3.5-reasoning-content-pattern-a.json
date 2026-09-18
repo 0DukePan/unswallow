@@ -7,7 +7,13 @@
   "source": "https://github.com/sgl-project/sglang/issues/30744",
   "sourced": true,
   "note": "Reasoning content channel uses reasoning_content, matching the DeepSeek-compatible field name SGLang exposes.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "Sourced SGLang #30744 shape: the runtime LoRA swallow strands the call in reasoning_content.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Beijing" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-sglang-30744",
     "object": "chat.completion",

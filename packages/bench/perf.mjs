@@ -7,12 +7,17 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const core = require('../unswallow/dist/src/index.js');
-const { checkAndRescue, checkAndRescueStream, sanitizeHistory, matchMatrixEntry, extractAllEnvelopes, createStreamAccumulator } = core;
+const { checkAndRescue, checkAndRescueStream, sanitizeHistory, matchMatrixEntry, extractAllEnvelopes, createStreamAccumulator, evaluateIntent } = core;
 const matrixEntries = require('unswallow-matrix').entries;
 
 const RESULTS_DIR = path.join(import.meta.dirname, 'perf');
 const RESULTS_MD = path.join(RESULTS_DIR, 'results.md');
 const RESULTS_JSON = path.join(RESULTS_DIR, 'results.json');
+
+// Generous guard (≈10x headroom over a desktop measurement) for `--check` / `--probe-only`.
+const INTENT_P95_CEILING_MS = 20;
+const IS_CHECK = process.argv.includes('--check');
+const IS_PROBE_ONLY = process.argv.includes('--probe-only');
 
 const WORDS = [
   'the', 'user', 'asked', 'about', 'weather', 'tokyo', 'berlin', 'need', 'call', 'tool',
@@ -335,6 +340,29 @@ function probeTrackerLoop(chunks) {
   return acc;
 }
 
+/**
+ * Intent-layer probe: cue-window scan + envelope position measurement for a
+ * located envelope on the given reasoning text — the work the recovery gate
+ * adds on top of the pure envelope scan.
+ */
+function probeIntent(reasoningText) {
+  const { envelopes } = extractAllEnvelopes(reasoningText);
+  const hits = envelopes.map((envelope) => ({
+    envelope,
+    channel: 'reasoning',
+    thinkBlock: false,
+    regionId: 0,
+    regionText: reasoningText,
+  }));
+  const validations = hits.map(() => ({
+    structurallyValid: true,
+    nameKnown: 'unknown',
+    schemaValid: 'unknown',
+    errors: [],
+  }));
+  return evaluateIntent(hits, hits, validations, {}, 'stop', false);
+}
+
 const SCENARIOS = [
   { key: 'a-small', label: 'Pattern A — small reasoning (~2–3KB)', iters: 3000, retained: 2000 },
   { key: 'a-xml', label: 'Pattern A — function-XML envelope (~1.5KB)', iters: 3000, retained: 2000 },
@@ -420,6 +448,23 @@ async function measureProxy() {
 }
 
 async function main() {
+  if (IS_PROBE_ONLY) {
+    const rng = mulberry32(0x756e7377);
+    const payload = makePayload(rng, 'a-huge');
+    const reasoning = payload.choices[0].message.reasoning;
+    const res = measure(() => probeIntent(reasoning), 150, 50, 3);
+    if (res.p95 > INTENT_P95_CEILING_MS) {
+      console.error(
+        `perf probe FAILED: intent-gate p95 ${res.p95.toFixed(2)} ms exceeds the ${INTENT_P95_CEILING_MS} ms ceiling on the 1 MB payload`
+      );
+      process.exitCode = 1;
+    } else {
+      console.log(
+        `perf probe: intent-gate p95 ${res.p95.toFixed(2)} ms is within the ${INTENT_P95_CEILING_MS} ms ceiling (1 MB payload)`
+      );
+    }
+    return;
+  }
   const rng = mulberry32(0x756e7377);
   const streamIterable = (chunks) => {
     return {
@@ -604,10 +649,13 @@ async function main() {
   const hugeReasoning = hugePayload.choices[0].message.reasoning;
   const cloneRes = measure(() => probeClone(hugePayload), 200, 50, 3);
   const scanRes = measure(() => probeScan(hugeReasoning), 300, 50, 3);
-  const probes = { clone: cloneRes, scan: scanRes, trackerLoop: trackerLoopRes };
+  const intentRes = measure(() => probeIntent(hugeReasoning), 200, 50, 3);
+  const probes = { clone: cloneRes, scan: scanRes, intent: intentRes, trackerLoop: trackerLoopRes };
   const probesCtx = {
     clonePayloadBytes: Buffer.byteLength(JSON.stringify(hugePayload)),
     scanBytes: Buffer.byteLength(hugeReasoning),
+    intentBytes: Buffer.byteLength(hugeReasoning),
+    intentP95CeilingMs: INTENT_P95_CEILING_MS,
     trackerChunks: streamChunks.length - 1,
     streamTotalMs: streamRes.mean,
   };
@@ -659,13 +707,16 @@ async function main() {
     '',
     '## Component probes (why TS and Python diverge)',
     '',
-    'The mechanisms cited in the README divergence note, measured in isolation on the same payloads: the recovery deep copy, the envelope scan over the reasoning text, and the streaming per-chunk leak-tracker loop (accumulator `push` only, no final check).',
+    'The mechanisms cited in the README divergence note, measured in isolation on the same payloads: the recovery deep copy, the envelope scan over the reasoning text, the intent-gate evaluation (cue windows + envelope position), and the streaming per-chunk leak-tracker loop (accumulator `push` only, no final check).',
     '',
-    '| probe | payload | n | mean (min–max) |',
-    '| --- | --- | --- | --- |',
-    `| deep copy of 1 MB payload (structuredClone) | ${(probesCtx.clonePayloadBytes / 1024).toFixed(1)} KB | ${cloneRes.n} | ${fmtSpread(cloneRes)} |`,
-    `| envelope scan of 1 MB reasoning (extractAllEnvelopes) | ${(probesCtx.scanBytes / 1024).toFixed(1)} KB | ${scanRes.n} | ${fmtSpread(scanRes)} |`,
-    `| leak-tracker loop, ${probesCtx.trackerChunks} chunk pushes (${(streamChunks.reduce((s, c) => s + Buffer.byteLength(c.choices?.[0]?.delta?.reasoning ?? ''), 0) / 1024).toFixed(1)} KB) | — | ${trackerLoopRes.n} | ${fmtSpread(trackerLoopRes)} |`,
+    '| probe | payload | n | mean (min–max) | p95 |',
+    '| --- | --- | --- | --- | --- |',
+    `| deep copy of 1 MB payload (structuredClone) | ${(probesCtx.clonePayloadBytes / 1024).toFixed(1)} KB | ${cloneRes.n} | ${fmtSpread(cloneRes)} | ${cloneRes.p95.toFixed(3)} ms |`,
+    `| envelope scan of 1 MB reasoning (extractAllEnvelopes) | ${(probesCtx.scanBytes / 1024).toFixed(1)} KB | ${scanRes.n} | ${fmtSpread(scanRes)} | ${scanRes.p95.toFixed(3)} ms |`,
+    `| intent gate on 1 MB reasoning (evaluateIntent) | ${(probesCtx.intentBytes / 1024).toFixed(1)} KB | ${intentRes.n} | ${fmtSpread(intentRes)} | ${intentRes.p95.toFixed(3)} ms |`,
+    `| leak-tracker loop, ${probesCtx.trackerChunks} chunk pushes (${(streamChunks.reduce((s, c) => s + Buffer.byteLength(c.choices?.[0]?.delta?.reasoning ?? ''), 0) / 1024).toFixed(1)} KB) | — | ${trackerLoopRes.n} | ${fmtSpread(trackerLoopRes)} | ${trackerLoopRes.p95.toFixed(3)} ms |`,
+    '',
+    `\`npm run bench:perf:check\` fails when the intent-gate p95 exceeds ${INTENT_P95_CEILING_MS} ms on the 1 MB payload (≈10× headroom over desktop numbers — a coarse regression tripwire, not a benchmark claim).`,
     '',
     '## Pattern D — sanitizeHistory',
     '',
@@ -719,6 +770,18 @@ async function main() {
 
   console.log(md);
   console.log('report written to packages/bench/perf/');
+  if (IS_CHECK) {
+    if (intentRes.p95 > INTENT_P95_CEILING_MS) {
+      console.error(
+        `perf check FAILED: intent-gate p95 ${intentRes.p95.toFixed(2)} ms exceeds the ${INTENT_P95_CEILING_MS} ms ceiling on the 1 MB payload`
+      );
+      process.exitCode = 1;
+    } else {
+      console.log(
+        `perf check: intent-gate p95 ${intentRes.p95.toFixed(2)} ms is within the ${INTENT_P95_CEILING_MS} ms ceiling`
+      );
+    }
+  }
 }
 
 main().catch((e) => {

@@ -63,6 +63,16 @@ class ToolValidationResult:
 
 
 @dataclass
+class ToolIntentEvidence:
+    boundary: Literal["terminal", "mid", "unknown"]
+    trailing_prose_chars: int
+    cues: List[str]
+    quoted_context: bool
+    expect_tool_call: Literal["yes", "no", "unknown"]
+    blocked: List[str] = field(default_factory=list)
+
+
+@dataclass
 class SwallowCheckResult:
     detected: bool
     pattern: Optional[str]
@@ -76,6 +86,20 @@ class SwallowCheckResult:
     warnings: List[str] = field(default_factory=list)
     validation: Optional[ToolValidationResult] = None
     recovered_response: Optional[Dict[str, Any]] = None
+    category: Optional[str] = None
+    intent: Optional[ToolIntentEvidence] = None
+    recovered_calls: Optional[List[ToolCall]] = None
+
+
+def empty_intent() -> ToolIntentEvidence:
+    return ToolIntentEvidence(
+        boundary="unknown",
+        trailing_prose_chars=0,
+        cues=[],
+        quoted_context=False,
+        expect_tool_call="unknown",
+        blocked=[],
+    )
 
 
 def not_detected(engine_hint: str) -> SwallowCheckResult:
@@ -92,4 +116,7 @@ def not_detected(engine_hint: str) -> SwallowCheckResult:
         warnings=[],
         validation=None,
         recovered_response=None,
+        category=None,
+        intent=empty_intent(),
+        recovered_calls=None,
     )

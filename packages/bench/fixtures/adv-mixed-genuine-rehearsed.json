@@ -1,0 +1,34 @@
+{
+  "id": "adv-mixed-genuine-rehearsed",
+  "description": "Adversarial: one rehearsed envelope mid-thought and one terminal genuine call in the same reasoning channel. The gate must recover only the terminal call and name the dropped one.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Covers the roadmap's 'multiple tool calls in one response (some real, some rehearsed)' case; per-call intent state, not all-or-nothing.",
+  "groundTruth": {
+    "classification": "tool_rehearsal",
+    "recoverable": true,
+    "reason": "The final terminal call (Kyoto) is the model's intended invocation; the earlier mid-thought draft (Oslo) is a rehearsal and must not be recovered.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Kyoto" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "toolCallCount": 2, "recoveredCallCount": 1, "category": "tool_rehearsal" },
+  "response": {
+    "id": "chatcmpl-adv-mixed",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nWorking through the options.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Oslo\"}}\n</tool_call>\nThat was only a draft of what the call might look like, and after reconsidering the user request I will now decide on the final approach and continue carefully.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Kyoto\"}}\n</tool_call>\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

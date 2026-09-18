@@ -10,6 +10,15 @@ Status values: **Verified** · **Partially verified** · **Not reproduced** ·
 [reproduction.md](reproduction.md) — nothing is marked Verified without a
 recorded raw response from the real engine.
 
+**Ollama remains unconfirmed.** Swallowed tool calls have been reported in
+community threads for Ollama-hosted Qwen-class models, but there is **no
+sourced engine-matrix row and no raw capture in this repository** — the matrix
+requires an upstream report or a recorded reproduction per row, and neither
+exists yet. Treat Ollama as *reported across inference stacks, not reproduced
+here*; do not infer behavior from "the same model works on another runtime".
+If you can capture a raw response, the [fixture intake](reproduction.md#adding-a-fixture)
+turns it into a pinned case and a sourced row.
+
 | Provider | Version | Model | Pattern | Streaming | Reproduced | Detected | Recovered | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | llama.cpp | b8461 (bug-era) | Qwen3.5-9B-UD-Q4_K_XL | A | both | **Verified** (2026-09-06) | yes (0.95) | yes (`read_file`) | Live repro of [#20837](https://github.com/ggml-org/llama.cpp/issues/20837): multi-turn agent loop, thinking enabled; XML envelope in `reasoning_content` after a prior tool call, `finish: stop`, no `tool_calls`. Pinned as fixtures `llamacpp-b8461-qwen3.5-9b-multiturn-pattern-a` / `-streaming-multiturn-pattern-a`. |

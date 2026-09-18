@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "Contrast with argumentsFromString recoveries, where the string parses to an object. A bare scalar is not dispatchable.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "malformed_envelope",
+    "recoverable": false,
+    "reason": "Arguments are a bare scalar string that does not parse to an object; nothing dispatchable exists."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-string-args",
     "object": "chat.completion",

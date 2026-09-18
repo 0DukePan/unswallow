@@ -9,30 +9,38 @@ from .types import ToolEnvelope
 
 
 class ClassifiedHit:
-    __slots__ = ("envelope", "channel", "think_block")
+    __slots__ = ("envelope", "channel", "think_block", "region_id", "region_text")
 
-    def __init__(self, envelope: ToolEnvelope, channel: str, think_block: bool) -> None:
+    def __init__(self, envelope: ToolEnvelope, channel: str, think_block: bool, region_id: int, region_text: str) -> None:
         self.envelope = envelope
         self.channel = channel
         self.think_block = think_block
+        self.region_id = region_id
+        self.region_text = region_text
 
 
 class Classification:
-    __slots__ = ("pattern", "envelope", "envelopes", "source", "reasons")
+    __slots__ = ("pattern", "envelope", "envelopes", "hits", "all_hits", "source", "reasons", "capped")
 
     def __init__(
         self,
         pattern,
         envelope: Optional[ToolEnvelope],
         envelopes: List[ToolEnvelope],
+        hits: List[ClassifiedHit],
+        all_hits: List[ClassifiedHit],
         source: str,
         reasons: List[str],
+        capped: bool = False,
     ) -> None:
         self.pattern = pattern
         self.envelope = envelope
         self.envelopes = envelopes
+        self.hits = hits
+        self.all_hits = all_hits
         self.source = source
         self.reasons = reasons
+        self.capped = capped
 
 
 def _dedupe(hits: List[ClassifiedHit]):
@@ -57,7 +65,9 @@ def _scan_channel(regions):
         envelopes, region_capped = extract_all_envelopes(region.text)
         capped = capped or region_capped
         for envelope in envelopes:
-            hits.append(ClassifiedHit(envelope, region.channel, region.source == "think-block"))
+            hits.append(
+                ClassifiedHit(envelope, region.channel, region.source == "think-block", region.id, region.text)
+            )
             tail = region.text[envelope.end :].strip()
             if tail:
                 trailing_chars += len(tail)
@@ -75,7 +85,7 @@ def _formats_of(hits: List[ClassifiedHit]) -> str:
 def classify(message: Dict, additional_fields=None) -> Classification:
     tool_calls = message.get("tool_calls")
     if isinstance(tool_calls, list) and tool_calls:
-        return Classification(None, None, [], "content", ["response already carries tool_calls"])
+        return Classification(None, None, [], [], [], "content", ["response already carries tool_calls"])
 
     regions = extract_regions(message, additional_fields)
     reasoning_regions = [r for r in regions if r.channel != "content"]
@@ -112,8 +122,11 @@ def classify(message: Dict, additional_fields=None) -> Classification:
             "A",
             kept[0].envelope,
             [h.envelope for h in kept],
+            kept,
+            reasoning_hits,
             kept[0].channel,
             reasons,
+            reasoning_capped,
         )
 
     content_hits, content_capped, trailing_chars = _scan_channel(content_regions)
@@ -146,8 +159,11 @@ def classify(message: Dict, additional_fields=None) -> Classification:
             "B",
             kept[0].envelope,
             [h.envelope for h in kept],
+            kept,
+            content_hits,
             "content",
             reasons,
+            content_capped,
         )
 
     if any(r.source == "leak" for r in regions):
@@ -155,8 +171,10 @@ def classify(message: Dict, additional_fields=None) -> Classification:
             "C",
             None,
             [],
+            [],
+            [],
             "thinking",
             ["reasoning tags leaked into the content field (unclosed think block)"],
         )
 
-    return Classification(None, None, [], "content", [])
+    return Classification(None, None, [], [], [], "content", [])

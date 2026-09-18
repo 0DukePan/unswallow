@@ -7,7 +7,12 @@
   "source": "self-authored",
   "sourced": false,
   "note": "This is the single most important correctness property: a wrong recovery is worse than the silent failure it replaces.",
-  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0 },
+  "groundTruth": {
+    "classification": "tool_discussion",
+    "recoverable": false,
+    "reason": "The model weighs calling a tool in prose and then answers directly; no structural envelope exists."
+  },
+  "expect": { "detected": false, "pattern": null, "recovered": false, "minConfidence": 0, "category": null },
   "response": {
     "id": "chatcmpl-fp-discussion",
     "object": "chat.completion",

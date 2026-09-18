@@ -25,7 +25,17 @@ export {
 } from './recover';
 export type { LocatedEnvelope, ExtractionResult } from './recover';
 export { extractRegions, splitThinkBlocks, REASONING_FIELDS } from './scan';
-export { checkMessage } from './pipeline';
+export { checkMessage, NOT_DETECTED } from './pipeline';
+export {
+  evaluateIntent,
+  NEGATION_CUES,
+  RETRACTION_CUES,
+  PLANNING_CUES,
+  REPORT_CUES,
+  CUE_WINDOW,
+  TRAILING_PROSE_MIN,
+} from './intent';
+export type { EnvelopeIntent, IntentEvaluation } from './intent';
 export { validateEnvelope } from './validate';
 export { createStreamAccumulator, checkAndRescueStream } from './stream';
 export { observeCheckResult } from './integrations/otel';
@@ -47,6 +57,8 @@ export type {
   ToolEnvelope,
   SwallowCheckResult,
   CheckOptions,
+  ToolIntentCategory,
+  ToolIntentEvidence,
 } from './types';
 
 export function checkAndRescue(
@@ -72,14 +84,24 @@ export function checkAndRescue(
       warnings: ['response has no choices[0].message'],
       validation: null,
       recoveredResponse: null,
+      category: null,
+      intent: {
+        boundary: 'unknown',
+        trailingProseChars: 0,
+        cues: [],
+        quotedContext: false,
+        expectToolCall: 'unknown',
+        blocked: [],
+      },
+      recoveredCalls: null,
     };
   }
 
-  const result = checkMessage(response.choices[0].message, opts);
-  if (result.recovered && result.toolCalls && result.toolCalls.length > 0) {
+  const result = checkMessage(response.choices[0].message, opts, response.choices[0].finish_reason ?? null);
+  if (result.recovered && result.recoveredCalls && result.recoveredCalls.length > 0) {
     result.recoveredResponse = applyRecoveryMany(
       response,
-      result.toolCalls
+      result.recoveredCalls
     );
   }
   return result;

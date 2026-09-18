@@ -7,7 +7,13 @@
   "source": "https://api-docs.deepseek.com/guides/function_calling",
   "sourced": false,
   "note": "Tests the reasoning_content channel + JSON envelope path end to end.",
-  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9 },
+  "groundTruth": {
+    "classification": "swallowed_tool_call",
+    "recoverable": true,
+    "reason": "JSON envelope in reasoning_content between DeepSeek separator tokens; the model decided to call and stopped.",
+    "expectedCalls": [{ "name": "get_weather", "arguments": { "city": "Hangzhou" } }]
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": true, "minConfidence": 0.9, "category": "swallowed_tool_call" },
   "response": {
     "id": "chatcmpl-deepseek",
     "object": "chat.completion",

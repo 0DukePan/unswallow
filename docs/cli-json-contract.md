@@ -25,10 +25,13 @@ The report contains:
 | --- | --- |
 | `schemaVersion` | CLI-report schema version |
 | `detected`, `pattern`, `recovered` | detection and recovery outcome |
+| `category` | detection-layer classification: `swallowed_tool_call` / `tool_rehearsal` / `quoted_tool_call`, or `null` |
+| `intent` | the recovery-gate evidence: `boundary` (`terminal`/`mid`/`unknown`), `trailingProseChars`, `cues`, `quotedContext`, `expectToolCall`, `blocked[]` |
 | `source` | response field where the envelope was found |
-| `toolCall`, `toolCalls` | extracted call(s), if any |
+| `toolCall`, `toolCalls` | extracted call(s), if any — `toolCalls` is every candidate |
+| `recoveredCalls` | the gate-passing subset that `recoveredResponse` was built from, or `null` |
 | `validation` | structural, name, and schema validation outcome |
-| `confidence`, `warnings` | confidence and explanatory diagnostics |
+| `confidence`, `warnings` | confidence and explanatory diagnostics (blocked envelopes are named here) |
 | `matrixMatch` | matching compatibility row, including source and fix hint |
 | `recoveredResponse` | healed response only when recovery was allowed |
 

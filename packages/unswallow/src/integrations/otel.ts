@@ -73,6 +73,7 @@ export function observeCheckResult(
     const metricAttrs = {
       engine: String(attrs.engine),
       pattern: String(attrs.pattern),
+      category: result.category ?? 'none',
       name_known: String(attrs.name_known),
       schema_valid: String(attrs.schema_valid),
     };
@@ -86,6 +87,11 @@ export function observeCheckResult(
     opts.meter.createCounter('false_positive_guard_total', {
       description: 'Detections withheld by a recovery safety gate',
     }).add(guardBlocked ? 1 : 0, metricAttrs);
+    const intentBlocked =
+      result.detected && !result.recovered && (result.intent?.blocked.length ?? 0) > 0;
+    opts.meter.createCounter('recovery_blocked_total', {
+      description: 'Candidates withheld by the intent gate (per response)',
+    }).add(intentBlocked ? 1 : 0, metricAttrs);
     if (result.pattern) {
       opts.meter.createCounter(`pattern_${result.pattern.toLowerCase()}_total`, {
         description: `Detected Pattern ${result.pattern} responses`,

@@ -79,6 +79,26 @@ export interface ToolValidationResult {
   errors: string[];
 }
 
+export type ToolIntentCategory =
+  | 'swallowed_tool_call'
+  | 'tool_rehearsal'
+  | 'quoted_tool_call';
+
+export interface ToolIntentEvidence {
+  /** Envelope position relative to its reasoning-channel boundary. */
+  boundary: 'terminal' | 'mid' | 'unknown';
+  /** Non-whitespace reasoning text (tags excluded) after the furthest envelope. */
+  trailingProseChars: number;
+  /** Matched discussion/negation cues near an envelope. */
+  cues: string[];
+  /** Whether an envelope sat inside quotation marks or reported text. */
+  quotedContext: boolean;
+  /** Caller-declared agent state: was a tool call expected this turn? */
+  expectToolCall: 'yes' | 'no' | 'unknown';
+  /** Reasons recovery was withheld for at least one envelope. */
+  blocked: string[];
+}
+
 export interface SwallowCheckResult {
   detected: boolean;
   pattern: 'A' | 'B' | 'C' | null;
@@ -92,6 +112,12 @@ export interface SwallowCheckResult {
   warnings: string[];
   validation: ToolValidationResult | null;
   recoveredResponse: RawProviderResponse | null;
+  /** Detection-layer classification; null when nothing was detected. */
+  category: ToolIntentCategory | null;
+  /** Deterministic intent evidence behind the classification and recovery gate. */
+  intent: ToolIntentEvidence;
+  /** The gate-passing subset of toolCalls that was actually recovered. */
+  recoveredCalls: Array<{ name: string; arguments: Record<string, unknown> }> | null;
 }
 
 export interface CheckOptions {
@@ -104,4 +130,16 @@ export interface CheckOptions {
   minConfidence?: number;
   /** Recover only when supplied tool schemas validate the recovered arguments. */
   strictSchema?: boolean;
+  /**
+   * Recovery gate strictness. `block` (default) withholds recovery when there is
+   * deterministic evidence against execution; `strict` additionally requires
+   * positive corroboration; `off` restores the pre-intent-gate behavior.
+   */
+  intentGate?: 'block' | 'strict' | 'off';
+  /** Agent state: `false` withholds recovery when no call was expected this turn. */
+  expectToolCall?: boolean;
+  /** Tool names treated as side-effecting: detected but not recovered by default. */
+  sideEffectingTools?: string[];
+  /** Opt back in to recovering calls whose names are listed in sideEffectingTools. */
+  recoverSideEffecting?: boolean;
 }

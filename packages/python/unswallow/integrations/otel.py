@@ -53,6 +53,7 @@ def observe_check_result(
         metric_attrs = {
             "engine": str(attrs["engine"]),
             "pattern": str(attrs["pattern"]),
+            "category": result.category or "none",
             "name_known": str(attrs["name_known"]),
             "schema_valid": str(attrs["schema_valid"]),
         }
@@ -60,6 +61,8 @@ def observe_check_result(
         meter.create_counter("recovered_tool_calls_total", description="Tool calls recovered from structurally valid envelopes").add(len(result.tool_calls or []) if result.recovered else 0, metric_attrs)
         blocked = result.detected and not result.recovered and result.pattern != "C"
         meter.create_counter("false_positive_guard_total", description="Detections withheld by a recovery safety gate").add(1 if blocked else 0, metric_attrs)
+        intent_blocked = bool(result.detected and not result.recovered and result.intent and result.intent.blocked)
+        meter.create_counter("recovery_blocked_total", description="Candidates withheld by the intent gate (per response)").add(1 if intent_blocked else 0, metric_attrs)
         if result.pattern:
             meter.create_counter("pattern_{}_total".format(result.pattern.lower()), description="Detected Pattern {} responses".format(result.pattern)).add(1 if result.detected else 0, metric_attrs)
         if isinstance(recovery_latency_ms, (int, float)) and recovery_latency_ms >= 0:

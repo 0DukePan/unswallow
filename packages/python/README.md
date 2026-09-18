@@ -6,6 +6,8 @@ The 1:1 Python mirror of the `unswallow` TypeScript library: detect and recover 
 pip install unswallow
 ```
 
+**35/35 pinned fixtures · 100% detection recall · 0 unsafe recoveries · 0 runtime dependencies** — the same adversarial corpus as the TypeScript core, with exact cross-language parity on confidence and category. Reports: [correctness](https://github.com/0DukePan/unswallow/blob/main/packages/bench/results/results.md) · [safety](https://github.com/0DukePan/unswallow/blob/main/packages/bench/results/fp-results.md) · [performance](https://github.com/0DukePan/unswallow/blob/main/packages/bench/perf/results.md).
+
 ```python
 from unswallow import check_and_rescue
 
@@ -21,6 +23,8 @@ if result.recovered and result.recovered_response:
 ```
 
 Same interface, same semantics, same bundled matrix data (synced from `packages/matrix/data/engine-matrix.json`), zero runtime dependencies, Python 3.9+.
+
+Recovery is gate-guarded: structurally complete candidates are detected, but recovery is withheld on deterministic evidence against execution — quoted/negated/retracted calls, mid-thought drafts, schema violations, unknown tool names, `expect_tool_call=False`, or names listed in `side_effecting_tools`. Tune with `intent_gate="block" | "strict" | "off"`; see [`docs/intent-guard.md`](https://github.com/0DukePan/unswallow/blob/main/docs/intent-guard.md).
 
 ## Streaming
 

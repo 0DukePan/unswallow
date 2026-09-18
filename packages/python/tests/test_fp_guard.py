@@ -44,6 +44,88 @@ class FpGuardTest(unittest.TestCase):
         result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
         self.assertFalse(result.detected)
 
+    # Adversarial corpus at unit level — the same shapes pinned as the adv-* fixtures.
+
+    def test_complete_envelope_with_negated_language_is_not_recovered(self):
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    '< thinking>\nThe model would output {"name": "get_weather", "arguments": '
+                    '{"city": "Tokyo"}}\nDo not execute this — illustrative only.\n< response>\n'
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertEqual(result.category, "quoted_tool_call")
+        self.assertFalse(result.recovered)
+
+    def test_mid_reasoning_envelope_is_a_rehearsal(self):
+        prose = (
+            "Pulling live weather is not necessary for a packing list, and the user did not ask for current "
+            "conditions. I will explain seasonal expectations instead and keep the answer concise."
+        )
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    "< thinking>\nLet me weigh the options.\n"
+                    '{"name": "get_weather", "arguments": {"city": "Lisbon"}}\n'
+                    + prose
+                    + "\n< response>\n"
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertEqual(result.category, "tool_rehearsal")
+        self.assertFalse(result.recovered)
+
+    def test_retracted_call_is_not_recovered(self):
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    '< thinking>\n{"name": "get_weather", "arguments": {"city": "Cairo"}}\n'
+                    "Actually, no — scratch that. I will answer directly instead.\n< response>\n"
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.detected)
+        self.assertEqual(result.category, "tool_rehearsal")
+        self.assertFalse(result.recovered)
+
+    def test_mixed_rehearsed_and_genuine_recovers_only_the_terminal_call(self):
+        prose = (
+            "That was only a draft of what the call might look like, and after reconsidering the user request I "
+            "will now decide on the final approach and continue carefully."
+        )
+        r = response(
+            {
+                "role": "assistant",
+                "content": "",
+                "reasoning": (
+                    "< thinking>\nWorking through options.\n"
+                    '{"name": "get_weather", "arguments": {"city": "Oslo"}}\n'
+                    + prose
+                    + '\n{"name": "get_weather", "arguments": {"city": "Kyoto"}}\n< response>\n'
+                ),
+                "tool_calls": [],
+            }
+        )
+        result = check_and_rescue(r, engine_hint="vllm", engine_version="0.19.0")
+        self.assertTrue(result.recovered)
+        self.assertEqual(len(result.recovered_calls), 1)
+        self.assertEqual(result.recovered_calls[0].arguments, {"city": "Kyoto"})
+
     def test_non_object_arguments_rejected(self):
         r = response(
             {

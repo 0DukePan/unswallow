@@ -1,0 +1,33 @@
+{
+  "id": "adv-quoted-report-context",
+  "description": "Adversarial: a complete envelope reported as what the model would output, inside a fenced block. Report framing must withhold recovery (the fence alone must not be the reason).",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Reported/quoted text around an envelope is a hard veto; a bare code fence is not.",
+  "groundTruth": {
+    "classification": "quoted_tool_call",
+    "recoverable": false,
+    "reason": "The envelope is quoted as a historical/illustrative output, not emitted as a decision."
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": false, "minConfidence": 0.9, "category": "quoted_tool_call" },
+  "response": {
+    "id": "chatcmpl-adv-quoted-report",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nIn the previous turn the model would output:\n```json\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Oslo\"}}\n```\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

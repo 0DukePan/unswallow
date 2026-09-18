@@ -1,0 +1,33 @@
+{
+  "id": "adv-rehearsal-mid-reasoning",
+  "description": "Adversarial: a complete envelope drafted mid-thought, followed by substantial reasoning prose that concludes the answer without the tool. Position evidence must classify it as a rehearsal.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "No negation language is present — midpoint position alone carries the classification, per the roadmap's signal weighting.",
+  "groundTruth": {
+    "classification": "tool_rehearsal",
+    "recoverable": false,
+    "reason": "The model drafts a possible call while planning and then answers without it; the envelope never ends the reasoning channel."
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": false, "minConfidence": 0.9, "category": "tool_rehearsal" },
+  "response": {
+    "id": "chatcmpl-adv-rehearsal",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\nLet me think about what the user actually needs here. The question mentions weather, but it is mostly about travel planning and packing.\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Lisbon\"}}\n</tool_call>\nPulling live weather is not necessary for a packing list, and the user did not ask for current conditions. I will explain seasonal expectations instead and keep the answer concise.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

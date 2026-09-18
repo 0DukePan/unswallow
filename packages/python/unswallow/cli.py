@@ -121,18 +121,21 @@ def _render(result: SwallowCheckResult, engine: str, version: str) -> None:
     for w in result.warnings:
         if "tool-call envelope" in w:
             print("  " + w)
-    if result.recovered and result.tool_calls:
+    if result.recovered and result.recovered_calls:
         print()
         print("  BEFORE                  AFTER")
-        print("  tool_calls: []          tool_calls: [{}]".format(", ".join("{}(\u2026)".format(c.name) for c in result.tool_calls)))
+        print("  tool_calls: []          tool_calls: [{}]".format(", ".join("{}(\u2026)".format(c.name) for c in result.recovered_calls)))
         print("  finish_reason: stop     finish_reason: tool_calls")
         print()
-        for c in result.tool_calls:
+        for c in result.recovered_calls:
             print("  recovered: {}({})".format(c.name, json.dumps(c.arguments)))
     elif pattern == "C":
         print("  detection-only — no recovery performed (pattern C, see docs)")
+    elif result.detected:
+        print("  recovery withheld by the intent gate — see warnings below")
     print()
     print("confidence    : {} {:.2f}".format(_bar(result.confidence), result.confidence))
+    print("category      : {}".format(result.category or "\u2014"))
     match = result.matrix_match
     if match:
         print("matrix match  : {} {} \u2192 {}".format(match.engine, match.version_range, match.behavior))
@@ -211,12 +214,23 @@ def _cmd_check(args: argparse.Namespace) -> int:
 def _to_dict(result: SwallowCheckResult) -> dict:
     matrix = result.matrix_match
     validation = result.validation
+    intent = result.intent
     return {
         "detected": result.detected,
         "pattern": result.pattern,
         "toolCall": {"name": result.tool_call.name, "arguments": result.tool_call.arguments} if result.tool_call else None,
         "toolCalls": [{"name": c.name, "arguments": c.arguments} for c in result.tool_calls] if result.tool_calls else None,
         "recovered": result.recovered,
+        "category": result.category,
+        "intent": {
+            "boundary": intent.boundary,
+            "trailingProseChars": intent.trailing_prose_chars,
+            "cues": intent.cues,
+            "quotedContext": intent.quoted_context,
+            "expectToolCall": intent.expect_tool_call,
+            "blocked": intent.blocked,
+        } if intent else None,
+        "recoveredCalls": [{"name": c.name, "arguments": c.arguments} for c in result.recovered_calls] if result.recovered_calls else None,
         "source": result.source,
         "engineHint": result.engine_hint,
         "matrixMatch": {

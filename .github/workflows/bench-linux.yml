@@ -26,8 +26,8 @@ jobs:
           python-version: '3.13'
       - run: npm ci
       - run: npm run build --workspace unswallow
-      - run: node --expose-gc packages/bench/perf.mjs
-      - run: python packages/python/bench/perf_python.py
+      - run: node --expose-gc packages/bench/perf.mjs --check
+      - run: python packages/python/bench/perf_python.py --check
       - name: Keep Windows numbers intact; publish Linux numbers alongside
         run: |
           cp packages/bench/perf/results.md packages/bench/perf/results-linux.md

@@ -1,0 +1,33 @@
+{
+  "id": "adv-retraction-after-call",
+  "description": "Adversarial: a complete envelope followed by an explicit retraction. The reframing must withhold recovery and classify the candidate as a rehearsal.",
+  "engine": "vllm",
+  "version": "0.19.0",
+  "pattern": "A",
+  "source": "self-authored",
+  "sourced": false,
+  "note": "Covers the roadmap's 'followed by an explanation that reframes or retracts it' case.",
+  "groundTruth": {
+    "classification": "tool_rehearsal",
+    "recoverable": false,
+    "reason": "The call is written and then explicitly retracted in the same turn; executing it would contradict the model's conclusion."
+  },
+  "expect": { "detected": true, "pattern": "A", "recovered": false, "minConfidence": 0.9, "category": "tool_rehearsal" },
+  "response": {
+    "id": "chatcmpl-adv-retraction",
+    "object": "chat.completion",
+    "model": "Qwen/Qwen3.5-35B-A3B-FP8",
+    "choices": [
+      {
+        "index": 0,
+        "finish_reason": "stop",
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "< thinking>\n<tool_call>\n{\"name\": \"get_weather\", \"arguments\": {\"city\": \"Cairo\"}}\n</tool_call>\nActually, no — scratch that. I will answer directly instead.\n< response>\n",
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

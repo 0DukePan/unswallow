@@ -1,6 +1,17 @@
 from __future__ import annotations
 
 from .history import ensure_reasoning_echo, sanitize_history, strip_reasoning_tags
+from .intent import (
+    CUE_WINDOW,
+    NEGATION_CUES,
+    PLANNING_CUES,
+    REPORT_CUES,
+    RETRACTION_CUES,
+    TRAILING_PROSE_MIN,
+    EnvelopeIntent,
+    IntentEvaluation,
+    evaluate_intent,
+)
 from .matrix import (
     get_matrix_file,
     load_matrix,
@@ -24,6 +35,7 @@ from .stream import StreamAccumulator, check_and_rescue_stream
 from .validate import validate_envelope
 from .types import (
     SwallowCheckResult,
+    ToolIntentEvidence,
     ToolValidationResult,
     SwallowMatrixEntry,
     ToolCall,
@@ -41,6 +53,15 @@ __all__ = [
     "strip_reasoning_tags",
     "ensure_reasoning_echo",
     "validate_envelope",
+    "evaluate_intent",
+    "NEGATION_CUES",
+    "RETRACTION_CUES",
+    "PLANNING_CUES",
+    "REPORT_CUES",
+    "CUE_WINDOW",
+    "TRAILING_PROSE_MIN",
+    "EnvelopeIntent",
+    "IntentEvaluation",
     "load_matrix",
     "get_matrix_file",
     "match_matrix_entry",
@@ -59,6 +80,7 @@ __all__ = [
     "SwallowMatrixEntry",
     "ToolCall",
     "ToolEnvelope",
+    "ToolIntentEvidence",
     "ToolValidationResult",
     "__version__",
     "observe_check_result",

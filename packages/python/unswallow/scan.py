@@ -10,16 +10,18 @@ THINK_TAG = re.compile(r"<\s*(\/?)\s*([a-zA-Z0-9_.:\-]*?\s*(?:think|response))[^
 
 
 class Region:
-    __slots__ = ("channel", "source", "text")
+    __slots__ = ("id", "channel", "source", "text")
 
-    def __init__(self, channel: str, source: str, text: str) -> None:
+    def __init__(self, channel: str, source: str, text: str, region_id: int = 0) -> None:
+        self.id = region_id
         self.channel = channel
         self.source = source
         self.text = text
 
 
-def split_think_blocks(text: str) -> List[Region]:
+def split_think_blocks(text: str, start_id: int = 0) -> List[Region]:
     out: List[Region] = []
+    next_id = start_id
     depth = 0
     last = 0
     block_start = 0
@@ -31,22 +33,26 @@ def split_think_blocks(text: str) -> List[Region]:
         if is_open_think:
             if depth == 0:
                 if m.start() > last:
-                    out.append(Region("content", "field", text[last : m.start()]))
+                    out.append(Region("content", "field", text[last : m.start()], next_id))
+                    next_id += 1
                 block_start = m.start()
             depth += 1
         else:
             if depth > 0:
                 depth -= 1
                 if depth == 0:
-                    out.append(Region("thinking", "think-block", text[block_start : m.end()]))
+                    out.append(Region("thinking", "think-block", text[block_start : m.end()], next_id))
+                    next_id += 1
                     last = m.end()
     if depth > 0:
-        out.append(Region("thinking", "leak", text[block_start:]))
+        out.append(Region("thinking", "leak", text[block_start:], next_id))
+        next_id += 1
         last = len(text)
     if last < len(text):
-        out.append(Region("content", "field", text[last:]))
+        out.append(Region("content", "field", text[last:], next_id))
+        next_id += 1
     if not out and text:
-        out.append(Region("content", "field", text))
+        out.append(Region("content", "field", text, next_id))
     return out
 
 
@@ -56,8 +62,8 @@ def extract_regions(message: Dict, additional_fields=None) -> List[Region]:
     for f in fields:
         v = message.get(f)
         if isinstance(v, str) and v:
-            regions.append(Region(f, "field", v))
+            regions.append(Region(f, "field", v, len(regions)))
     content = message.get("content")
     if isinstance(content, str) and content:
-        regions.extend(split_think_blocks(content))
+        regions.extend(split_think_blocks(content, len(regions)))
     return regions
