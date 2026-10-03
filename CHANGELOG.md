@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-03
+
+Minor bump: the CLI contract changed (new exit code, new JSON fields,
+`check --fixture` exit behavior), so `0.x` honesty calls for `0.3.0`, not `0.2.1`.
+
+### Fixed
+
+- **Parallel `<function=…>` calls silently lost.** `findClose` built its
+  closing-tag regex without the `g` flag, so `lastIndex` was ignored and only
+  the first envelope in a region was found; sibling markup then read as
+  trailing prose and the intent guard blocked everything. All parallel
+  envelopes are now recovered.
+- **Proxy streamed blocked calls.** The streaming tail was built from
+  `toolCalls` (all candidates) instead of `recoveredCalls` (gate-passing
+  only); rehearsed/quoted calls reached the client. Now gate-passing only,
+  with `finish_reason` passed to the check.
+- **Proxy hung on large streams.** A stream over the 1 MB accumulator guard
+  threw inside an async handler with no `catch` (unhandled rejection, client
+  hang). It now forwards untouched, skips recovery, and a top-level `catch`
+  keeps the proxy alive.
+- **Proxy dropped most `CheckOptions`.** Only 5 of 11 fields were forwarded;
+  `intentGate`, `minConfidence`, `strictSchema`, `sideEffectingTools`,
+  `expectToolCall`, and `recoverSideEffecting` now flow through.
+- **OTel overcounted partial recovery.** `recovered_tool_calls_total` counted
+  `toolCalls.length`; it counts `recoveredCalls.length`. Instruments are
+  cached once per meter.
+- **LiteLLM callback over-reported.** `check_message_dict` returned
+  `tool_calls` (all candidates); it returns `recovered_calls`.
+
+### Changed
+
+- **CLI is tri-state.** `check --endpoint` / `doctor` report `healthy`,
+  `affected`, or `inconclusive` (exit `4` when no tool call was elicited).
+  `check --json` carries `schemaVersion`, `status`, `passes[]`;
+  `doctor --json` status gains `inconclusive`. `check --fixture` exits `1`
+  on detection (like `inspect`); the bundled demo stays exit `0`.
+  New flags: `--stream`, `--samples`, `--mode observe`, `--intent-gate`,
+  `--min-confidence`, `--strict-schema`, `--side-effecting`, `--request-aware`;
+  `--json`/`--stream` are valueless; API key via `UNSWALLOW_API_KEY`.
+  `x-unswallow` reports `category`, `blocked`, `observeOnly`.
+- **Docs honesty.** “zero runtime dependencies” → “zero third-party
+  dependencies” (`unswallow` depends on `unswallow-matrix`); Python blurb
+  no longer claims “1:1 mirror”.
+
 ## [Unreleased]
 
 ### Added

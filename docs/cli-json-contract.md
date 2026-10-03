@@ -1,8 +1,12 @@
 # CLI JSON contract
 
-`unswallow inspect --json` and `unswallow doctor --json` are stable,
-machine-readable interfaces for CI and incident tooling. Their top-level
-`schemaVersion` is currently the string `"1"`.
+`unswallow check --json`, `unswallow inspect --json` and `unswallow doctor --json`
+are stable, machine-readable interfaces for CI and incident tooling. Their
+top-level `schemaVersion` is currently the string `"1"`.
+
+Exit codes: `0` = healthy / not affected, `1` = affected, `2` = error,
+`3` = usage error, `4` = inconclusive (the probe never elicited a tool call;
+not a clean bill of health).
 
 ## Compatibility policy
 
@@ -38,18 +42,37 @@ The report contains:
 `validation.schemaValid` is `"unknown"` if a supplied schema is malformed or
 cannot safely be evaluated. It is never reported as `"yes"` in that case.
 
+## `check --endpoint --json` / `check --fixture --json`
+
+`check --fixture` exits `1` on a detected swallow (like `inspect`); the
+bundled self-test demo still exits `0`. `check --endpoint` is tri-state:
+`healthy` (parsed `tool_calls`), `affected`, or `inconclusive`.
+
+The report contains:
+
+| field | meaning |
+| --- | --- |
+| `schemaVersion` | CLI-report schema version (`"1"`) |
+| `status` | `healthy`, `affected`, or `inconclusive` |
+| `passes` | per-probe passes: `{mode: non-streaming/streaming, state, probeStatus}[]` (`--stream` adds the streaming pass, `--samples <n>` repeats up to 20) |
+| `probeStatus` | shown pass upstream HTTP status |
+| … | plus the full check-result fields (`detected`, `pattern`, `recovered`, `category`, `intent`, `recoveredCalls`, `validation`, `confidence`, `warnings`, `matrixMatch`, `recoveredResponse`) |
+
+Recovered probe calls are validated against the probe's own tool schema
+(`get_weather({city})`).
+
 ## `doctor --json`
 
 Exit status is `0` for a healthy probe, `1` for an affected or
-recovery-supported probe, and `2` for network, provider, output-file, or
-processing failures.
+recovery-supported probe, `4` for an inconclusive probe (no tool call
+elicited), and `2` for network, provider, output-file, or processing failures.
 
 The report contains:
 
 | field | meaning |
 | --- | --- |
 | `schemaVersion` | CLI-report schema version |
-| `status` | `healthy`, `affected`, or `recovery-supported` |
+| `status` | `healthy`, `affected`, `recovery-supported`, or `inconclusive` |
 | `probeStatus` | upstream HTTP status |
 | `rawResponseFile` | `--out` file path, or `null` |
 | `result` | the complete check result described above |

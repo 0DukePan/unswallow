@@ -1,6 +1,6 @@
 # unswallow (Python)
 
-The 1:1 Python mirror of the `unswallow` TypeScript library: detect and recover tool calls trapped inside a model's reasoning channel — the reasoning-channel swallow bug class across vLLM, SGLang, and llama.cpp.
+The stdlib-only Python port of the `unswallow` TypeScript library: detect and recover tool calls trapped inside a model's reasoning channel — the reasoning-channel swallow bug class across vLLM, SGLang, and llama.cpp. Same detection and recovery core with the same intent guard, schema validation, and bundled matrix data.
 
 ![unswallow](https://raw.githubusercontent.com/0DukePan/unswallow/main/docs/social-preview.png)
 

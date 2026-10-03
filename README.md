@@ -8,14 +8,14 @@
   <img src="https://img.shields.io/npm/v/unswallow?style=flat-square&color=111111&label=npm" alt="npm">
   <img src="https://img.shields.io/pypi/v/unswallow?style=flat-square&color=111111&label=pypi" alt="PyPI">
   <a href="https://github.com/0DukePan/unswallow/actions/workflows/ci.yml"><img src="https://github.com/0DukePan/unswallow/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/runtime%20deps-0-111111?style=flat-square" alt="zero runtime dependencies">
+  <img src="https://img.shields.io/badge/third--party%20deps-0-111111?style=flat-square" alt="zero third-party dependencies">
   <img src="https://img.shields.io/badge/works%20with-vLLM%20%C2%B7%20SGLang%20%C2%B7%20llama.cpp-111111?style=flat-square" alt="Works with vLLM, SGLang and llama.cpp">
   <img src="https://img.shields.io/badge/types-TypeScript%20%2B%20Python-111111?style=flat-square" alt="TypeScript and Python">
   <img src="https://img.shields.io/badge/license-MIT-111111?style=flat-square" alt="MIT license">
 </p>
 
 <p align="center">
-  <strong>35/35 pinned fixtures &middot; 100% detection recall &middot; 0 unsafe recoveries &middot; 0 false negatives &middot; 0 runtime dependencies</strong><br>
+  <strong>35/35 pinned fixtures &middot; 100% detection recall &middot; 0 unsafe recoveries &middot; 0 false negatives &middot; 0 third-party dependencies</strong><br>
   <sub>Measured on a 35-fixture adversarial corpus (11 genuine swallows, 19 non-executable cases, 200 seeded synthetic negatives) and rerunnable on your hardware. The corpus is small and adversarial on purpose — these are regression counts over documented examples, not population estimates. Method and raw results: <a href="packages/bench/results/results.md">correctness</a> &middot; <a href="packages/bench/results/fp-results.md">safety</a> &middot; <a href="packages/bench/perf/results.md">performance</a> &middot; <a href="docs/false-positives.md">methodology</a>.</sub>
 </p>
 
@@ -27,7 +27,7 @@
 
 No crash. No error. No log line. Just `HTTP 200`, `finish_reason: stop`, and `tool_calls: []` — your agent reads "the model chose not to act" and silently stops mid-task.
 
-The call is sitting, fully formed, in the wrong channel: `reasoning` / `reasoning_content` / `thinking`. The server's parser never looked there. unswallow finds it, checks whether the model actually meant it, and puts it back — one function, zero runtime dependencies, ~0.1 ms on realistic payloads.
+The call is sitting, fully formed, in the wrong channel: `reasoning` / `reasoning_content` / `thinking`. The server's parser never looked there. unswallow finds it, checks whether the model actually meant it, and puts it back — one function, zero third-party dependencies, ~0.1 ms on realistic payloads.
 
 Works against **vLLM, SGLang, and llama.cpp** swallow shapes, with a sourced engine/version matrix that tracks where the bug is live.
 
@@ -257,8 +257,8 @@ The matrix is published as its own package, `unswallow-matrix`, **versioned inde
 ## Install & use
 
 ```bash
-npm i unswallow        # TypeScript/Node ≥ 18.17 — library + CLI + proxy, zero runtime deps
-pip install unswallow  # Python ≥ 3.9 — 1:1 stdlib-only mirror, same matrix data, same CLI
+npm i unswallow        # TypeScript/Node ≥ 18.17 — library + CLI + proxy, zero third-party deps
+pip install unswallow  # Python ≥ 3.9 — stdlib-only, same matrix data, same CLI (check/inspect/doctor/matrix) and same intent guard
 ```
 
 ### Streaming
@@ -290,8 +290,9 @@ An OpenAI-compatible passthrough that heals responses inline — scoped strictly
 npx unswallow proxy --upstream http://localhost:8000/v1 --port 8787 --engine vllm --version 0.19.0
 ```
 
-- **Non-streaming:** response healed in place; `x-unswallow` header reports `{detected, pattern, recovered, confidence}`.
-- **Streaming:** chunks forwarded live; the terminal `finish_reason: stop` chunk is held, and on a swallow a recovery tail (`tool_calls` delta + `finish_reason: tool_calls`) is emitted in its place, followed by a diagnostics event. Parallel calls emit one delta per recovered call.
+- **Non-streaming:** response healed in place; `x-unswallow` header reports `{detected, pattern, recovered, confidence, category, blocked, observeOnly}`.
+- **Streaming:** chunks forwarded live; the terminal `finish_reason: stop` chunk is held, and on a swallow a recovery tail (`tool_calls` delta + `finish_reason: tool_calls`) is emitted in its place, followed by a diagnostics event. Only gate-passing calls are emitted; parallel calls emit one delta per recovered call. Streams over the accumulator guard forward untouched with recovery skipped.
+- **Modes:** `--mode recover` (default) heals; `--mode observe` detects, logs and reports but never rewrites. Opt-in `--request-aware` withholds recovery the client never offered (`tool_choice: none` or unlisted tool).
 - **Abort propagation:** if your client drops the connection mid-stream, the upstream request is cancelled instead of drained.
 - Everything else (other routes, methods, healthy responses) passes through untouched.
 
@@ -310,7 +311,7 @@ npx unswallow matrix                                    # browse the engine/vers
 npx unswallow check --endpoint ... --json               # machine-readable (versioned contract)
 ```
 
-Exit codes for live probes: `0` = not affected, `1` = affected (recovered or not), `2` = error. Wire it into CI the way you'd wire a health check.
+Exit codes: `0` = healthy / not affected, `1` = affected, `2` = error, `3` = usage error, `4` = inconclusive (probe never elicited a tool call). `check --endpoint --stream` also probes streaming; `--samples <n>` repeats (max 20). `check --json` carries `schemaVersion`, `status`, `passes[]`. Wire it into CI the way you'd wire a health check.
 
 ### Python
 
