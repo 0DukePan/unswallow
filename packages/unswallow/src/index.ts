@@ -39,6 +39,14 @@ export type { EnvelopeIntent, IntentEvaluation } from './intent';
 export { validateEnvelope } from './validate';
 export { createStreamAccumulator, checkAndRescueStream } from './stream';
 export { observeCheckResult } from './integrations/otel';
+export type {
+  ObservabilityOptions,
+  SpanLike,
+  TracerLike,
+  CounterLike,
+  HistogramLike,
+  MeterLike,
+} from './integrations/otel';
 export type { StreamChunk, StreamDelta, StreamAccumulatorOptions } from './stream';
 export { ensureReasoningEcho, sanitizeHistory, stripReasoningTags } from './history';
 export type { HistoryMessage, EnsureReasoningEchoOptions, SanitizeHistoryOptions } from './history';

@@ -1,4 +1,4 @@
-import { checkMessage } from './index';
+import { checkMessage } from './pipeline';
 import { applyRecoveryMany } from './recover';
 import type {
   CheckOptions,
