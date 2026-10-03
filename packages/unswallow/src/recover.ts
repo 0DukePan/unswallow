@@ -18,7 +18,7 @@ export interface ExtractionResult {
 }
 
 function findClose(text: string, tag: string, from: number): { start: number; end: number } | null {
-  const close = new RegExp(`</${tag}\\s*>`, 'i');
+  const close = new RegExp(`</${tag}\\s*>`, 'gi');
   close.lastIndex = from;
   const m = close.exec(text);
   if (!m) return null;
