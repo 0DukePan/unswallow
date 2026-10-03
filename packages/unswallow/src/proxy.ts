@@ -1,11 +1,14 @@
 import http from 'node:http';
-import { checkAndRescue, checkMessage, createStreamAccumulator } from './index';
+import { checkMessage } from './pipeline';
+import { createStreamAccumulator } from './stream';
 import { applyRecoveryMany } from './recover';
+import { normalizeEngine } from './matrix';
 import type { StreamChunk } from './stream';
 import type {
   CheckOptions,
   RawProviderResponse,
   SwallowCheckResult,
+  ToolSchema,
 } from './types';
 
 export interface ProxyOptions extends CheckOptions {
@@ -13,6 +16,10 @@ export interface ProxyOptions extends CheckOptions {
   prefix?: string;
   maxBodyBytes?: number;
   onResult?: (result: SwallowCheckResult, path: string) => void;
+  /** Opt-in: derive expectToolCall / toolSchemas from the client's request tools. */
+  requestAware?: boolean;
+  /** Detect and report but never rewrite a response. */
+  observeOnly?: boolean;
 }
 
 export interface ProxyServer extends http.Server {
@@ -128,108 +135,220 @@ function ssePayload(chunk: unknown): string {
   return `data: ${JSON.stringify(chunk)}\n\n`;
 }
 
+function report(result: SwallowCheckResult, observeOnly: boolean): Record<string, unknown> {
+  return {
+    detected: result.detected,
+    pattern: result.pattern,
+    recovered: result.recovered,
+    confidence: result.confidence,
+    category: result.category,
+    blocked: result.intent?.blocked.length ?? 0,
+    observeOnly,
+  };
+}
+
+/**
+ * Opt-in request-aware gating: use the client's own request tools to avoid
+ * fabricating a call the caller never offered. With requestAware off the
+ * proxy behaves exactly as before (request payload is ignored).
+ */
+function effectiveCheckOpts(
+  base: CheckOptions,
+  payload: unknown,
+  requestAware?: boolean
+): CheckOptions {
+  if (!requestAware) return base;
+  const p = (payload ?? {}) as { tools?: unknown; tool_choice?: unknown };
+  const tools = Array.isArray(p.tools) ? (p.tools as ToolSchema[]) : [];
+  const hasTools = tools.length > 0;
+  const toolChoiceNone = p.tool_choice === 'none';
+  if (!hasTools || toolChoiceNone) {
+    const next: CheckOptions = { ...base, expectToolCall: false };
+    if (hasTools) next.toolSchemas = tools;
+    return next;
+  }
+  return { ...base, toolSchemas: tools };
+}
+
+function checkResponse(
+  response: RawProviderResponse,
+  opts: CheckOptions
+): SwallowCheckResult {
+  if (
+    !response ||
+    !Array.isArray((response as { choices?: unknown }).choices) ||
+    (response as { choices: unknown[] }).choices.length === 0 ||
+    !(response as { choices: Array<{ message?: unknown }> }).choices[0].message
+  ) {
+    const engine = normalizeEngine(opts.engineHint);
+    return {
+      detected: false,
+      pattern: null,
+      toolCall: null,
+      toolCalls: null,
+      recovered: false,
+      source: 'content',
+      engineHint: engine,
+      matrixMatch: null,
+      confidence: 0,
+      warnings: ['response has no choices[0].message'],
+      validation: null,
+      recoveredResponse: null,
+      category: null,
+      intent: {
+        boundary: 'unknown',
+        trailingProseChars: 0,
+        cues: [],
+        quotedContext: false,
+        expectToolCall: 'unknown',
+        blocked: [],
+      },
+      recoveredCalls: null,
+    };
+  }
+  const result = checkMessage(
+    response.choices[0].message,
+    opts,
+    response.choices[0].finish_reason ?? null
+  );
+  if (result.recovered && result.recoveredCalls && result.recoveredCalls.length > 0) {
+    result.recoveredResponse = applyRecoveryMany(response, result.recoveredCalls);
+  }
+  return result;
+}
+
 export function createProxyServer(opts: ProxyOptions): ProxyServer {
   const upstream = opts.upstream.replace(/\/+$/, '');
   const prefix = opts.prefix ?? DEFAULT_PREFIX;
   const maxBodyBytes = opts.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
   const onResult = opts.onResult;
-  const checkOpts: CheckOptions = {
+  const requestAware = opts.requestAware ?? false;
+  const observeOnly = opts.observeOnly ?? false;
+  const baseCheckOpts: CheckOptions = {
     engineHint: opts.engineHint,
     engineVersion: opts.engineVersion,
     toolSchemas: opts.toolSchemas,
     matrix: opts.matrix,
     additionalFields: opts.additionalFields,
+    minConfidence: opts.minConfidence,
+    strictSchema: opts.strictSchema,
+    intentGate: opts.intentGate,
+    expectToolCall: opts.expectToolCall,
+    sideEffectingTools: opts.sideEffectingTools,
+    recoverSideEffecting: opts.recoverSideEffecting,
   };
 
   const server = http.createServer(async (req, res) => {
     const path = req.url ?? '/';
     const { signal, release } = linkAbort(req, res);
     try {
-      if (req.method !== 'POST' || !isChatCompletions(path, prefix)) {
-        await pipePassthrough(req, res, upstream + path, signal);
-        return;
-      }
-
-      let body: Buffer;
       try {
-        body = await readBody(req, maxBodyBytes);
-      } catch (e) {
-        if (isAbortError(e)) return;
-        if (!res.destroyed && !res.writableEnded) {
-          res.writeHead(413);
-          res.end(e instanceof Error ? e.message : 'request too large');
+        if (req.method !== 'POST' || !isChatCompletions(path, prefix)) {
+          await pipePassthrough(req, res, upstream + path, signal);
+          return;
         }
-        return;
-      }
 
-      let payload: unknown;
-      try {
-        payload = JSON.parse(body.toString('utf8'));
-      } catch {
-        if (!res.destroyed && !res.writableEnded) {
-          res.writeHead(400, { 'content-type': 'application/json' });
-          res.end(JSON.stringify({ error: 'invalid JSON body' }));
+        let body: Buffer;
+        try {
+          body = await readBody(req, maxBodyBytes);
+        } catch (e) {
+          if (isAbortError(e)) return;
+          if (!res.destroyed && !res.writableEnded) {
+            res.writeHead(413);
+            res.end(e instanceof Error ? e.message : 'request too large');
+          }
+          return;
         }
-        return;
-      }
 
-      let upstreamRes: Response;
-      try {
-        upstreamRes = await fetch(upstream + path, {
-          method: 'POST',
-          headers: forwardHeaders(req),
-          body: JSON.stringify(payload),
-          signal,
-        });
-      } catch (e) {
-        if (isAbortError(e)) return;
-        if (!res.destroyed && !res.writableEnded) {
-          res.writeHead(502);
-          res.end(e instanceof Error ? e.message : 'upstream unreachable');
+        let payload: unknown;
+        try {
+          payload = JSON.parse(body.toString('utf8'));
+        } catch {
+          if (!res.destroyed && !res.writableEnded) {
+            res.writeHead(400, { 'content-type': 'application/json' });
+            res.end(JSON.stringify({ error: 'invalid JSON body' }));
+          }
+          return;
         }
-        return;
-      }
 
-      if (upstreamRes.status !== 200) {
-        const text = await upstreamRes.text();
-        if (!res.destroyed && !res.writableEnded) {
-          res.writeHead(upstreamRes.status, {
-            'content-type': upstreamRes.headers.get('content-type') ?? 'application/json',
+        const checkOpts = effectiveCheckOpts(baseCheckOpts, payload, requestAware);
+
+        let upstreamRes: Response;
+        try {
+          upstreamRes = await fetch(upstream + path, {
+            method: 'POST',
+            headers: forwardHeaders(req),
+            body: JSON.stringify(payload),
+            signal,
           });
-          res.end(text);
+        } catch (e) {
+          if (isAbortError(e)) return;
+          if (!res.destroyed && !res.writableEnded) {
+            res.writeHead(502);
+            res.end(e instanceof Error ? e.message : 'upstream unreachable');
+          }
+          return;
         }
-        return;
-      }
 
-      if (isStreamingRequest(payload)) {
-        await handleStreaming(upstreamRes, res, signal, checkOpts, onResult);
-        return;
-      }
+        if (upstreamRes.status !== 200) {
+          const text = await upstreamRes.text();
+          if (!res.destroyed && !res.writableEnded) {
+            res.writeHead(upstreamRes.status, {
+              'content-type': upstreamRes.headers.get('content-type') ?? 'application/json',
+            });
+            res.end(text);
+          }
+          return;
+        }
 
-      let response: RawProviderResponse;
-      try {
-        response = JSON.parse(await upstreamRes.text()) as RawProviderResponse;
-      } catch {
+        if (isStreamingRequest(payload)) {
+          await handleStreaming(upstreamRes, res, signal, checkOpts, onResult, path, observeOnly);
+          return;
+        }
+
+        let response: RawProviderResponse;
+        try {
+          response = JSON.parse(await upstreamRes.text()) as RawProviderResponse;
+        } catch {
+          if (!res.destroyed && !res.writableEnded) {
+            res.writeHead(502, { 'content-type': 'application/json' });
+            res.end(JSON.stringify({ error: 'upstream returned non-JSON for chat completion' }));
+          }
+          return;
+        }
+        const result = checkResponse(response, checkOpts);
+        onResult?.(result, path);
+        const out =
+          result.recovered && !observeOnly && result.recoveredResponse
+            ? result.recoveredResponse
+            : response;
         if (!res.destroyed && !res.writableEnded) {
-          res.writeHead(502, { 'content-type': 'application/json' });
-          res.end(JSON.stringify({ error: 'upstream returned non-JSON for chat completion' }));
+          res.writeHead(200, {
+            'content-type': 'application/json',
+            'x-unswallow': JSON.stringify(report(result, observeOnly)),
+          });
+          res.end(JSON.stringify(out));
         }
-        return;
-      }
-      const result = checkAndRescue(response, checkOpts);
-      onResult?.(result, path);
-      const out = result.recovered && result.recoveredResponse ? result.recoveredResponse : response;
-      if (!res.destroyed && !res.writableEnded) {
-        res.writeHead(200, {
-          'content-type': 'application/json',
-          'x-unswallow': JSON.stringify({
-            detected: result.detected,
-            pattern: result.pattern,
-            recovered: result.recovered,
-            confidence: result.confidence,
-          }),
-        });
-        res.end(JSON.stringify(out));
+      } catch (e) {
+        if (isAbortError(e) || signal.aborted) return;
+        // Top-level guard: never leave the client hanging / never crash the process.
+        if (res.destroyed || res.writableEnded) return;
+        try {
+          if (!res.headersSent) {
+            res.writeHead(502, { 'content-type': 'application/json' });
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : 'proxy error' }));
+          } else {
+            safeWrite(res, 'data: [DONE]\n\n');
+            res.end();
+          }
+        } catch {
+          // last-resort: ensure the socket does not hang
+          try {
+            res.end();
+          } catch {
+            // ignore
+          }
+        }
       }
     } finally {
       release();
@@ -237,8 +356,8 @@ export function createProxyServer(opts: ProxyOptions): ProxyServer {
   });
 
   (server as ProxyServer).upstreamUrl = upstream;
-  (server as ProxyServer).engineHint = checkOpts.engineHint as string | undefined;
-  (server as ProxyServer).engineVersion = checkOpts.engineVersion as string | undefined;
+  (server as ProxyServer).engineHint = baseCheckOpts.engineHint as string | undefined;
+  (server as ProxyServer).engineVersion = baseCheckOpts.engineVersion as string | undefined;
   return server as ProxyServer;
 }
 
@@ -274,7 +393,9 @@ async function handleStreaming(
   res: http.ServerResponse,
   signal: AbortSignal,
   checkOpts: CheckOptions,
-  onResult?: (result: SwallowCheckResult, path: string) => void
+  onResult: ((result: SwallowCheckResult, path: string) => void) | undefined,
+  path: string,
+  observeOnly: boolean
 ): Promise<void> {
   const acc = createStreamAccumulator();
   const reader = upstreamRes.body!.getReader();
@@ -282,6 +403,7 @@ async function handleStreaming(
   let buffer = '';
   let finishChunk: string | null = null;
   let doneChunk: string | null = null;
+  let overflowed = false;
 
   res.writeHead(200, {
     'content-type': 'text/event-stream',
@@ -290,10 +412,24 @@ async function handleStreaming(
   });
 
   const forwardLine = (line: string) => {
+    if (overflowed) {
+      safeWrite(res, line + '\n');
+      return;
+    }
     if (line.startsWith('data:')) {
       const chunk = parseStreamChunk(line);
       if (chunk) {
-        acc.push(chunk);
+        try {
+          acc.push(chunk);
+        } catch (e) {
+          if (e instanceof RangeError) {
+            // Accumulator guard tripped: forward the rest untouched, skip recovery.
+            overflowed = true;
+            safeWrite(res, line + '\n');
+            return;
+          }
+          throw e;
+        }
         const choice = chunk.choices?.[0];
         if (choice?.finish_reason) {
           finishChunk = line;
@@ -334,9 +470,36 @@ async function handleStreaming(
   }
   if (buffer.length > 0) forwardLine(buffer);
 
-  const assembled = acc.end();
-  const result = checkMessage(assembled.choices[0].message, checkOpts);
-  onResult?.(result, '/v1/chat/completions');
+  if (overflowed) {
+    // Forward untouched; do not attempt recovery or diagnostics that need the full body.
+    if (finishChunk) safeWrite(res, finishChunk + '\n');
+    if (!res.destroyed && !res.writableEnded) {
+      safeWrite(res, doneChunk ?? 'data: [DONE]');
+      safeWrite(res, '\n\n');
+      res.end();
+    }
+    return;
+  }
+
+  let assembled: RawProviderResponse;
+  try {
+    assembled = acc.end();
+  } catch {
+    // If the accumulator cannot assemble (e.g. guard), forward what we have.
+    if (finishChunk) safeWrite(res, finishChunk + '\n');
+    if (!res.destroyed && !res.writableEnded) {
+      safeWrite(res, doneChunk ?? 'data: [DONE]');
+      safeWrite(res, '\n\n');
+      res.end();
+    }
+    return;
+  }
+  const result = checkMessage(
+    assembled.choices[0].message,
+    checkOpts,
+    assembled.choices[0].finish_reason ?? null
+  );
+  onResult?.(result, path);
 
   safeWrite(
     res,
@@ -344,17 +507,12 @@ async function handleStreaming(
       id: assembled.id,
       object: 'chat.completion.chunk',
       choices: [],
-      x_unswallow: {
-        detected: result.detected,
-        pattern: result.pattern,
-        recovered: result.recovered,
-        confidence: result.confidence,
-      },
+      x_unswallow: report(result, observeOnly),
     })
   );
 
-  if (result.recovered && result.toolCalls && result.toolCalls.length > 0) {
-    const recovered = applyRecoveryMany(assembled, result.toolCalls);
+  if (!observeOnly && result.recovered && result.recoveredCalls && result.recoveredCalls.length > 0) {
+    const recovered = applyRecoveryMany(assembled, result.recoveredCalls);
     const calls = recovered.choices[0].message.tool_calls ?? [];
     for (let i = 0; i < calls.length; i++) {
       const call = calls[i];
