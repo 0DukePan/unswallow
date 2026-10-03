@@ -37,8 +37,8 @@ def check_message_dict(message: Dict[str, Any]) -> Optional[List[Dict[str, Any]]
     result = check_and_rescue(
         {"choices": [{"index": 0, "finish_reason": "stop", "message": message}]}
     )
-    if result.detected and result.recovered and result.tool_calls:
-        return [{"name": c.name, "arguments": c.arguments} for c in result.tool_calls]
+    if result.detected and result.recovered and result.recovered_calls:
+        return [{"name": c.name, "arguments": c.arguments} for c in result.recovered_calls]
     return None
 
 
