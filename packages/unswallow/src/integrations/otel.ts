@@ -49,6 +49,20 @@ export interface ObservabilityOptions {
   onAuditLog?: (event: { type: 'unswallow.check'; result: SwallowCheckResult }) => void;
 }
 
+const instruments = new WeakMap<object, Map<string, unknown>>();
+function cached<T>(meter: object, name: string, make: () => T): T {
+  let byName = instruments.get(meter);
+  if (!byName) instruments.set(meter, (byName = new Map()));
+  if (!byName.has(name)) byName.set(name, make());
+  return byName.get(name) as T;
+}
+function counter(meter: MeterLike, name: string, o: Record<string, unknown>): CounterLike {
+  return cached(meter, name, () => meter.createCounter(name, o));
+}
+function histogram(meter: MeterLike, name: string, o: Record<string, unknown>): HistogramLike | undefined {
+  return meter.createHistogram ? cached(meter, name, () => meter.createHistogram!(name, o)) : undefined;
+}
+
 export function observeCheckResult(
   result: SwallowCheckResult,
   opts: ObservabilityOptions = {}
@@ -77,30 +91,30 @@ export function observeCheckResult(
       name_known: String(attrs.name_known),
       schema_valid: String(attrs.schema_valid),
     };
-    opts.meter.createCounter('swallowed_tool_calls_total', {
+    counter(opts.meter, 'swallowed_tool_calls_total', {
       description: 'Responses where a swallowed tool-call pattern was detected',
     }).add(result.detected ? 1 : 0, metricAttrs);
-    opts.meter.createCounter('recovered_tool_calls_total', {
+    counter(opts.meter, 'recovered_tool_calls_total', {
       description: 'Tool calls recovered from structurally valid envelopes',
-    }).add(result.recovered ? (result.toolCalls?.length ?? 0) : 0, metricAttrs);
+    }).add(result.recovered ? (result.recoveredCalls?.length ?? 0) : 0, metricAttrs);
     const guardBlocked = result.detected && !result.recovered && result.pattern !== 'C';
-    opts.meter.createCounter('false_positive_guard_total', {
+    counter(opts.meter, 'false_positive_guard_total', {
       description: 'Detections withheld by a recovery safety gate',
     }).add(guardBlocked ? 1 : 0, metricAttrs);
     const intentBlocked =
       result.detected && !result.recovered && (result.intent?.blocked.length ?? 0) > 0;
-    opts.meter.createCounter('recovery_blocked_total', {
+    counter(opts.meter, 'recovery_blocked_total', {
       description: 'Candidates withheld by the intent gate (per response)',
     }).add(intentBlocked ? 1 : 0, metricAttrs);
     if (result.pattern) {
-      opts.meter.createCounter(`pattern_${result.pattern.toLowerCase()}_total`, {
+      counter(opts.meter, `pattern_${result.pattern.toLowerCase()}_total`, {
         description: `Detected Pattern ${result.pattern} responses`,
       }).add(result.detected ? 1 : 0, metricAttrs);
     }
     if (typeof opts.recoveryLatencyMs === 'number' && Number.isFinite(opts.recoveryLatencyMs) && opts.recoveryLatencyMs >= 0) {
-      opts.meter.createHistogram?.('recovery_latency_ms', {
+      histogram(opts.meter, 'recovery_latency_ms', {
         description: 'Wall-clock time measured by the caller around check and recovery', unit: 'ms',
-      }).record(opts.recoveryLatencyMs, metricAttrs);
+      })?.record(opts.recoveryLatencyMs, metricAttrs);
     }
   }
 }

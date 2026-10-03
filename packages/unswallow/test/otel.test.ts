@@ -119,7 +119,7 @@ test('matrix match engine flows into span attributes', () => {
 
 test('meter records recovery counters, pattern totals, and optional latency', () => {
   const meter = new FakeMeter();
-  observeCheckResult(result({ detected: true, recovered: true, pattern: 'B', toolCalls: [{ name: 'search', arguments: {} }] }), {
+  observeCheckResult(result({ detected: true, recovered: true, pattern: 'B', toolCalls: [{ name: 'search', arguments: {} }], recoveredCalls: [{ name: 'search', arguments: {} }] }), {
     meter, recoveryLatencyMs: 12.5,
   });
   const counter = (name: string) => meter.counters.find((entry) => entry.name === name)!.counter;
@@ -171,4 +171,18 @@ test('meter leaves the intent-gate block counter at zero when recovery proceeded
   );
   const counter = (name: string) => meter.counters.find((entry) => entry.name === name)!.counter;
   assert.equal(counter('recovery_blocked_total').calls[0].delta, 0);
+});
+test('recovered counter counts only gate-passing calls on partial recovery', () => {
+  const meter = new FakeMeter();
+  observeCheckResult(result({ detected: true, recovered: true, pattern: 'A',
+    toolCalls: [{ name: 'a', arguments: {} }, { name: 'b', arguments: {} }],
+    recoveredCalls: [{ name: 'b', arguments: {} }] }), { meter });
+  assert.equal(meter.counters.find((e) => e.name === 'recovered_tool_calls_total')!.counter.calls[0].delta, 1);
+});
+
+test('instruments are created once per meter, not once per call', () => {
+  const meter = new FakeMeter();
+  for (let i = 0; i < 5; i++) observeCheckResult(result({ detected: true, pattern: 'A' }), { meter });
+  assert.equal(meter.counters.filter((e) => e.name === 'swallowed_tool_calls_total').length, 1);
+  assert.equal(meter.counters.find((e) => e.name === 'swallowed_tool_calls_total')!.counter.calls.length, 5);
 });
